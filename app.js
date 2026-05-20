@@ -2382,7 +2382,7 @@ function openSetupWizardModal() {
           </div>
           <span class="badge ${connected ? "green" : "gray"}">${connected ? "연결됨" : "연결 전"}</span>
         </div>
-        <a class="ghost compact guide-link" href="./처음설정가이드.html" target="_blank" rel="noopener">그림과 함께 자세히 보기</a>
+        <a class="ghost compact guide-link" href="./처음설정가이드.html" target="_blank" rel="noopener">자세히 보기</a>
       </div>
     `,
     onSubmit: () => true,
