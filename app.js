@@ -62,6 +62,10 @@ document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
   render();
   runStartupSync().then(finalizeSetupAfterLink).catch(e => console.warn("Setup finalize error:", e));
+  if (!canUseRemoteSync() && !justConnectedViaLink && !sessionStorage.getItem("wizardShown")) {
+    sessionStorage.setItem("wizardShown", "1");
+    setTimeout(openSetupWizardModal, 800);
+  }
   startPolling();
   sendUsagePing();
   document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -994,13 +998,9 @@ function renderHero() {
   if (!els.heroTitle) return;
   if (!state.schoolName?.trim()) {
     els.heroTitle.textContent = "학교 설정을 먼저 완료해주세요";
-    if (adminMode) {
-      els.heroSub.classList.remove("hero-sub-notice");
-      els.heroSub.textContent = "상단의 학교 설정에서 학교명과 물품실을 입력하면 시연 준비가 끝납니다.";
-    } else {
-      els.heroSub.classList.add("hero-sub-notice");
-      els.heroSub.innerHTML = `학교 관리자라면 <b>관리자 모드</b> 버튼 클릭 → 초기 PIN <code>1234</code> 입력 → <b>처음 설정 가이드</b> 버튼을 눌러 초기 설정 진행`;
-    }
+    els.heroSub.classList.remove("hero-sub-notice");
+    els.heroSub.innerHTML = `<button class="primary compact" id="heroSetupBtn" type="button">처음 설정 시작하기</button>`;
+    els.heroSub.querySelector("#heroSetupBtn").addEventListener("click", openSetupWizardModal);
     return;
   }
 
@@ -2340,8 +2340,6 @@ function renderHandoverPanel() {
 }
 
 function openSetupWizardModal() {
-  if (!adminMode) return;
-
   const connected = canUseRemoteSync() && Boolean(syncConfig.lastSyncedAt);
   const copyUrl = "https://docs.google.com/spreadsheets/d/1q0fny_Xczq6Anbk1VUgk_k2NR7bm1OktCqqMPXh4YKA/copy";
 
