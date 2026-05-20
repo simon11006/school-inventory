@@ -2378,7 +2378,7 @@ function openSetupWizardModal() {
         <div class="settings-block-head">
           <div>
             <h3>연결 상태</h3>
-            <p class="helper">${connected ? "이미 연결되어 있습니다. 5번을 다시 할 필요는 없습니다." : "아직 연결 전입니다. 5번 링크를 클릭하면 자동으로 완료됩니다."}</p>
+            <p class="helper">${connected ? "이미 연결되어 있습니다. 4번을 다시 할 필요는 없습니다." : "아직 연결 전입니다. 4번 링크를 클릭하면 자동으로 완료됩니다."}</p>
           </div>
           <span class="badge ${connected ? "green" : "gray"}">${connected ? "연결됨" : "연결 전"}</span>
         </div>
