@@ -2370,7 +2370,8 @@ function openSetupWizardModal() {
         </li>
         <li class="setup-wizard-step">
           <strong>4. 웹앱으로 배포</strong>
-          <p class="helper">시트의 <code>확장 → Apps Script → 배포 → 새 배포 → 유형: 웹 앱 → 액세스: 모든 사용자 → 배포</code>.</p>
+          <p class="helper">시트의 <code>확장 → Apps Script → 배포 → 새 배포</code> 클릭 후:</p>
+          <p class="helper">① 왼쪽 위 톱니바퀴(⚙️) → <strong>웹 앱</strong> 선택<br>② 새 설명: <code>v1</code> 입력<br>③ 액세스: <strong>모든 사용자</strong><br>④ <strong>배포</strong> 클릭 → 나타나는 URL 복사</p>
         </li>
         <li class="setup-wizard-step">
           <strong>5. "우리 학교 접속 링크" 클릭</strong>
