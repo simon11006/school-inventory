@@ -2350,33 +2350,29 @@ function openSetupWizardModal() {
     submitText: "닫기",
     body: `
       <div class="wizard-summary">
-        <p class="helper">아래 1~5를 위에서 아래로 따라 하세요. 5번 링크를 클릭하면 연결·진단·업로드·동기화가 <strong>자동</strong>으로 끝납니다.</p>
+        <p class="helper">아래 1~4를 위에서 아래로 따라 하세요. 4번 링크를 클릭하면 연결이 자동으로 완료됩니다.</p>
       </div>
 
       <ol class="setup-wizard-steps">
         <li class="setup-wizard-step">
-          <strong>1. 학교 기본 정보 입력</strong>
-          <p class="helper">학교명·교사·물품실·담당자·관리자 PIN을 먼저 입력합니다.</p>
-          <button class="ghost compact" id="wizardOpenSettingsBtn" type="button">학교 설정 열기</button>
-        </li>
-        <li class="setup-wizard-step">
-          <strong>2. 학교용 시트 사본 만들기</strong>
+          <strong>1. 학교용 시트 사본 만들기</strong>
           <p class="helper">학교 공용 Google 계정으로 로그인한 뒤 아래 버튼을 눌러 "사본 만들기"를 클릭합니다.</p>
           <a class="ghost compact" href="${copyUrl}" target="_blank" rel="noopener">학교용 시트 만들기</a>
         </li>
         <li class="setup-wizard-step">
-          <strong>3. 시트에서 "처음 설정" 실행 + 권한 승인</strong>
-          <p class="helper">사본 시트 상단 <code>교구이음 → 처음 설정</code> 실행. "확인되지 않은 앱" 경고가 나오면 <strong>고급 → (스크립트 이름)(으)로 이동(안전하지 않음)</strong> → 허용.</p>
+          <strong>2. 시트에서 "처음 설정" 실행 + 권한 승인</strong>
+          <p class="helper">사본 시트 상단 <code>교구이음 → ① 처음 설정 / 연결 키 발급</code> 실행. "확인되지 않은 앱" 경고가 나오면 <strong>고급 → (스크립트 이름)(으)로 이동(안전하지 않음)</strong> → 허용.</p>
         </li>
         <li class="setup-wizard-step">
-          <strong>4. 웹앱으로 배포</strong>
+          <strong>3. 웹앱으로 배포</strong>
           <p class="helper">시트의 <code>확장 → Apps Script → 배포 → 새 배포</code> 클릭 후:</p>
           <p class="helper">① 왼쪽 위 톱니바퀴(⚙️) → <strong>웹 앱</strong> 선택<br>② 새 설명: <code>v1</code> 입력<br>③ 다음 사용자 인증 정보로 실행: <strong>나(본인 계정)</strong><br>④ 액세스 권한이 있는 사용자: <strong>모든 사용자</strong><br>⑤ <strong>배포</strong> 클릭 → 웹 앱 URL(<code>/exec</code>로 끝나는 주소)을 복사해 메모장에 저장</p>
-          <p class="helper" style="color:var(--warn,#b45309);">⚠️ 이 URL은 5단계에서 붙여넣어야 하므로 반드시 저장해두세요.</p>
+          <p class="helper" style="color:var(--warn,#b45309);">⚠️ 이 URL은 4단계에서 붙여넣어야 하므로 반드시 저장해두세요.</p>
         </li>
         <li class="setup-wizard-step">
-          <strong>5. "우리 학교 접속 링크" 클릭</strong>
-          <p class="helper">시트 메뉴 <code>교구이음 → 우리 학교 접속 링크</code> 실행 → 표시된 링크를 클릭하면 이 앱이 열리며 자동으로 연결·진단·업로드·동기화까지 끝납니다.</p>
+          <strong>4. "우리 학교 접속 링크" 클릭</strong>
+          <p class="helper">시트 메뉴 <code>교구이음 → ④ 우리 학교 접속 링크</code> 실행 → URL 입력창에 3단계에서 복사한 주소 붙여넣기 → <strong>▶ 우리 학교 앱 열기</strong> 클릭.</p>
+          <p class="helper">앱이 열리면 연결이 자동으로 완료됩니다. 이후 <strong>학교 설정</strong>에서 학교명·교사·물품실을 입력하고 저장하면 스프레드시트에 바로 올라갑니다.</p>
         </li>
       </ol>
 
@@ -2394,12 +2390,7 @@ function openSetupWizardModal() {
     onSubmit: () => true,
   });
 
-  modal.querySelector("#wizardOpenSettingsBtn").addEventListener("click", () => {
-    modal.remove();
-    openSchoolSettingsModal();
-  });
-
-  // 5번 단계를 안내했으므로 "링크 연결 대기" 상태로 표시 → 링크로 돌아오면 완료 화면이 뜬다
+  // 4번 단계를 안내했으므로 "링크 연결 대기" 상태로 표시 → 링크로 돌아오면 완료 화면이 뜬다
   if (!connected) {
     setupState.awaitingLinkConnect = true;
     saveSetupState();
