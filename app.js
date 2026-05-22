@@ -2316,11 +2316,12 @@ function renderHandoverPanel() {
 
   selectedItemId = null;
   selectedReservationId = null;
-  els.workPanel.innerHTML = `
-    <div class="panel-card">
-      <p class="panel-title">담당자 인계 점검</p>
-      <p class="helper">새 담당자에게 넘기기 전 아래 절차를 순서대로 따라 하세요. 마지막에 새 담당자가 앱에 정상 접속되는지 직접 확인합니다.</p>
-    </div>
+  const modal = openModal({
+    title: "담당자 인계 점검",
+    submitText: "닫기",
+    onSubmit: () => true,
+    body: `
+    <p class="helper" style="margin-bottom:16px;">새 담당자에게 넘기기 전 아래 절차를 순서대로 따라 하세요. 마지막에 새 담당자가 앱에 정상 접속되는지 직접 확인합니다.</p>
 
     <div class="panel-section">
       <p class="panel-title">① 먼저 확인 — 어떤 계정으로 시트를 만들었나요?</p>
@@ -2477,8 +2478,9 @@ function renderHandoverPanel() {
     </div>
 
     <button class="ghost" id="exportHandoverBtn" type="button">현재 데이터 내보내기 (백업)</button>
-  `;
-  document.querySelector("#exportHandoverBtn").addEventListener("click", exportItems);
+    `,
+  });
+  modal.querySelector("#exportHandoverBtn").addEventListener("click", exportItems);
 }
 
 function openSetupWizardModal() {
