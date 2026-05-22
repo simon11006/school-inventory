@@ -2360,7 +2360,10 @@ function renderHandoverPanel() {
       <div class="settings-block first">
         <h3>[이전 담당자] 1단계 · 백업 먼저 받기</h3>
         <ul class="quiet-list">
-          <li>이 화면 아래 <strong>현재 데이터 내보내기 (백업)</strong> 버튼을 눌러 CSV 파일을 저장합니다.</li>
+          <li>아래 버튼을 눌러 CSV 파일로 백업합니다.</li>
+        </ul>
+        <button class="ghost" id="exportHandoverBtn" type="button" style="margin:8px 0;">현재 데이터 내보내기 (백업)</button>
+        <ul class="quiet-list">
           <li>스프레드시트도 직접 열어서 <code>파일 → 다운로드 → Microsoft Excel(.xlsx)</code>로 추가 백업합니다.</li>
           <li>두 파일 모두 USB나 학교 공용 드라이브에 보관합니다.</li>
         </ul>
@@ -2477,7 +2480,6 @@ function renderHandoverPanel() {
       </ul>
     </div>
 
-    <button class="ghost" id="exportHandoverBtn" type="button">현재 데이터 내보내기 (백업)</button>
     `,
   });
   modal.querySelector("#exportHandoverBtn").addEventListener("click", exportItems);
