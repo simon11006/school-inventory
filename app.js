@@ -2390,16 +2390,17 @@ function renderHandoverPanel() {
 
       <div class="settings-block">
         <h3>[새 담당자] 4단계 · Apps Script 권한 승인하기</h3>
-        <p class="helper">새 계정으로 처음 사용하므로 권한을 한 번 승인해야 합니다.</p>
+        <p class="helper">새 계정으로 처음 사용하므로 권한을 한 번 승인해야 합니다. 데이터가 지워지지 않는 안전한 방법으로 진행하세요.</p>
         <ul class="quiet-list">
-          <li>스프레드시트 메뉴 <code>교구이음 → ① 처음 설정 / 연결 키 발급</code>을 클릭합니다.</li>
-          <li>"승인이 필요합니다" 팝업이 뜨면 <strong>계속</strong>을 클릭합니다.</li>
+          <li>스프레드시트 상단 메뉴 <code>확장 프로그램 → Apps Script</code>를 클릭합니다.</li>
+          <li>Apps Script 화면이 열리면 왼쪽 함수 목록(편집기 상단 드롭다운)에서 <strong>onOpen</strong>을 선택합니다.</li>
+          <li>▶ <strong>실행</strong> 버튼을 클릭합니다.</li>
+          <li>"승인이 필요합니다" 팝업이 뜨면 <strong>권한 검토</strong>를 클릭합니다.</li>
           <li>Google 계정 선택 화면에서 <strong>본인 계정</strong>을 클릭합니다.</li>
           <li><strong>"Google에서 확인하지 않은 앱"</strong> 경고가 나오면 — 왼쪽 아래 <strong>고급</strong>을 클릭합니다.</li>
-          <li><strong>"(스크립트 이름)(으)로 이동(안전하지 않음)"</strong> 링크를 클릭합니다.</li>
+          <li><strong>"(앱 이름)(으)로 이동(안전하지 않음)"</strong> 링크를 클릭합니다.</li>
           <li><strong>허용</strong>을 클릭합니다.</li>
-          <li>완료되면 "처음 설정이 완료되었습니다" 팝업이 뜹니다. <strong>확인</strong>을 클릭합니다.</li>
-          <li style="color:var(--warn,#b45309);">⚠️ 주의: 이 단계는 연결 키가 새로 발급됩니다. 기존 물품 데이터는 그대로입니다.</li>
+          <li>Apps Script 탭을 닫고 스프레드시트로 돌아옵니다. 상단에 <strong>교구이음</strong> 메뉴가 보이면 성공입니다.</li>
         </ul>
       </div>
 
