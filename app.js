@@ -2362,7 +2362,7 @@ function renderHandoverPanel() {
         <ul class="quiet-list">
           <li>아래 버튼을 눌러 CSV 파일로 백업합니다.</li>
         </ul>
-        <button class="ghost" id="exportHandoverBtn" type="button" style="margin:8px 0;">현재 데이터 내보내기 (백업)</button>
+        <button class="primary compact" id="exportHandoverBtn" type="button" style="margin:8px 0;width:fit-content;">⬇ 현재 데이터 내보내기 (백업)</button>
         <ul class="quiet-list">
           <li>스프레드시트도 직접 열어서 <code>파일 → 다운로드 → Microsoft Excel(.xlsx)</code>로 추가 백업합니다.</li>
           <li>두 파일 모두 USB나 학교 공용 드라이브에 보관합니다.</li>
