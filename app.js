@@ -2354,66 +2354,101 @@ function renderHandoverPanel() {
 
     <div class="panel-section">
       <p class="panel-title">② 인계 절차 (개인 계정 사용 중인 경우)</p>
+      <p class="helper">각 단계 앞에 <strong>[이전]</strong> / <strong>[새]</strong> 표시는 누가 진행하는지를 나타냅니다.</p>
 
       <div class="settings-block first">
-        <h3>1단계 · 백업 먼저 받기</h3>
+        <h3>[이전 담당자] 1단계 · 백업 먼저 받기</h3>
         <ul class="quiet-list">
-          <li>아래 <strong>현재 데이터 내보내기</strong> 버튼을 눌러 CSV 파일을 저장합니다.</li>
+          <li>이 화면 아래 <strong>현재 데이터 내보내기 (백업)</strong> 버튼을 눌러 CSV 파일을 저장합니다.</li>
           <li>스프레드시트도 직접 열어서 <code>파일 → 다운로드 → Microsoft Excel(.xlsx)</code>로 추가 백업합니다.</li>
+          <li>두 파일 모두 USB나 학교 공용 드라이브에 보관합니다.</li>
         </ul>
       </div>
 
       <div class="settings-block">
-        <h3>2단계 · 스프레드시트 소유권 이전하기</h3>
-        <p class="helper">이전 담당자가 진행합니다. 학교 공용 계정이 없으면 새 담당자 계정으로 이전해도 됩니다.</p>
+        <h3>[이전 담당자] 2단계 · 스프레드시트 소유권 이전하기</h3>
+        <p class="helper">새 담당자의 Gmail 주소를 미리 받아두세요.</p>
         <ul class="quiet-list">
-          <li>스프레드시트를 열고 오른쪽 위 <strong>공유</strong> 버튼을 클릭합니다.</li>
-          <li>새 담당자(또는 학교 공용 계정)의 이메일 주소를 입력하고 <strong>편집자</strong>로 초대합니다.</li>
-          <li>공유 목록에 나타난 해당 이메일 오른쪽 드롭다운을 클릭합니다.</li>
+          <li>스프레드시트를 열고 오른쪽 위 파란색 <strong>공유</strong> 버튼을 클릭합니다.</li>
+          <li>사람 추가 입력창에 새 담당자의 Gmail 주소를 입력합니다.</li>
+          <li>권한을 <strong>편집자</strong>로 설정하고 <strong>보내기</strong>를 클릭합니다.</li>
+          <li>공유 창 아래쪽 목록에서 새 담당자 이메일 오른쪽 드롭다운(▼)을 클릭합니다.</li>
           <li><strong>"소유자로 이전"</strong>을 선택하고 확인 팝업에서 <strong>승인</strong>을 누릅니다.</li>
-          <li>이제 스프레드시트와 Apps Script 모두 새 담당자 소유가 됩니다.</li>
+          <li>완료 후 새 담당자에게 "소유권 이전했습니다"라고 알립니다.</li>
         </ul>
       </div>
 
       <div class="settings-block">
-        <h3>3단계 · 새 계정으로 웹앱 재배포하기</h3>
-        <p class="helper">소유권을 받은 계정으로 스프레드시트를 열고 진행합니다.</p>
+        <h3>[새 담당자] 3단계 · 스프레드시트 열기</h3>
+        <p class="helper">이전 담당자가 소유권을 이전하면 Gmail 받은편지함에 초대 메일이 옵니다.</p>
         <ul class="quiet-list">
-          <li>스프레드시트 상단 메뉴에서 <code>확장 프로그램 → Apps Script</code>를 클릭합니다.</li>
-          <li>Apps Script 화면 오른쪽 위 <strong>배포 → 새 배포</strong>를 클릭합니다.</li>
-          <li>왼쪽 위 톱니바퀴(⚙️) 아이콘을 클릭하고 <strong>웹 앱</strong>을 선택합니다.</li>
-          <li>설명란에 <code>v2</code>를 입력합니다 (버전 구분용).</li>
-          <li><strong>다음 사용자 인증 정보로 실행</strong>: <strong>나(새 담당자 본인 계정)</strong> 선택</li>
-          <li><strong>액세스 권한이 있는 사용자</strong>: <strong>모든 사용자</strong> 선택</li>
-          <li><strong>배포</strong> 버튼을 클릭하고, 나타나는 웹 앱 URL(<code>/exec</code>로 끝나는 주소)을 복사해 메모장에 저장합니다.</li>
+          <li>Gmail에서 "교구이음 스프레드시트가 공유되었습니다" 메일을 찾아 링크를 클릭합니다.</li>
+          <li>또는 <a href="https://drive.google.com" target="_blank" rel="noopener" style="color:var(--accent);">drive.google.com</a>에 접속 후 검색창에 <strong>교구이음</strong>을 입력합니다.</li>
+          <li>스프레드시트를 열면 상단에 <strong>교구이음</strong> 메뉴가 나타납니다. (메뉴가 안 보이면 페이지를 새로고침합니다.)</li>
         </ul>
       </div>
 
       <div class="settings-block">
-        <h3>4단계 · 새 연결 링크 만들기</h3>
+        <h3>[새 담당자] 4단계 · Apps Script 권한 승인하기</h3>
+        <p class="helper">새 계정으로 처음 사용하므로 권한을 한 번 승인해야 합니다.</p>
         <ul class="quiet-list">
-          <li>스프레드시트 메뉴 <code>교구이음 → ④ 우리 학교 접속 링크</code>를 실행합니다.</li>
-          <li>URL 입력창에 3단계에서 복사한 <code>/exec</code> 주소를 붙여넣습니다.</li>
-          <li><strong>▶ 우리 학교 앱 열기</strong>를 클릭하면 앱이 열리면서 연결이 자동 완료됩니다.</li>
+          <li>스프레드시트 메뉴 <code>교구이음 → ① 처음 설정 / 연결 키 발급</code>을 클릭합니다.</li>
+          <li>"승인이 필요합니다" 팝업이 뜨면 <strong>계속</strong>을 클릭합니다.</li>
+          <li>Google 계정 선택 화면에서 <strong>본인 계정</strong>을 클릭합니다.</li>
+          <li><strong>"Google에서 확인하지 않은 앱"</strong> 경고가 나오면 — 왼쪽 아래 <strong>고급</strong>을 클릭합니다.</li>
+          <li><strong>"(스크립트 이름)(으)로 이동(안전하지 않음)"</strong> 링크를 클릭합니다.</li>
+          <li><strong>허용</strong>을 클릭합니다.</li>
+          <li>완료되면 "처음 설정이 완료되었습니다" 팝업이 뜹니다. <strong>확인</strong>을 클릭합니다.</li>
+          <li style="color:var(--warn,#b45309);">⚠️ 주의: 이 단계는 연결 키가 새로 발급됩니다. 기존 물품 데이터는 그대로입니다.</li>
         </ul>
       </div>
 
       <div class="settings-block">
-        <h3>5단계 · 교사들에게 새 링크 안내하기</h3>
-        <p class="helper" style="color:var(--warn,#b45309);">⚠️ 연결 URL이 바뀌었으므로 기존 링크는 더 이상 동작하지 않습니다.</p>
+        <h3>[새 담당자] 5단계 · 새 웹앱 배포하기</h3>
+        <p class="helper">스프레드시트 메뉴에서 진행합니다.</p>
         <ul class="quiet-list">
-          <li>앱에서 <strong>관리자 모드 → 학교 설정</strong>으로 이동합니다.</li>
-          <li><strong>교사 초대 링크 복사</strong> 버튼으로 새 링크를 복사합니다.</li>
-          <li>학교 메신저 채팅방에 새 링크를 공유하고, 교사들에게 즐겨찾기를 새 링크로 바꿔달라고 안내합니다.</li>
+          <li>상단 메뉴 <code>확장 프로그램 → Apps Script</code>를 클릭합니다. (새 탭이 열립니다.)</li>
+          <li>Apps Script 화면 오른쪽 위 파란색 <strong>배포</strong> 버튼 옆 <strong>▼</strong>를 클릭합니다.</li>
+          <li><strong>새 배포</strong>를 클릭합니다.</li>
+          <li>"새 배포" 창 왼쪽 위 톱니바퀴 아이콘(⚙️)을 클릭하고 <strong>웹 앱</strong>을 선택합니다.</li>
+          <li>설명란에 <code>v2</code>를 입력합니다.</li>
+          <li><strong>다음 사용자 인증 정보로 실행</strong> 항목을 <strong>나(본인 계정)</strong>로 설정합니다.</li>
+          <li><strong>액세스 권한이 있는 사용자</strong> 항목을 <strong>모든 사용자</strong>로 설정합니다.</li>
+          <li><strong>배포</strong>를 클릭합니다.</li>
+          <li>권한 승인 팝업이 다시 나오면 4단계와 같이 <strong>고급 → 안전하지 않음 → 허용</strong>을 클릭합니다.</li>
+          <li>배포 완료 화면에 <strong>웹 앱 URL</strong>이 표시됩니다. <code>/exec</code>로 끝나는 이 주소를 <strong>복사해서 메모장에 저장</strong>합니다.</li>
+          <li>Apps Script 탭을 닫고 스프레드시트 탭으로 돌아옵니다.</li>
         </ul>
       </div>
 
       <div class="settings-block">
-        <h3>6단계 · 마무리 정리</h3>
+        <h3>[새 담당자] 6단계 · 우리 학교 접속 링크 만들기</h3>
         <ul class="quiet-list">
-          <li><strong>관리자 PIN 변경</strong>: 학교 설정 → 관리자 PIN 변경에서 새 PIN으로 교체합니다.</li>
-          <li>스프레드시트 공유 화면에서 이전 담당자의 개인 계정을 찾아 <strong>접근 권한 제거</strong>합니다.</li>
-          <li>새 담당자가 본인 PC에서 앱에 접속해 물품 조회와 예약이 정상 동작하는지 확인합니다.</li>
+          <li>스프레드시트 메뉴 <code>교구이음 → ④ 우리 학교 접속 링크</code>를 클릭합니다.</li>
+          <li>URL 입력창에 5단계에서 복사한 <code>/exec</code> 주소를 붙여넣고 <strong>확인</strong>을 클릭합니다.</li>
+          <li>생성된 링크를 클릭하면 앱이 열리면서 <strong>연결이 자동으로 완료</strong>됩니다.</li>
+          <li>앱 화면 오른쪽 위에 <strong>"연결됨"</strong> 표시가 나오면 성공입니다.</li>
+        </ul>
+      </div>
+
+      <div class="settings-block">
+        <h3>[새 담당자] 7단계 · 교사들에게 새 링크 안내하기</h3>
+        <p class="helper" style="color:var(--warn,#b45309);">⚠️ 연결 주소가 바뀌었으므로 이전 링크는 더 이상 동작하지 않습니다. 교사들이 새 링크로 바꿔야 합니다.</p>
+        <ul class="quiet-list">
+          <li>앱 오른쪽 위 <strong>관리자 모드</strong>를 켭니다 (PIN 입력).</li>
+          <li>헤더에 나타나는 <strong>학교 설정</strong>을 클릭합니다.</li>
+          <li><strong>교사 초대 링크 복사</strong> 버튼을 눌러 새 링크를 복사합니다.</li>
+          <li>학교 메신저(밴드·카카오톡 등) 채팅방에 새 링크를 공유합니다.</li>
+          <li>교사들에게 "기존 즐겨찾기 대신 이 새 링크를 사용해 주세요"라고 안내합니다.</li>
+        </ul>
+      </div>
+
+      <div class="settings-block">
+        <h3>[새 담당자] 8단계 · 마무리 정리</h3>
+        <ul class="quiet-list">
+          <li><strong>관리자 PIN 변경</strong>: 학교 설정 → 맨 아래 <strong>관리자 PIN 변경</strong>에서 새 PIN으로 바꿉니다. (기본값 1234는 반드시 변경하세요.)</li>
+          <li><strong>이전 담당자 권한 제거</strong>: 스프레드시트 오른쪽 위 공유 버튼 → 이전 담당자 계정 옆 드롭다운 → <strong>액세스 권한 제거</strong>를 클릭합니다.</li>
+          <li>본인 PC에서 앱에 접속해 물품 목록 조회·예약이 정상 동작하는지 확인합니다.</li>
         </ul>
       </div>
     </div>
