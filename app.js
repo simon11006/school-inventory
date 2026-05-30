@@ -713,6 +713,7 @@ function loadSyncConfig() {
     lastCheckedAt: "",
     lastSyncedAt: "",
     lastRemoteSavedAt: "",
+    schoolCode: "",  // 짧은 주소(?s=) 로 연결된 학교 코드 (heartbeat 용)
   };
   return { ...fallback, ...InventoryStorage.readJson(SYNC_CONFIG_KEY, {}) };
 }
@@ -725,8 +726,33 @@ function markSyncChecked(remoteSavedAt = "") {
   syncConfig.lastCheckedAt = new Date().toISOString();
   if (remoteSavedAt) syncConfig.lastRemoteSavedAt = remoteSavedAt;
   saveSyncConfig();
+  // 짧은 주소로 연결된 학교의 활용 추적 (account-ui.js 가 로드된 경우에만)
+  if (syncConfig.schoolCode && window.account?.heartbeat) {
+    window.account.heartbeat(syncConfig.schoolCode);
+  }
   renderTodayLabel();
 }
+
+// account-ui.js(모듈)가 ?s=코드 해석 후 호출하는 연결 적용 진입점
+function applyConnectionFromAccount(conn) {
+  if (!conn || !conn.apiKey) return false;
+  let endpoint = conn.webAppUrl || "";
+  if (!endpoint && conn.deploymentId) {
+    endpoint = APPS_SCRIPT_URL_PREFIX + conn.deploymentId + APPS_SCRIPT_URL_SUFFIX;
+  }
+  if (!endpoint) return false;
+  syncConfig.provider = "appsScript";
+  syncConfig.endpoint = endpoint;
+  syncConfig.apiKey   = conn.apiKey;
+  if (conn.shortCode) syncConfig.schoolCode = conn.shortCode;
+  syncConfig.autoSync = "pullOnStart"; // 교사용: 페이지 로드 시 최신 데이터 당김
+  saveSyncConfig();
+  justConnectedViaLink = true;
+  return true;
+}
+window.applyConnectionFromAccount = applyConnectionFromAccount;
+// account-ui.js 가 현재 연결된 schoolCode 를 읽을 수 있게 노출
+window.getSchoolCode = () => syncConfig.schoolCode;
 
 function extractDeploymentId(endpoint) {
   if (!endpoint) return "";

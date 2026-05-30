@@ -230,10 +230,14 @@
 
   <div id="toastRoot" class="toast-root" aria-live="polite"></div>
 
+  <script src="./account-core.js"></script>
   <script src="./vendor/xlsx.full.min.js"></script>
   <script src="./inventory-storage.js"></script>
   <script src="./inventory-core.js"></script>
   <script src="./app.js"></script>
+  <!-- Firebase 12.14.0 모듈 스크립트 (type="module" → 자동 defer, app.js 이후 실행) -->
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./account-ui.js"></script>
 </body>
 
 </html>
