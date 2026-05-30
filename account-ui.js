@@ -5,8 +5,6 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
@@ -286,6 +284,16 @@ async function handleLogin(modal) {
     const auth = getAuth();
     const db   = getDb();
     const cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), pw);
+
+    // ① 총괄관리자 확인 (uid 기반)
+    const adminSnap = await getDoc(doc(db, "admins", cred.user.uid));
+    if (adminSnap.exists() && adminSnap.data().role === "super") {
+      modal.remove();
+      openSuperAdminView();
+      return;
+    }
+
+    // ② 일반 학교 계정
     const snap = await getDoc(doc(db, "schools", cred.user.uid));
     const data = snap.exists() ? snap.data() : null;
 
@@ -389,41 +397,48 @@ function openConnectionManager(uid, data) {
   }
 }
 
-// ─── 총괄관리자 대시보드 ─────────────────────────────────────────────────────
-async function isSuperAdmin(email) {
-  if (!email) return false;
-  const snap = await getDoc(doc(getDb(), "admins", email));
-  return snap.exists() && snap.data().role === "super";
-}
+// ─── 총괄관리자 대시보드 (메인 뷰에 렌더링) ────────────────────────────────
 
-async function openAdminDashboard() {
-  if (!fbReady()) return;
-  const provider = new GoogleAuthProvider();
-  let result;
-  try { result = await signInWithPopup(getAuth(), provider); }
-  catch (e) { return alert("구글 로그인 실패: " + (e?.message || e)); }
+/** 로그인 후 메인 뷰 전체를 총괄관리자 대시보드로 전환 */
+function openSuperAdminView() {
+  window._superAdminMode = true; // app.js의 renderMainView/renderHero가 덮어쓰지 않도록
 
-  if (!(await isSuperAdmin(result.user.email))) {
-    await signOut(getAuth());
-    return alert("총괄관리자 권한이 없는 계정입니다:\n" + result.user.email);
+  // Hero 영역 업데이트
+  const heroTitle = document.querySelector("#heroTitle");
+  const heroSub   = document.querySelector("#heroSub");
+  if (heroTitle) heroTitle.textContent = "총괄관리자 대시보드";
+  if (heroSub) {
+    heroSub.classList.remove("hero-sub-notice");
+    heroSub.innerHTML = `<button class="ghost compact" id="superAdminLogoutBtn" type="button">로그아웃</button>`;
+    heroSub.querySelector("#superAdminLogoutBtn").addEventListener("click", async () => {
+      await signOut(getAuth());
+      window._superAdminMode = false;
+      location.reload();
+    });
   }
-  renderDashboard().catch(e => alert("대시보드 로드 실패: " + (e?.message || e)));
+
+  const mainView = document.querySelector("#mainView");
+  if (!mainView) return;
+  mainView.innerHTML = `<div class="empty-state"><p>불러오는 중…</p></div>`;
+  renderSuperAdminContent(mainView).catch(e => {
+    mainView.innerHTML = `<div class="empty-state"><h4>로드 실패</h4><p>${esc(e?.message || e)}</p></div>`;
+  });
 }
 
-async function renderDashboard() {
+async function renderSuperAdminContent(container) {
   const db   = getDb();
   const Core = window.AccountCore;
 
-  // NEIS 키 현재 값
-  const neisSnap     = await getDoc(doc(db, "settings", "neis"));
-  const currentNeis  = neisSnap.exists() ? (neisSnap.data().apiKey || "") : "";
+  // NEIS 키
+  const neisSnap    = await getDoc(doc(db, "settings", "neis"));
+  const currentNeis = neisSnap.exists() ? (neisSnap.data().apiKey || "") : "";
 
   // 학교 목록 (최신 가입 순)
   const snap = await getDocs(query(collection(db, "schools"), orderBy("createdAt", "desc")));
   const now  = Date.now();
 
   const rows = snap.docs.map(d => {
-    const v     = d.data();
+    const v      = d.data();
     const lastMs = v.lastActiveAt?.toMillis?.() || 0;
     const inactive = v.status === "approved" && Core.isInactive(lastMs, now);
 
@@ -435,80 +450,99 @@ async function renderDashboard() {
     const useBadge = v.status === "approved"
       ? (inactive ? '<span class="badge orange">미활용 30일+</span>' : '<span class="badge green">활용중</span>')
       : "";
-    const lastTxt = lastMs ? new Date(lastMs).toLocaleDateString("ko-KR") : "기록 없음";
-    const schoolLabel = `${esc(v.schoolName)}` +
+    const lastTxt    = lastMs ? new Date(lastMs).toLocaleDateString("ko-KR") : "기록 없음";
+    const shortLink  = v.shortCode ? `<a href="/?s=${esc(v.shortCode)}" target="_blank" class="helper">${esc(v.shortCode)}</a>` : "-";
+    const schoolLabel = esc(v.schoolName) +
       (v.schoolType ? ` <small style="color:var(--text2);">(${esc(v.schoolType)})</small>` : "");
 
     let actions = "";
     if (v.status === "pending") {
-      actions = `<button class="primary compact" data-approve="${d.id}">승인</button> <button class="ghost compact" data-reject="${d.id}">거부</button>`;
+      actions = `<button class="primary compact" data-approve="${d.id}">승인</button>
+                 <button class="ghost compact" data-reject="${d.id}">거부</button>`;
     } else if (v.status === "approved") {
       actions = `<button class="ghost compact" data-suspend="${d.id}">정지</button>`;
     } else {
       actions = `<button class="ghost compact" data-approve="${d.id}">승인</button>`;
     }
+
     return `<tr>
       <td>${schoolLabel}</td>
       <td>${statusBadge} ${useBadge}</td>
       <td>${esc(v.email || "")}</td>
+      <td>${shortLink}</td>
       <td>${lastTxt}</td>
       <td>${actions}</td>
     </tr>`;
   }).join("");
 
-  const modal = window.openModal({
-    title: "총괄관리자 대시보드",
-    submitText: "닫기",
-    onSubmit: () => true,
-    body: `
-      <!-- NEIS 키 설정 -->
-      <div class="settings-block" style="margin-bottom:16px;">
-        <div class="settings-block-head">나이스(NEIS) API 키 설정</div>
-        <p class="helper">학교 가입 시 나이스 학교 검색에 사용됩니다.
-          <a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 신청.
-          미설정 시 일 300건 제한(초기 운영에 충분).
-        </p>
-        <span style="display:flex;gap:6px;">
+  container.innerHTML = `
+    <div class="super-admin-dashboard">
+
+      <div class="settings-block first">
+        <div class="settings-block-head">
+          <div>
+            <h3>나이스(NEIS) API 키 설정</h3>
+            <p class="helper">학교 가입 시 학교 검색에 사용됩니다.
+              <a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 신청.
+              미설정 시 일 300건 제한.</p>
+          </div>
+        </div>
+        <span style="display:flex;gap:6px;max-width:480px;">
           <input id="neisKeyInput" type="text" placeholder="발급받은 인증키 붙여넣기"
             value="${esc(currentNeis)}" style="flex:1;" />
           <button class="primary compact" id="neisKeySave" type="button">저장</button>
         </span>
-        <p class="helper" style="margin-top:4px;">
-          ${currentNeis ? `현재 키: ${esc(currentNeis.slice(0, 10))}… (저장됨)` : "미설정"}
-        </p>
+        ${currentNeis
+          ? `<p class="helper">현재 키: ${esc(currentNeis.slice(0, 12))}… (저장됨)</p>`
+          : `<p class="helper">미설정 — 저장 없이도 하루 300건까지 검색 가능합니다.</p>`}
       </div>
 
-      <!-- 학교 목록 -->
-      <div style="overflow:auto;max-height:55vh;">
-        <table class="table">
-          <thead><tr>
-            <th>학교</th><th>상태</th><th>연락 이메일</th><th>마지막 활동</th><th>작업</th>
-          </tr></thead>
-          <tbody>
-            ${rows || '<tr><td colspan="5" style="text-align:center;color:var(--text2);">가입한 학교가 없습니다.</td></tr>'}
-          </tbody>
-        </table>
-      </div>`,
-  });
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <div>
+            <h3>가입 학교 목록</h3>
+            <p class="helper">승인 대기 학교를 확인하고 승인 또는 거부하세요.</p>
+          </div>
+          <button class="ghost compact" id="superAdminRefresh" type="button">새로고침</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead><tr>
+              <th>학교</th><th>상태</th><th>연락 이메일</th><th>접속 코드</th><th>마지막 활동</th><th>작업</th>
+            </tr></thead>
+            <tbody>
+              ${rows || `<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">
+                가입한 학교가 없습니다.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>`;
 
   // NEIS 키 저장
-  modal.querySelector("#neisKeySave").addEventListener("click", async () => {
-    const key = modal.querySelector("#neisKeyInput").value.trim();
+  container.querySelector("#neisKeySave").addEventListener("click", async () => {
+    const key = container.querySelector("#neisKeyInput").value.trim();
     try {
       await setDoc(doc(db, "settings", "neis"), { apiKey: key }, { merge: true });
       alert(key ? "NEIS API 키를 저장했습니다." : "NEIS API 키를 삭제했습니다.");
-      modal.remove();
-      renderDashboard();
+      renderSuperAdminContent(container);
     } catch (e) { alert("저장 실패: " + (e?.message || e)); }
   });
 
-  // 승인·거부·정지
-  modal.addEventListener("click", async ev => {
-    const t       = ev.target;
-    const approve = t.getAttribute?.("data-approve");
-    const reject  = t.getAttribute?.("data-reject");
-    const suspend = t.getAttribute?.("data-suspend");
-    if (!approve && !reject && !suspend) return;
+  // 새로고침
+  container.querySelector("#superAdminRefresh").addEventListener("click", () => {
+    renderSuperAdminContent(container);
+  });
+
+  // 승인·거부·정지 — tbody에 직접 달아서 innerHTML 교체 시 자동 정리
+  const tbody = container.querySelector("tbody");
+  tbody?.addEventListener("click", async ev => {
+    const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend]");
+    if (!t) return;
+    const approve = t.getAttribute("data-approve");
+    const reject  = t.getAttribute("data-reject");
+    const suspend = t.getAttribute("data-suspend");
     t.disabled = true;
     try {
       if (approve) {
@@ -531,8 +565,7 @@ async function renderDashboard() {
       } else if (suspend) {
         await updateDoc(doc(db, "schools", suspend), { status: "suspended" });
       }
-      modal.remove();
-      renderDashboard();
+      renderSuperAdminContent(container);
     } catch (e) {
       t.disabled = false;
       alert("작업 실패: " + (e?.message || e));
@@ -597,13 +630,13 @@ async function heartbeat(code) {
 window.account = {
   openRegister:       openRegisterModal,
   openLogin:          openLoginModal,
-  openAdminDashboard,
+  openSuperAdminView,          // 콘솔에서 직접 호출 가능 (로그인 후)
   heartbeat,
   _searchNeisSchools: searchNeisSchools, // 브라우저 콘솔 테스트용
 };
 
 // ─── 부팅: 버튼 연결 + 짧은 주소 해석 ──────────────────────────────────────
 document.querySelector("#accountBtn")?.addEventListener("click", openLoginModal);
-document.querySelector("#superAdminBtn")?.addEventListener("click", openAdminDashboard);
+document.querySelector("#superAdminBtn")?.addEventListener("click", openLoginModal); // 동일 로그인 창 → uid로 자동 구분
 
 resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작

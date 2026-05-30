@@ -1020,6 +1020,7 @@ function renderTodayLabel() {
 
 function renderHero() {
   if (!els.heroTitle) return;
+  if (window._superAdminMode) return; // 총괄관리자 대시보드 — hero 유지
   if (!canUseRemoteSync()) {
     // 미연결 상태 — 학교 계정 시스템으로 유도
     els.heroTitle.textContent = "학교 계정으로 시작하세요";
@@ -1388,6 +1389,7 @@ function renderNavigation() {
 }
 
 function renderMainView() {
+  if (window._superAdminMode) return; // 총괄관리자 대시보드 — mainView 유지
   if (shouldBlockUnconnectedTeacher()) renderConnectionRequiredView();
   else if (currentView === "dashboard") renderDashboard();
   else if (currentView === "items") renderItemsTable();
