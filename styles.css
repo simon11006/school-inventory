@@ -2652,6 +2652,10 @@ body.super-admin-mode .hero-illust {
 }
 /* 사이드바는 유지 — 관리자 메뉴를 주입해서 사용 */
 
+/* 주입된 관리자 메뉴 버튼은 숨김 예외 처리 */
+body.super-admin-mode #sadminSideNav .nav-item { display: flex !important; }
+body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
+
 /* 대시보드 본문 — 사이드바는 기존 앱 것을 그대로 사용 */
 .super-admin-dashboard {
   padding: 8px 24px 48px;
