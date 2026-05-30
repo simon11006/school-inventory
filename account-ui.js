@@ -777,7 +777,9 @@ async function renderSuperAdminContent(container) {
     } else {
       actions = `<button class="ghost compact" data-approve="${d.id}">승인</button>`;
     }
-    actions += ` <button class="ghost compact" data-edit="${d.id}">편집</button>`;
+    actions += ` <button class="ghost compact" data-edit="${d.id}">편집</button>
+               <button class="ghost compact" data-delete="${d.id}" data-name="${esc(v.schoolName)}"
+                 style="color:var(--danger,#c0392b);">삭제</button>`;
 
     return `<tr>
       <td>${esc(v.schoolName)}${v.schoolType ? ` <small style="color:var(--ink-mute);">(${esc(v.schoolType)})</small>` : ""}</td>
@@ -897,16 +899,36 @@ async function renderSuperAdminContent(container) {
   // ── 탭1: 승인·거부·정지·편집 ────────────────────────────
   container.querySelector("#sadmin-schools tbody")
     ?.addEventListener("click", async ev => {
-      const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend],[data-edit]");
+      const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend],[data-edit],[data-delete]");
       if (!t) return;
       const approve = t.getAttribute("data-approve");
       const reject  = t.getAttribute("data-reject");
       const suspend = t.getAttribute("data-suspend");
       const edit    = t.getAttribute("data-edit");
+      const del     = t.getAttribute("data-delete");
 
       if (edit) {
         const editSnap = await getDoc(doc(db, "schools", edit));
         if (editSnap.exists()) openSchoolEditModal(edit, editSnap.data());
+        return;
+      }
+
+      if (del) {
+        const name = t.dataset.name || "이 학교";
+        if (!confirm(`"${name}" 계정을 정말 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+        t.disabled = true;
+        try {
+          const sSnap = await getDoc(doc(db, "schools", del));
+          const shortCode = sSnap.data()?.shortCode;
+          const batch = writeBatch(db);
+          batch.delete(doc(db, "schools", del));
+          if (shortCode) batch.delete(doc(db, "connections", shortCode));
+          await batch.commit();
+          renderSuperAdminContent(container);
+        } catch (e) {
+          t.disabled = false;
+          alert("삭제 실패: " + (e?.message || e));
+        }
         return;
       }
 
@@ -997,46 +1019,80 @@ function openSchoolEditModal(schoolId, data) {
     submitText: "닫기",
     onSubmit: () => true,
     body: `
-      <div style="padding:10px 12px;background:var(--surface2,#f0f4f0);border-radius:8px;margin-bottom:16px;">
-        <strong>${esc(data.schoolName)}</strong>
-        ${data.schoolType ? `<span class="badge green" style="font-size:11px;margin-left:4px;">${esc(data.schoolType)}</span>` : ""}
-        <br/><span class="helper">로그인 아이디: <code>${esc(data.username || "")}</code>
-          &nbsp;·&nbsp; 접속 코드: <code>${esc(data.shortCode || "없음")}</code></span>
-      </div>
+      <div class="acct-form">
 
-      <label>연락 이메일
-        <input id="editEmail" type="email" value="${esc(data.email || "")}" />
-      </label>
-      <label>담당자 이름
-        <input id="editContactName" type="text" value="${esc(data.contactName || "")}" />
-      </label>
-      <label>담당자 업무
-        <input id="editContactRole" type="text" value="${esc(data.contactRole || "")}" placeholder="예) 교무부장" />
-      </label>
+        <!-- 학교 정보 카드 -->
+        <div class="acct-school-card">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <strong>${esc(data.schoolName)}</strong>
+            ${data.schoolType ? `<span class="badge green" style="font-size:11px;">${esc(data.schoolType)}</span>` : ""}
+          </div>
+          <p class="acct-hint" style="margin:4px 0 0;">
+            아이디: <code>${esc(data.username || "")}</code>
+            &nbsp;·&nbsp; 접속 코드: <code>${esc(data.shortCode || "없음")}</code>
+          </p>
+        </div>
 
-      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0 10px;" />
-      <p class="helper" style="margin-bottom:8px;">연결 정보 (학교 담당자가 로그인 후 직접 변경할 수도 있어요)</p>
+        <!-- 계정 정보 -->
+        <div class="acct-field">
+          <span class="acct-label">연락 이메일</span>
+          <input id="editEmail" type="email" value="${esc(data.email || "")}" />
+        </div>
 
-      <label>웹앱 URL
-        <input id="editWebAppUrl" type="url" value="${esc(conn.webAppUrl || "")}"
-          placeholder="https://script.google.com/macros/s/.../exec" />
-      </label>
-      <label>연결 키 (API_KEY)
-        <input id="editApiKey" type="text" value="${esc(conn.apiKey || "")}" />
-      </label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="acct-field" style="flex:1;min-width:120px;">
+            <span class="acct-label">담당자 이름</span>
+            <input id="editContactName" type="text" value="${esc(data.contactName || "")}" />
+          </div>
+          <div class="acct-field" style="flex:1;min-width:120px;">
+            <span class="acct-label">담당자 업무</span>
+            <input id="editContactRole" type="text" value="${esc(data.contactRole || "")}" />
+          </div>
+        </div>
 
-      <button class="primary" id="editSaveBtn" type="button" style="width:100%;margin-top:14px;">저장</button>
+        <div class="acct-field">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span class="acct-label">비밀번호</span>
+            <span class="acct-hint">변경 시 입력, 비워두면 유지</span>
+          </div>
+          <input id="editPassword" type="text" placeholder="변경할 경우에만 입력" autocomplete="off" />
+        </div>
 
-      <div style="margin-top:12px;padding:10px;background:var(--surface2,#f0f4f0);
-        border-radius:6px;font-size:12px;color:var(--ink-mute);">
-        비밀번호 변경은 Firebase 콘솔 → Authentication에서 해당 계정을 찾아 직접 처리하세요.
+        <!-- 연결 정보 -->
+        <div style="border-top:1px solid var(--line);padding-top:16px;">
+          <p class="acct-label" style="margin:0 0 12px;">연결 정보</p>
+          <div class="acct-field" style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <span class="acct-label">웹앱 URL</span>
+              <span class="acct-hint">/exec 로 끝나는 주소</span>
+            </div>
+            <input id="editWebAppUrl" type="url" value="${esc(conn.webAppUrl || "")}"
+              placeholder="https://script.google.com/macros/s/.../exec" />
+          </div>
+          <div class="acct-field">
+            <span class="acct-label">연결 키 (API_KEY)</span>
+            <input id="editApiKey" type="text" value="${esc(conn.apiKey || "")}" />
+          </div>
+        </div>
+
+        <button class="primary" id="editSaveBtn" type="button" style="width:100%;">저장</button>
+
+        <!-- 위험 영역: 삭제 -->
+        <div style="border-top:1px solid var(--line);padding-top:14px;">
+          <button class="ghost" id="editDeleteBtn" type="button"
+            style="width:100%;color:var(--danger,#c0392b);border-color:var(--danger,#c0392b);">
+            이 학교 계정 삭제
+          </button>
+        </div>
       </div>`,
   });
 
+  // 저장
   modal.querySelector("#editSaveBtn").addEventListener("click", async () => {
     const newEmail = modal.querySelector("#editEmail").value.trim();
     const newCName = modal.querySelector("#editContactName").value.trim();
     const newCRole = modal.querySelector("#editContactRole").value.trim();
+    const newPw    = modal.querySelector("#editPassword").value.trim();
     const newUrl   = modal.querySelector("#editWebAppUrl").value.trim();
     const newKey   = modal.querySelector("#editApiKey").value.trim();
     const btn      = modal.querySelector("#editSaveBtn");
@@ -1045,16 +1101,18 @@ function openSchoolEditModal(schoolId, data) {
       const m        = newUrl.match(/\/macros\/s\/([^/]+)\/exec/);
       const deployId = m ? m[1] : (conn.deploymentId || "");
 
-      await updateDoc(doc(db, "schools", schoolId), {
+      const updates = {
         email:                     newEmail,
         contactName:               newCName,
         contactRole:               newCRole,
         "connection.webAppUrl":    newUrl,
         "connection.apiKey":       newKey,
         "connection.deploymentId": deployId,
-      });
+      };
+      if (newPw) updates.password = newPw;
 
-      // connections 미러도 동기화
+      await updateDoc(doc(db, "schools", schoolId), updates);
+
       if (data.shortCode) {
         await updateDoc(doc(db, "connections", data.shortCode), {
           webAppUrl: newUrl, apiKey: newKey, deploymentId: deployId,
@@ -1068,6 +1126,25 @@ function openSchoolEditModal(schoolId, data) {
     } catch (e) {
       alert("저장 실패: " + (e?.message || e));
       btn.textContent = "저장"; btn.disabled = false;
+    }
+  });
+
+  // 삭제
+  modal.querySelector("#editDeleteBtn").addEventListener("click", async () => {
+    if (!confirm(`"${data.schoolName}" 계정을 정말 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    const btn = modal.querySelector("#editDeleteBtn");
+    btn.textContent = "삭제 중…"; btn.disabled = true;
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "schools", schoolId));
+      if (data.shortCode) batch.delete(doc(db, "connections", data.shortCode));
+      await batch.commit();
+      modal.remove();
+      const container = document.querySelector("#mainView");
+      if (container) renderSuperAdminContent(container);
+    } catch (e) {
+      alert("삭제 실패: " + (e?.message || e));
+      btn.textContent = "이 학교 계정 삭제"; btn.disabled = false;
     }
   });
 }
