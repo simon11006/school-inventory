@@ -325,7 +325,10 @@ h1, h2, h3, p {
 .brand-logo-title {
   margin: 0;
   line-height: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
+.brand-logo-title:hover { opacity: 0.8; }
 
 .brand-logo {
   display: block;

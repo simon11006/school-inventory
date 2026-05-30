@@ -92,6 +92,19 @@ function bindElements() {
 }
 
 function bindEvents() {
+  // 로고 클릭 → 첫화면(대시보드)으로 이동
+  document.querySelector(".brand-logo-title")?.addEventListener("click", () => {
+    if (window._superAdminMode) {
+      // 총괄관리자 모드: 첫 번째 관리자 패널(가입 학교)로 이동
+      document.querySelector("[data-sadmin-tab='schools']")?.click();
+    } else {
+      switchView("dashboard");
+      selectedReservationId = null;
+      selectedItemId = null;
+      render();
+    }
+  });
+
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.addEventListener("click", () => {
       switchView(button.dataset.view);
