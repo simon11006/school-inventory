@@ -252,7 +252,9 @@ function openLoginModal() {
     submitText: "닫기",
     onSubmit: () => true,
     body: `
-      <label>아이디<input id="loginUser" type="text" autocomplete="username" /></label>
+      <label>아이디 (이메일 아님 — 가입 시 직접 정한 영문 아이디)
+        <input id="loginUser" type="text" placeholder="예) myschool-admin" autocomplete="username" />
+      </label>
       <label>비밀번호<input id="loginPw" type="password" autocomplete="current-password" /></label>
       <button class="primary" id="loginSubmit" type="button" style="width:100%;margin-top:8px;">로그인</button>
       <button class="ghost compact" id="goRegister" type="button" style="width:100%;margin-top:8px;">
