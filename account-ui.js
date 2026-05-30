@@ -81,52 +81,64 @@ function openRegisterModal() {
     submitText: "닫기",
     onSubmit: () => true,
     body: `
-      <p class="helper" style="margin-bottom:12px;">
-        나이스에서 학교를 검색해 선택한 뒤 계정 정보를 입력하세요. 총괄관리자 승인 후 로그인할 수 있습니다.
-      </p>
+      <div class="acct-form">
+        <p class="acct-hint" style="margin:0;">나이스에서 학교를 검색해 선택한 뒤 계정 정보를 입력하세요.<br/>총괄관리자 승인 후 로그인할 수 있습니다.</p>
 
-      <label>학교 이름으로 검색
-        <span style="display:flex;gap:6px;">
-          <input id="regSearchInput" type="text" placeholder="예) 서울초" style="flex:1;" />
-          <button class="ghost compact" id="regSearchBtn" type="button">검색</button>
-        </span>
-      </label>
-      <ul id="regSearchResults" style="list-style:none;margin:0 0 8px;padding:0;
-        max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:6px;display:none;"></ul>
-
-      <div id="regSelectedSchool" style="display:none;padding:10px;
-        background:var(--surface2,#f0f4f0);border-radius:8px;margin-bottom:12px;">
-        <span id="regSchoolName" style="font-weight:600;"></span>
-        <span id="regSchoolType" class="badge green" style="font-size:11px;vertical-align:middle;margin-left:4px;"></span><br/>
-        <small id="regSchoolAddress" style="color:var(--text2);"></small><br/>
-        <button class="ghost compact" id="regSchoolReset" type="button" style="margin-top:4px;">다시 검색</button>
-      </div>
-
-      <div id="regAccountSection" style="display:none;">
-        <label>로그인 아이디 (영문 소문자·숫자·-·_ / 4~20자)
-          <input id="regUser" type="text" placeholder="예) seoul-elem-01" autocomplete="username" />
-        </label>
-        <label>비밀번호 (6자 이상)
-          <input id="regPw" type="password" autocomplete="new-password" />
-        </label>
-        <label>연락 이메일 (필수)
-          <input id="regEmail" type="email" placeholder="기관 이메일 권장" />
-        </label>
-        <label>담당자 이름 (선택)
-          <input id="regName" type="text" />
-        </label>
-        <div style="margin:12px 0;padding:10px;border:1px solid var(--line);
-          border-radius:8px;font-size:13px;line-height:1.6;">
-          <strong>개인정보 수집·이용 동의</strong><br/>
-          • 수집 항목: 연락 이메일, (선택)담당자 이름<br/>
-          • 이용 목적: 서비스 장애·공지 연락, 가입 승인 확인<br/>
-          • 보유 기간: 학교 계정 해지 시까지<br/>
-          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;">
-            <input id="regConsent" type="checkbox" style="width:auto;" />
-            위 내용에 동의합니다 (필수)
-          </label>
+        <div class="acct-field">
+          <span class="acct-label">학교 검색</span>
+          <span class="acct-hint">학교 이름의 일부를 입력 후 Enter 또는 검색 버튼을 누르세요</span>
+          <div style="display:flex;gap:6px;">
+            <input id="regSearchInput" type="text" placeholder="예) 서울초등학교" style="flex:1;" />
+            <button class="ghost compact" id="regSearchBtn" type="button">검색</button>
+          </div>
         </div>
-        <button class="primary" id="regSubmit" type="button" style="width:100%;">가입 신청</button>
+
+        <ul id="regSearchResults" style="list-style:none;margin:0;padding:0;
+          max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:8px;display:none;"></ul>
+
+        <div id="regSelectedSchool" class="acct-school-card" style="display:none;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <strong id="regSchoolName"></strong>
+            <span id="regSchoolType" class="badge green" style="font-size:11px;"></span>
+          </div>
+          <span class="acct-hint" id="regSchoolAddress"></span>
+          <button class="ghost compact" id="regSchoolReset" type="button" style="margin-top:4px;">다시 검색</button>
+        </div>
+
+        <div id="regAccountSection" class="acct-form" style="display:none;">
+          <div class="acct-field">
+            <span class="acct-label">로그인 아이디</span>
+            <span class="acct-hint">영문 소문자·숫자·하이픈·밑줄만 사용, 4~20자</span>
+            <input id="regUser" type="text" placeholder="예) seoul-elem-01" autocomplete="username" />
+          </div>
+          <div class="acct-field">
+            <span class="acct-label">비밀번호</span>
+            <span class="acct-hint">6자 이상</span>
+            <input id="regPw" type="password" autocomplete="new-password" />
+          </div>
+          <div class="acct-field">
+            <span class="acct-label">연락 이메일 <span style="color:var(--danger,#c0392b);">*</span></span>
+            <span class="acct-hint">가입 승인 안내 및 서비스 공지에 사용됩니다. 기관 이메일을 권장합니다.</span>
+            <input id="regEmail" type="email" placeholder="school@example.go.kr" />
+          </div>
+          <div class="acct-field">
+            <span class="acct-label">담당자 이름 <span class="acct-hint" style="font-weight:400;">(선택)</span></span>
+            <input id="regName" type="text" placeholder="홍길동" />
+          </div>
+          <div class="acct-consent-box">
+            <strong>개인정보 수집·이용 동의</strong>
+            <ul style="margin:8px 0 0 0;padding-left:18px;">
+              <li>수집 항목: 연락 이메일, (선택) 담당자 이름</li>
+              <li>이용 목적: 서비스 장애·공지 연락, 가입 승인 확인</li>
+              <li>보유 기간: 학교 계정 해지 시까지</li>
+            </ul>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:600;">
+              <input id="regConsent" type="checkbox" style="width:auto;margin:0;" />
+              위 내용에 동의합니다 (필수)
+            </label>
+          </div>
+          <button class="primary" id="regSubmit" type="button" style="width:100%;">가입 신청</button>
+        </div>
       </div>`,
   });
 
@@ -171,9 +183,12 @@ function openRegisterModal() {
     }
   });
 
-  // 엔터로도 검색
+  // 엔터로도 검색 (preventDefault로 form 제출 방지)
   modal.querySelector("#regSearchInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") modal.querySelector("#regSearchBtn").click();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      modal.querySelector("#regSearchBtn").click();
+    }
   });
 
   // 다시 검색
@@ -250,18 +265,25 @@ async function handleRegister(modal, school) {
 function openLoginModal() {
   if (!fbReady()) return;
   const modal = window.openModal({
-    title: "학교 로그인",
+    title: "학교 계정 로그인",
     submitText: "닫기",
     onSubmit: () => true,
     body: `
-      <label>아이디 (이메일 아님 — 가입 시 직접 정한 영문 아이디)
-        <input id="loginUser" type="text" placeholder="예) myschool-admin" autocomplete="username" />
-      </label>
-      <label>비밀번호<input id="loginPw" type="password" autocomplete="current-password" /></label>
-      <button class="primary" id="loginSubmit" type="button" style="width:100%;margin-top:8px;">로그인</button>
-      <button class="ghost compact" id="goRegister" type="button" style="width:100%;margin-top:8px;">
-        처음이신가요? 학교 가입
-      </button>`,
+      <div class="acct-form">
+        <div class="acct-field">
+          <span class="acct-label">아이디</span>
+          <span class="acct-hint">이메일이 아니라 가입 시 직접 정한 영문 아이디입니다</span>
+          <input id="loginUser" type="text" placeholder="예) myschool-admin" autocomplete="username" />
+        </div>
+        <div class="acct-field">
+          <span class="acct-label">비밀번호</span>
+          <input id="loginPw" type="password" autocomplete="current-password" />
+        </div>
+        <button class="primary" id="loginSubmit" type="button" style="width:100%;margin-top:4px;">로그인</button>
+        <button class="ghost" id="goRegister" type="button" style="width:100%;">
+          처음이신가요? 학교 계정 가입 →
+        </button>
+      </div>`,
   });
 
   modal.querySelector("#loginPw").addEventListener("keydown", e => {

@@ -2663,6 +2663,51 @@ body.super-admin-mode .app-shell {
   width: 100%;
 }
 
+/* ─── Account form (login / register modals) ─── */
+.acct-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.acct-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.acct-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+.acct-hint {
+  font-size: 12px;
+  color: var(--ink-mute);
+  line-height: 1.4;
+}
+.acct-field > input,
+.acct-field > select,
+.acct-field > div > input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.acct-school-card {
+  padding: 12px 14px;
+  background: var(--surface2, #f0f4f0);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+.acct-consent-box {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.acct-consent-box strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
 /* ─── Connection required — two-card layout ─── */
 .conn-req-cards {
   display: flex;
