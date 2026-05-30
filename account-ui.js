@@ -556,7 +556,7 @@ function openSuperAdminView() {
     schoolNameEl.classList.remove("needs-setup");
   }
 
-  // Hero 영역 업데이트
+  // Hero 영역: 제목 + 로그아웃 버튼
   const heroTitle = document.querySelector("#heroTitle");
   const heroSub   = document.querySelector("#heroSub");
   if (heroTitle) heroTitle.textContent = "총괄관리자 대시보드";
@@ -567,13 +567,46 @@ function openSuperAdminView() {
       await signOut(getAuth());
       window._superAdminMode = false;
       document.body.classList.remove("super-admin-mode");
+      // 사이드바 복원
+      const sadminNav = document.querySelector("#sadminSideNav");
+      if (sadminNav) sadminNav.remove();
       location.reload();
+    });
+  }
+
+  // ── 사이드바에 관리자 메뉴 주입 ─────────────────────────
+  const sidebar = document.querySelector(".sidebar");
+  if (sidebar && !sidebar.querySelector("#sadminSideNav")) {
+    const adminNav = document.createElement("nav");
+    adminNav.id = "sadminSideNav";
+    adminNav.innerHTML = `
+      <p class="side-label">관리자 메뉴</p>
+      <button class="nav-item active" data-sadmin-tab="schools" type="button">
+        <span class="nav-glyph" aria-hidden="true">🏫</span>가입 학교
+      </button>
+      <button class="nav-item" data-sadmin-tab="accounts" type="button">
+        <span class="nav-glyph" aria-hidden="true">🔑</span>아이디 관리
+      </button>
+      <button class="nav-item" data-sadmin-tab="settings" type="button">
+        <span class="nav-glyph" aria-hidden="true">⚙️</span>시스템 설정
+      </button>`;
+    sidebar.appendChild(adminNav);
+
+    // 사이드바 클릭 → 패널 전환
+    adminNav.addEventListener("click", e => {
+      const btn = e.target.closest("[data-sadmin-tab]");
+      if (!btn) return;
+      adminNav.querySelectorAll("[data-sadmin-tab]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const mainView = document.querySelector("#mainView");
+      mainView?.querySelectorAll(".sadmin-panel").forEach(p => p.classList.remove("active"));
+      mainView?.querySelector(`#sadmin-${btn.dataset.sadminTab}`)?.classList.add("active");
     });
   }
 
   const mainView = document.querySelector("#mainView");
   if (!mainView) return;
-  mainView.innerHTML = `<div class="empty-state"><p>불러오는 중…</p></div>`;
+  mainView.innerHTML = `<div style="padding:28px;color:var(--ink-mute);">불러오는 중…</div>`;
   renderSuperAdminContent(mainView).catch(e => {
     mainView.innerHTML = `<div class="empty-state"><h4>로드 실패</h4><p>${esc(e?.message || e)}</p></div>`;
   });
@@ -658,98 +691,69 @@ async function renderSuperAdminContent(container) {
 
   container.innerHTML = `
     <div class="super-admin-dashboard">
-      <div class="sadmin-layout">
 
-        <!-- ── 좌측 네비게이션 ── -->
-        <nav class="sadmin-nav">
-          <button class="sadmin-nav-item active" data-tab="schools" type="button">
-            <span class="sadmin-nav-icon">🏫</span>가입 학교
-          </button>
-          <button class="sadmin-nav-item" data-tab="accounts" type="button">
-            <span class="sadmin-nav-icon">🔑</span>아이디 관리
-          </button>
-          <button class="sadmin-nav-item" data-tab="settings" type="button">
-            <span class="sadmin-nav-icon">⚙️</span>시스템 설정
-          </button>
-        </nav>
-
-        <!-- ── 우측 콘텐츠 ── -->
-        <div class="sadmin-content">
-
-          <!-- 패널1: 가입 학교 -->
-          <div class="sadmin-panel active" id="sadmin-schools">
-            <div class="sadmin-panel-head">
-              <div>
-                <h3>가입 학교 목록</h3>
-                <p class="helper">승인 대기 학교를 확인하고 승인 또는 거부하세요.</p>
-              </div>
-              <button class="ghost compact" id="superAdminRefresh" type="button">새로고침</button>
-            </div>
-            <div style="overflow-x:auto;">
-              <table class="table">
-                <thead><tr>
-                  <th>학교</th><th>상태</th><th>연락 이메일</th>
-                  <th>접속 코드</th><th>마지막 활동</th><th>작업</th>
-                </tr></thead>
-                <tbody>${schoolRows || empty6}</tbody>
-              </table>
-            </div>
+      <!-- 패널1: 가입 학교 -->
+      <div class="sadmin-panel active" id="sadmin-schools">
+        <div class="sadmin-panel-head">
+          <div>
+            <h3>가입 학교 목록</h3>
+            <p class="helper">승인 대기 학교를 확인하고 승인 또는 거부하세요.</p>
           </div>
+          <button class="ghost compact" id="superAdminRefresh" type="button">새로고침</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead><tr>
+              <th>학교</th><th>상태</th><th>연락 이메일</th>
+              <th>접속 코드</th><th>마지막 활동</th><th>작업</th>
+            </tr></thead>
+            <tbody>${schoolRows || empty6}</tbody>
+          </table>
+        </div>
+      </div>
 
-          <!-- 패널2: 아이디 관리 -->
-          <div class="sadmin-panel" id="sadmin-accounts">
-            <div class="sadmin-panel-head">
-              <div>
-                <h3>아이디 관리</h3>
-                <p class="helper">등록된 계정을 확인하고 비밀번호 초기화를 안내할 수 있습니다.</p>
-              </div>
-            </div>
-            <div style="overflow-x:auto;">
-              <table class="table">
-                <thead><tr>
-                  <th>학교</th><th>상태</th><th>아이디</th>
-                  <th>연락 이메일</th><th>담당자</th><th>비밀번호</th>
-                </tr></thead>
-                <tbody>${accountRows || empty5}</tbody>
-              </table>
-            </div>
+      <!-- 패널2: 아이디 관리 -->
+      <div class="sadmin-panel" id="sadmin-accounts">
+        <div class="sadmin-panel-head">
+          <div>
+            <h3>아이디 관리</h3>
+            <p class="helper">등록된 계정을 확인하고 비밀번호 초기화를 안내할 수 있습니다.</p>
           </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead><tr>
+              <th>학교</th><th>상태</th><th>아이디</th>
+              <th>연락 이메일</th><th>담당자</th><th>비밀번호</th>
+            </tr></thead>
+            <tbody>${accountRows || empty5}</tbody>
+          </table>
+        </div>
+      </div>
 
-          <!-- 패널3: 시스템 설정 -->
-          <div class="sadmin-panel" id="sadmin-settings">
-            <div class="sadmin-panel-head">
-              <div><h3>시스템 설정</h3></div>
-            </div>
-            <div class="settings-block">
-              <h4 style="margin:0 0 6px;">나이스(NEIS) API 키</h4>
-              <p class="helper" style="margin:0 0 12px;">학교 가입 시 학교 검색에 사용됩니다.
-                <a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 신청.
-                미설정 시 일 300건 제한.</p>
-              <div style="display:flex;gap:8px;max-width:520px;">
-                <input id="neisKeyInput" type="text"
-                  placeholder="발급받은 인증키 붙여넣기"
-                  value="${esc(currentNeis)}" style="flex:1;" />
-                <button class="primary compact" id="neisKeySave" type="button">저장</button>
-              </div>
-              ${currentNeis
-                ? `<p class="helper" style="margin-top:8px;">현재 키: ${esc(currentNeis.slice(0, 16))}… (저장됨)</p>`
-                : `<p class="helper" style="margin-top:8px;">미설정 상태입니다.</p>`}
-            </div>
+      <!-- 패널3: 시스템 설정 -->
+      <div class="sadmin-panel" id="sadmin-settings">
+        <div class="sadmin-panel-head">
+          <div><h3>시스템 설정</h3></div>
+        </div>
+        <div class="settings-block">
+          <h4 style="margin:0 0 6px;">나이스(NEIS) API 키</h4>
+          <p class="helper" style="margin:0 0 12px;">학교 가입 시 학교 검색에 사용됩니다.
+            <a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 신청.
+            미설정 시 일 300건 제한.</p>
+          <div style="display:flex;gap:8px;max-width:520px;">
+            <input id="neisKeyInput" type="text"
+              placeholder="발급받은 인증키 붙여넣기"
+              value="${esc(currentNeis)}" style="flex:1;" />
+            <button class="primary compact" id="neisKeySave" type="button">저장</button>
           </div>
+          ${currentNeis
+            ? `<p class="helper" style="margin-top:8px;">현재 키: ${esc(currentNeis.slice(0, 16))}… (저장됨)</p>`
+            : `<p class="helper" style="margin-top:8px;">미설정 상태입니다.</p>`}
+        </div>
+      </div>
 
-        </div><!-- /.sadmin-content -->
-      </div><!-- /.sadmin-layout -->
     </div>`;
-
-  // ── 좌측 네비 전환 ───────────────────────────────────────
-  container.querySelectorAll(".sadmin-nav-item").forEach(btn => {
-    btn.addEventListener("click", () => {
-      container.querySelectorAll(".sadmin-nav-item").forEach(b => b.classList.remove("active"));
-      container.querySelectorAll(".sadmin-panel").forEach(p => p.classList.remove("active"));
-      btn.classList.add("active");
-      container.querySelector(`#sadmin-${btn.dataset.tab}`).classList.add("active");
-    });
-  });
 
   // ── 새로고침 ─────────────────────────────────────────────
   container.querySelector("#superAdminRefresh").addEventListener("click", () => {

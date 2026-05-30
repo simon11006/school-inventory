@@ -2637,6 +2637,7 @@ body.super-admin-mode #helpBtn,
 body.super-admin-mode .sidebar-room-select,
 body.super-admin-mode #sideMenuLabel,
 body.super-admin-mode .nav-item,
+body.super-admin-mode .side-foot,
 body.super-admin-mode .side-sync-card,
 body.super-admin-mode .mobile-room-row,
 body.super-admin-mode #statusGrid,
@@ -2646,71 +2647,13 @@ body.super-admin-mode #mobileTabBar,
 body.super-admin-mode .hero-illust {
   display: none !important;
 }
+/* 사이드바는 유지 — 관리자 메뉴를 주입해서 사용 */
 
-/* 사이드바·워크패널 완전 숨김 + 그리드 단일 컬럼으로 전환 */
-body.super-admin-mode .sidebar,
-body.super-admin-mode .work-panel {
-  display: none !important;
-}
-body.super-admin-mode .app-shell {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-/* 대시보드 본문 */
+/* 대시보드 본문 — 사이드바는 기존 앱 것을 그대로 사용 */
 .super-admin-dashboard {
-  padding: 16px 0 48px;
+  padding: 8px 24px 48px;
   width: 100%;
   box-sizing: border-box;
-}
-
-/* 총괄관리자 — 좌측 네비 + 콘텐츠 2열 레이아웃 */
-.sadmin-layout {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 0;
-  align-items: start;
-}
-.sadmin-nav {
-  border-right: 1px solid var(--line);
-  padding: 4px 0;
-  position: sticky;
-  top: 72px;
-}
-.sadmin-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  padding: 11px 18px;
-  border: none;
-  border-right: 3px solid transparent;
-  background: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink-mute);
-  transition: color 0.15s, background 0.15s;
-}
-.sadmin-nav-item.active {
-  color: var(--accent, #5B8A6F);
-  background: var(--surface2, #f4f7f4);
-  border-right-color: var(--accent, #5B8A6F);
-  font-weight: 700;
-}
-.sadmin-nav-item:hover:not(.active) {
-  background: var(--surface2, #f4f7f4);
-  color: var(--ink);
-}
-.sadmin-nav-icon {
-  font-size: 15px;
-  line-height: 1;
-  opacity: 0.75;
-  flex-shrink: 0;
-}
-.sadmin-content {
-  padding: 0 28px 0 28px;
-  min-width: 0;
 }
 
 .sadmin-panel { display: none; }
@@ -2725,15 +2668,6 @@ body.super-admin-mode .app-shell {
 }
 .sadmin-panel-head h3 { margin: 0 0 4px; font-size: 16px; }
 .sadmin-panel-head .helper { margin: 0; }
-
-@media (max-width: 600px) {
-  .sadmin-layout { grid-template-columns: 1fr; }
-  .sadmin-nav { border-right: none; border-bottom: 1px solid var(--line); display: flex; }
-  .sadmin-nav-item { border-right: none; border-bottom: 3px solid transparent; flex: 1; justify-content: center; padding: 10px 6px; font-size: 12px; }
-  .sadmin-nav-item.active { border-bottom-color: var(--accent, #5B8A6F); }
-  .sadmin-nav-icon { display: none; }
-  .sadmin-content { padding: 16px 12px 0; }
-}
 
 /* ─── Account form (login / register modals) ─── */
 .acct-form {
