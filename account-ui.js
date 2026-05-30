@@ -106,29 +106,49 @@ function openRegisterModal() {
         </div>
 
         <div id="regAccountSection" class="acct-form" style="display:none;">
-          <div class="acct-field">
-            <span class="acct-label">로그인 아이디</span>
-            <span class="acct-hint">영문 소문자·숫자·하이픈·밑줄만 사용, 4~20자</span>
-            <input id="regUser" type="text" placeholder="예) seoul-elem-01" autocomplete="username" />
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="acct-field" style="flex:1;min-width:120px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+                <span class="acct-label">로그인 아이디</span>
+                <span class="acct-hint">영문·숫자·-·_ / 4~20자</span>
+              </div>
+              <input id="regUser" type="text" autocomplete="username" />
+            </div>
+            <div class="acct-field" style="flex:1;min-width:120px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+                <span class="acct-label">비밀번호</span>
+                <span class="acct-hint">6자 이상</span>
+              </div>
+              <input id="regPw" type="password" autocomplete="new-password" />
+            </div>
           </div>
           <div class="acct-field">
-            <span class="acct-label">비밀번호</span>
-            <span class="acct-hint">6자 이상</span>
-            <input id="regPw" type="password" autocomplete="new-password" />
-          </div>
-          <div class="acct-field">
-            <span class="acct-label">연락 이메일 <span style="color:var(--danger,#c0392b);">*</span></span>
-            <span class="acct-hint">가입 승인 안내 및 서비스 공지에 사용됩니다. 기관 이메일을 권장합니다.</span>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+              <span class="acct-label">연락 이메일 <span style="color:var(--danger,#c0392b);">*</span></span>
+              <span class="acct-hint">가입 승인 안내에 사용됩니다</span>
+            </div>
             <input id="regEmail" type="email" placeholder="school@example.go.kr" />
           </div>
-          <div class="acct-field">
-            <span class="acct-label">담당자 이름 <span class="acct-hint" style="font-weight:400;">(선택)</span></span>
-            <input id="regName" type="text" placeholder="홍길동" />
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="acct-field" style="flex:1;min-width:120px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+                <span class="acct-label">담당자 이름</span>
+                <span class="acct-hint">선택</span>
+              </div>
+              <input id="regName" type="text" />
+            </div>
+            <div class="acct-field" style="flex:1;min-width:120px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+                <span class="acct-label">담당자 업무</span>
+                <span class="acct-hint">선택</span>
+              </div>
+              <input id="regRole" type="text" placeholder="예) 교무부장" />
+            </div>
           </div>
           <div class="acct-consent-box">
             <strong>개인정보 수집·이용 동의</strong>
             <ul style="margin:8px 0 0 0;padding-left:18px;">
-              <li>수집 항목: 연락 이메일, (선택) 담당자 이름</li>
+              <li>수집 항목: 연락 이메일, (선택) 담당자 이름·업무</li>
               <li>이용 목적: 서비스 장애·공지 연락, 가입 승인 확인</li>
               <li>보유 기간: 학교 계정 해지 시까지</li>
             </ul>
@@ -209,6 +229,7 @@ async function handleRegister(modal, school) {
   const pw      = modal.querySelector("#regPw").value;
   const email   = modal.querySelector("#regEmail").value.trim();
   const name    = modal.querySelector("#regName").value.trim();
+  const role    = modal.querySelector("#regRole").value.trim();
   const consent = modal.querySelector("#regConsent").checked;
   const Core    = window.AccountCore;
 
@@ -242,6 +263,7 @@ async function handleRegister(modal, school) {
       username:    user,
       email,
       contactName: name || "",
+      contactRole: role || "",
       status:      "pending",
       shortCode:   "",
       connection:  { deploymentId: "", apiKey: "", webAppUrl: "" },
@@ -665,6 +687,9 @@ function openSchoolEditModal(schoolId, data) {
       <label>담당자 이름
         <input id="editContactName" type="text" value="${esc(data.contactName || "")}" />
       </label>
+      <label>담당자 업무
+        <input id="editContactRole" type="text" value="${esc(data.contactRole || "")}" placeholder="예) 교무부장" />
+      </label>
 
       <hr style="border:none;border-top:1px solid var(--line);margin:14px 0 10px;" />
       <p class="helper" style="margin-bottom:8px;">연결 정보 (학교 담당자가 로그인 후 직접 변경할 수도 있어요)</p>
@@ -688,6 +713,7 @@ function openSchoolEditModal(schoolId, data) {
   modal.querySelector("#editSaveBtn").addEventListener("click", async () => {
     const newEmail = modal.querySelector("#editEmail").value.trim();
     const newCName = modal.querySelector("#editContactName").value.trim();
+    const newCRole = modal.querySelector("#editContactRole").value.trim();
     const newUrl   = modal.querySelector("#editWebAppUrl").value.trim();
     const newKey   = modal.querySelector("#editApiKey").value.trim();
     const btn      = modal.querySelector("#editSaveBtn");
@@ -699,6 +725,7 @@ function openSchoolEditModal(schoolId, data) {
       await updateDoc(doc(db, "schools", schoolId), {
         email:                     newEmail,
         contactName:               newCName,
+        contactRole:               newCRole,
         "connection.webAppUrl":    newUrl,
         "connection.apiKey":       newKey,
         "connection.deploymentId": deployId,
