@@ -304,10 +304,11 @@ async function handleRegister(modal, school) {
     const dup = await getDocs(query(collection(db, "schools"), where("username", "==", user), limit(1)));
     if (!dup.empty) { submitBtn.textContent = "가입 신청"; submitBtn.disabled = false; return alert("이미 사용 중인 아이디입니다."); }
 
-    // Firebase Auth 사용자 생성 (실제 연락 이메일 사용 → 비밀번호 재설정 이메일 발송 가능)
-    const cred = await createUserWithEmailAndPassword(auth, email, pw);
+    // Firebase Auth 세션용 내부 토큰 생성 (사용자에게 노출 안 됨)
+    const authToken = Core.generateShortCode(16);
+    const cred = await createUserWithEmailAndPassword(auth, email, authToken);
 
-    // Firestore 학교 문서 생성 (uid = 문서 ID)
+    // Firestore 학교 문서 생성 — password: 실제 사용자 비밀번호, _authToken: Firebase Auth용
     await setDoc(doc(db, "schools", cred.user.uid), {
       schoolName:  school.name,
       neisCode:    school.neisCode,
@@ -318,6 +319,8 @@ async function handleRegister(modal, school) {
       email,
       contactName: name || "",
       contactRole: role || "",
+      password:    pw,
+      _authToken:  authToken,
       status:      "pending",
       shortCode:   "",
       connection:  { deploymentId: "", apiKey: "", webAppUrl: "" },
@@ -428,19 +431,12 @@ function openForgotPasswordModal() {
       } else {
         const data  = qs.docs[0].data();
         const email = data.email || "";
-        if (!email) {
-          result.innerHTML = `<div class="acct-school-card"><p style="margin:0;color:var(--danger,#c0392b);">등록된 이메일이 없습니다. 총괄관리자에게 문의하세요.</p></div>`;
-        } else {
-          await sendPasswordResetEmail(getAuth(), email);
-          const masked = email.replace(/^(.{1,2})(.*)(@.+)$/, (_, a, b, c) =>
-            a + "*".repeat(Math.min(b.length, 5)) + c);
-          result.innerHTML = `
-            <div class="acct-school-card">
-              <p style="margin:0 0 6px;font-weight:600;">${esc(data.schoolName)}</p>
-              <p style="margin:0 0 8px;">📧 <strong>${esc(masked)}</strong> 으로<br/>비밀번호 재설정 링크를 발송했습니다.</p>
-              <p class="acct-hint" style="margin:0;">이메일을 확인해 링크를 클릭하면 새 비밀번호를 설정할 수 있습니다.</p>
-            </div>`;
-        }
+        result.innerHTML = `
+          <div class="acct-school-card">
+            <p style="margin:0 0 6px;font-weight:600;">${esc(data.schoolName)}</p>
+            <p style="margin:0 0 8px;">총괄관리자에게 비밀번호 초기화를 요청하세요.</p>
+            <p class="acct-hint" style="margin:0;">문의처: <strong>endeavor1006@naver.com</strong></p>
+          </div>`;
       }
     } catch (e) {
       alert("조회 실패: " + (e?.message || e));
@@ -464,18 +460,29 @@ async function handleLogin(modal) {
     const auth = getAuth();
     const db   = getDb();
 
-    // 아이디로 Firestore 학교 조회 → 실제 이메일 확인
-    let authEmail = Core.usernameToAuthEmail(user); // 기본값: 합성 이메일(어드민용)
-    let schoolData = null;
+    // ── 학교 계정: Firestore 비밀번호 검증 후 내부 토큰으로 Firebase Auth ──
     const qs = await getDocs(query(collection(db, "schools"), where("username", "==", user), limit(1)));
     if (!qs.empty) {
-      schoolData = qs.docs[0].data();
-      authEmail = schoolData.email; // 학교 계정: 실제 연락 이메일로 로그인
+      const schoolDoc  = qs.docs[0];
+      const schoolData = schoolDoc.data();
+
+      if (schoolData.password !== pw) {
+        btn.textContent = "로그인"; btn.disabled = false;
+        return alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+      }
+      const cred = await signInWithEmailAndPassword(auth, schoolData.email, schoolData._authToken);
+
+      if (schoolData.status === "pending")   { await signOut(auth); btn.textContent = "로그인"; btn.disabled = false; return alert("아직 승인 대기 중입니다.\n총괄관리자 승인 후 이용할 수 있습니다."); }
+      if (schoolData.status === "rejected")  { await signOut(auth); btn.textContent = "로그인"; btn.disabled = false; return alert("가입이 거부되었습니다. 총괄관리자에게 문의하세요."); }
+      if (schoolData.status === "suspended") { await signOut(auth); btn.textContent = "로그인"; btn.disabled = false; return alert("정지된 계정입니다. 총괄관리자에게 문의하세요."); }
+
+      modal.remove();
+      openConnectionManager(cred.user.uid, schoolData);
+      return;
     }
 
-    const cred = await signInWithEmailAndPassword(auth, authEmail, pw);
-
-    // 총괄관리자 확인 (uid 기반)
+    // ── 총괄관리자: 합성 이메일로 Firebase Auth 직접 로그인 ──
+    const cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), pw);
     const adminSnap = await getDoc(doc(db, "admins", cred.user.uid));
     if (adminSnap.exists() && adminSnap.data().role === "super") {
       modal.remove();
@@ -483,18 +490,8 @@ async function handleLogin(modal) {
       return;
     }
 
-    // 일반 학교 계정 확인
-    const data = schoolData || (await getDoc(doc(db, "schools", cred.user.uid))).data();
-    if (!data) {
-      await signOut(auth);
-      return alert("계정 정보를 찾을 수 없습니다. 관리자에게 문의하세요.");
-    }
-    if (data.status === "pending")   { await signOut(auth); return alert("아직 승인 대기 중입니다.\n총괄관리자 승인 후 이용할 수 있습니다."); }
-    if (data.status === "rejected")  { await signOut(auth); return alert("가입이 거부되었습니다. 총괄관리자에게 문의하세요."); }
-    if (data.status === "suspended") { await signOut(auth); return alert("정지된 계정입니다. 총괄관리자에게 문의하세요."); }
-
-    modal.remove();
-    openConnectionManager(cred.user.uid, data);
+    await signOut(auth);
+    alert("계정 정보를 찾을 수 없습니다. 관리자에게 문의하세요.");
   } catch {
     alert("로그인 실패: 아이디 또는 비밀번호가 올바르지 않습니다.");
   } finally {
@@ -516,13 +513,15 @@ function openConnectionManager(uid, data) {
     body: `
       <div class="acct-form">
 
-        <!-- 학교 정보 -->
-        <div class="acct-school-card" style="display:flex;align-items:center;gap:8px;">
+        <!-- 학교 정보 + 로그아웃 -->
+        <div class="acct-school-card" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div>
             <strong>${esc(data.schoolName)}</strong>
             ${data.schoolType ? `<span class="badge green" style="font-size:11px;margin-left:4px;">${esc(data.schoolType)}</span>` : ""}
             <br/><span class="acct-hint">${esc(data.officeNm || "")}</span>
           </div>
+          <button class="ghost compact" id="connLogoutBtn" type="button"
+            style="white-space:nowrap;font-size:12px;">로그아웃</button>
         </div>
 
         ${shortLink ? `
@@ -592,6 +591,19 @@ function openConnectionManager(uid, data) {
       });
     });
   }
+
+  // 로그아웃
+  modal.querySelector("#connLogoutBtn").addEventListener("click", async () => {
+    await signOut(getAuth());
+    modal.remove();
+    const accountBtn = document.querySelector("#accountBtn");
+    if (accountBtn) {
+      accountBtn.textContent = "학교 계정";
+      accountBtn.style.color = "";
+      accountBtn.onclick = null;
+    }
+    location.reload();
+  });
 
   // 연결 정보 수정 토글
   modal.querySelector("#showConnEdit")?.addEventListener("click", () => {
@@ -794,8 +806,7 @@ async function renderSuperAdminContent(container) {
       <td>${esc(contact)}</td>
       <td><button class="ghost compact"
             data-pwreset="${d.id}"
-            data-username="${esc(v.username || "")}"
-            data-email="${esc(v.email || "")}">재설정 이메일</button></td>
+            data-username="${esc(v.username || "")}">비밀번호 초기화</button></td>
     </tr>`;
   }).join("");
 
@@ -933,49 +944,45 @@ async function renderSuperAdminContent(container) {
     ?.addEventListener("click", ev => {
       const t = ev.target.closest("[data-pwreset]");
       if (!t) return;
-      openPasswordResetGuideModal(t.dataset.username, t.dataset.email);
+      openPasswordResetGuideModal(t.dataset.pwreset, t.dataset.username);
     });
 }
 
-// ─── 비밀번호 재설정 이메일 발송 (총괄관리자용) ──────────────────────────────
-function openPasswordResetGuideModal(username, contactEmail) {
+// ─── 비밀번호 초기화 (총괄관리자용) — Firestore 비밀번호를 123456으로 변경 ──
+function openPasswordResetGuideModal(schoolId, username) {
   const modal = window.openModal({
-    title: "비밀번호 재설정",
+    title: "비밀번호 초기화",
     submitText: "닫기",
     onSubmit: () => true,
     body: `
       <div class="acct-form">
         <div class="acct-school-card">
-          <div class="acct-field">
-            <span class="acct-label">아이디</span>
-            <code style="font-size:14px;">${esc(username)}</code>
-          </div>
-          <div class="acct-field" style="margin-top:8px;">
-            <span class="acct-label">연락 이메일</span>
-            <code style="font-size:13px;">${esc(contactEmail || "(없음)")}</code>
-          </div>
+          <span class="acct-label">아이디</span>
+          <code style="font-size:15px;display:block;margin-top:2px;">${esc(username)}</code>
         </div>
-        <p class="acct-hint" style="margin:0;">버튼을 누르면 위 이메일로 비밀번호 재설정 링크가 발송됩니다.<br/>담당자가 이메일의 링크를 클릭해 새 비밀번호를 설정합니다.</p>
-        <button class="primary" id="sendResetBtn" type="button" style="width:100%;"
-          ${contactEmail ? "" : "disabled"}>
-          📧 재설정 이메일 발송
+        <p style="margin:0;">초기화하면 비밀번호가 <strong>123456</strong>으로 변경됩니다.<br/>
+          담당자에게 새 비밀번호를 알려주세요.</p>
+        <button class="primary" id="resetPwBtn" type="button" style="width:100%;">
+          비밀번호를 123456으로 초기화
         </button>
         <div id="resetResult"></div>
       </div>`,
   });
 
-  modal.querySelector("#sendResetBtn")?.addEventListener("click", async () => {
-    const btn = modal.querySelector("#sendResetBtn");
-    btn.textContent = "발송 중…"; btn.disabled = true;
+  modal.querySelector("#resetPwBtn").addEventListener("click", async () => {
+    const btn = modal.querySelector("#resetPwBtn");
+    btn.textContent = "처리 중…"; btn.disabled = true;
     try {
-      await sendPasswordResetEmail(getAuth(), contactEmail);
+      await updateDoc(doc(getDb(), "schools", schoolId), { password: "123456" });
       modal.querySelector("#resetResult").innerHTML = `
         <div class="acct-school-card" style="border-color:var(--accent,#5B8A6F);">
-          <p style="margin:0;color:var(--accent,#5B8A6F);">✓ 재설정 이메일을 발송했습니다.</p>
+          <p style="margin:0;color:var(--accent,#5B8A6F);">✓ 비밀번호가 <strong>123456</strong>으로 초기화되었습니다.</p>
+          <p class="acct-hint" style="margin:4px 0 0;">담당자에게 알려주세요.</p>
         </div>`;
+      modal.querySelector("#resetPwBtn").style.display = "none";
     } catch (e) {
-      btn.textContent = "📧 재설정 이메일 발송"; btn.disabled = false;
-      alert("발송 실패: " + (e?.message || e));
+      btn.textContent = "비밀번호를 123456으로 초기화"; btn.disabled = false;
+      alert("초기화 실패: " + (e?.message || e));
     }
   });
 }
