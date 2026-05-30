@@ -27,6 +27,7 @@
 2. 짧은 주소 = `https://item-school.netlify.app/?s=<코드>` (추가 셋업 없이 동작).
 3. 총괄관리자 = **구글 로그인**(허용된 구글 계정만).
 4. 미활용 = **마지막 활동 후 30일**, 총괄관리자 학교 목록에 배지 표시.
+5. 가입 시 학교 선택 = **NEIS API 검색**으로 공식 학교명 선택(자유 입력 불가). 총괄관리자가 NEIS 인증키를 Firestore `settings/neis`에 등록하면 그 키로 호출. 키 없으면 무키 호출(일 300건 제한). NEIS 엔드포인트: `https://open.neis.go.kr/hub/schoolInfo`.
 
 ---
 
@@ -35,7 +36,14 @@
 새로 만드는 파일:
 - `firebase-config.js` — Firebase 앱 초기화. `window.fb = { auth, db }` 전역 노출. (firebaseConfig 값은 Phase 0에서 사용자가 채움)
 - `account-core.js` — Firebase 의존 없는 **순수 함수**: 아이디 검증, 아이디→인증이메일 변환, 짧은 코드 생성, 미활용 판정, heartbeat 쓰로틀 판정.
-- `account-ui.js` — 가입/로그인/대시보드 모달 + Firestore 읽기/쓰기 + `?s=` 해석 + heartbeat. 기존 `openModal`/`syncConfig`를 재사용.
+- `account-ui.js` — 가입(NEIS 검색 포함)/로그인/대시보드(NEIS 키 설정 포함) 모달 + Firestore 읽기/쓰기 + `?s=` 해석 + heartbeat. 기존 `openModal`/`syncConfig`를 재사용.
+  - NEIS API(`open.neis.go.kr`)는 GET 요청 + CORS 허용(브라우저 직접 호출 가능). CORS 실패 시 Netlify Functions 프록시로 전환 가능(비고: 한국 교육 개발자 커뮤니티에서 CORS 허용 확인).
+
+Firestore 컬렉션 구조:
+- `schools/{uid}` — 학교 명부(NEIS 코드·개인정보 포함, 비공개)
+- `connections/{shortCode}` — 무로그인 조회용 연결 포인터 미러(공개)
+- `settings/neis` — NEIS API 키(공개 읽기, 총괄관리자만 쓰기)
+- `admins/{email}` — 총괄관리자 권한(비공개)
 - `firestore.rules` — Firestore 보안 규칙(콘솔에 붙여넣는 원본 보관용).
 - `docs/firebase-setup-guide.md` — 사용자용 Firebase 콘솔 클릭 가이드(Phase 0 산출물).
 
@@ -290,12 +298,14 @@ git commit -m "feat: load firebase SDK and account modules in index.html"
 
 ## Phase 2: 가입 + 개인정보 동의
 
-### Task 4: 가입 모달 + Firestore 문서 생성 (account-ui.js 시작)
+### Task 4: 가입 모달 + NEIS 학교 검색 + Firestore 문서 생성 (account-ui.js 시작)
 
 **Files:**
 - Create: `account-ui.js`
 
-- [ ] **Step 1: account-ui.js 기본 골격 + 가입 모달 작성**
+UX 흐름: ① 학교 검색(NEIS) → ② 목록에서 선택 → ③ 계정 정보 입력(아이디/비번/이메일/이름) → ④ 동의 → ⑤ 가입 신청. 학교명은 자유 입력 없이 NEIS 결과에서만 선택 가능.
+
+- [ ] **Step 1: account-ui.js 기본 골격 + NEIS 검색 + 가입 모달 작성**
 
 ```javascript
 // account-ui.js — 가입/로그인/대시보드 + Firestore 연동 (app.js 이후 로드)
@@ -313,16 +323,67 @@ git commit -m "feat: load firebase SDK and account modules in index.html"
     return true;
   }
 
+  // ---- NEIS 학교 검색 ----
+  async function getNeisApiKey() {
+    try {
+      var snap = await fb.db.collection("settings").doc("neis").get();
+      return (snap.exists && snap.data().apiKey) ? snap.data().apiKey : "";
+    } catch (e) { return ""; }
+  }
+
+  async function searchNeisSchools(query) {
+    var key = await getNeisApiKey();
+    var url = "https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=15&SCHUL_NM=" +
+              encodeURIComponent(query);
+    if (key) url += "&KEY=" + encodeURIComponent(key);
+    var resp = await fetch(url);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var json = await resp.json();
+    // 오류 응답(결과 없음 포함)
+    var info = json.schoolInfo;
+    if (!info || !info[1] || !info[1].row) return [];
+    return info[1].row.map(function (r) {
+      return {
+        name: r.SCHUL_NM,
+        type: r.SCHUL_KND_SC_NM,
+        location: r.LCTN_SC_NM,
+        address: r.ORG_RDNMA || "",
+        neisCode: r.SD_SCHUL_CODE,
+        officeCode: r.ATPT_OFCDC_SC_CODE,
+        officeNm: r.ATPT_OFCDC_SC_NM,
+      };
+    });
+  }
+
   // ---- 가입 ----
   function openRegisterModal() {
     if (!fbReady()) return;
+
     var modal = global.openModal({
       title: "학교 계정 가입",
       submitText: "가입 신청",
-      onSubmit: function () { return false; }, // 직접 처리(아래 핸들러)
+      onSubmit: function () { return false; },
       body:
-        '<p class="helper" style="margin-bottom:12px;">학교 이름으로 가입합니다. 승인 후 로그인할 수 있습니다.</p>' +
-        '<label>학교 이름<input id="regSchool" type="text" placeholder="예) 서울초등학교" /></label>' +
+        '<p class="helper" style="margin-bottom:12px;">먼저 나이스에서 학교를 검색해 선택하세요. 승인 후 로그인할 수 있습니다.</p>' +
+
+        // ① NEIS 검색
+        '<label>학교 이름으로 검색' +
+        '<span style="display:flex;gap:6px;">' +
+        '<input id="regSearchInput" type="text" placeholder="예) 서울초" style="flex:1;" />' +
+        '<button class="ghost compact" id="regSearchBtn" type="button">검색</button>' +
+        '</span></label>' +
+        '<ul id="regSearchResults" style="list-style:none;margin:0 0 8px;padding:0;max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:6px;display:none;"></ul>' +
+
+        // ② 선택된 학교 표시
+        '<div id="regSelectedSchool" style="display:none;padding:10px;background:var(--surface2,#f0f4f0);border-radius:8px;margin-bottom:12px;">' +
+        '<span id="regSchoolName" style="font-weight:600;"></span> ' +
+        '<span id="regSchoolType" class="badge green" style="font-size:11px;"></span><br/>' +
+        '<small id="regSchoolAddress" style="color:var(--text2);"></small><br/>' +
+        '<button class="ghost compact" id="regSchoolReset" type="button" style="margin-top:4px;">다시 검색</button>' +
+        '</div>' +
+
+        // ③④ 계정 정보 + 동의 (학교 선택 후 노출)
+        '<div id="regAccountSection" style="display:none;">' +
         '<label>로그인 아이디(영문 소문자/숫자/-/_ , 4~20자)<input id="regUser" type="text" placeholder="예) seoul-elem-01" /></label>' +
         '<label>비밀번호(6자 이상)<input id="regPw" type="password" /></label>' +
         '<label>연락 이메일(필수)<input id="regEmail" type="email" placeholder="기관 이메일 권장" /></label>' +
@@ -334,22 +395,78 @@ git commit -m "feat: load firebase SDK and account modules in index.html"
         '• 보유 기간: 학교 계정 해지 시까지<br/>' +
         '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;"><input id="regConsent" type="checkbox" style="width:auto;" /> 위 내용에 동의합니다(필수)</label>' +
         '</div>' +
-        '<button class="primary" id="regSubmit" type="button" style="width:100%;">가입 신청</button>',
+        '<button class="primary" id="regSubmit" type="button" style="width:100%;">가입 신청</button>' +
+        '</div>',
     });
+
+    // 선택된 학교 상태
+    var selectedSchool = null;
+
+    // 검색 버튼
+    modal.querySelector("#regSearchBtn").addEventListener("click", async function () {
+      var q = modal.querySelector("#regSearchInput").value.trim();
+      if (q.length < 2) return alert("두 글자 이상 입력하세요.");
+      var btn = this;
+      btn.textContent = "검색 중…";
+      btn.disabled = true;
+      var ul = modal.querySelector("#regSearchResults");
+      ul.style.display = "none";
+      ul.innerHTML = "";
+      try {
+        var results = await searchNeisSchools(q);
+        if (!results.length) {
+          ul.innerHTML = '<li style="padding:8px 10px;color:var(--text2);">검색 결과가 없습니다.</li>';
+        } else {
+          results.forEach(function (s) {
+            var li = document.createElement("li");
+            li.style.cssText = "padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--line);";
+            li.innerHTML =
+              '<strong>' + escapeHtmlSafe(s.name) + '</strong> ' +
+              '<span style="font-size:12px;color:var(--text2);">' +
+              escapeHtmlSafe(s.type) + ' · ' + escapeHtmlSafe(s.location) + '</span>';
+            li.addEventListener("click", function () {
+              selectedSchool = s;
+              modal.querySelector("#regSchoolName").textContent = s.name;
+              modal.querySelector("#regSchoolType").textContent = s.type;
+              modal.querySelector("#regSchoolAddress").textContent = s.address || s.location;
+              modal.querySelector("#regSelectedSchool").style.display = "block";
+              modal.querySelector("#regSearchResults").style.display = "none";
+              modal.querySelector("#regAccountSection").style.display = "block";
+            });
+            ul.appendChild(li);
+          });
+        }
+        ul.style.display = "block";
+      } catch (e) {
+        alert("나이스 검색 오류: " + (e && e.message ? e.message : "네트워크를 확인하세요."));
+      } finally {
+        btn.textContent = "검색";
+        btn.disabled = false;
+      }
+    });
+
+    // 다시 검색
+    modal.querySelector("#regSchoolReset").addEventListener("click", function () {
+      selectedSchool = null;
+      modal.querySelector("#regSelectedSchool").style.display = "none";
+      modal.querySelector("#regAccountSection").style.display = "none";
+      modal.querySelector("#regSearchInput").value = "";
+    });
+
+    // 가입 신청
     modal.querySelector("#regSubmit").addEventListener("click", function () {
-      handleRegister(modal);
+      handleRegister(modal, selectedSchool);
     });
   }
 
-  async function handleRegister(modal) {
-    var school = modal.querySelector("#regSchool").value.trim();
+  async function handleRegister(modal, school) {
+    if (!school) return alert("학교를 먼저 검색해 선택하세요.");
     var user = modal.querySelector("#regUser").value.trim().toLowerCase();
     var pw = modal.querySelector("#regPw").value;
     var email = modal.querySelector("#regEmail").value.trim();
     var name = modal.querySelector("#regName").value.trim();
     var consent = modal.querySelector("#regConsent").checked;
 
-    if (!school) return alert("학교 이름을 입력하세요.");
     if (!Core.isValidUsername(user)) return alert("아이디는 영문 소문자/숫자/-/_ 4~20자입니다.");
     if (pw.length < 6) return alert("비밀번호는 6자 이상이어야 합니다.");
     if (!email) return alert("연락 이메일은 필수입니다.");
@@ -361,21 +478,27 @@ git commit -m "feat: load firebase SDK and account modules in index.html"
       if (!dup.empty) return alert("이미 사용 중인 아이디입니다.");
 
       // Auth 사용자 생성(합성 이메일)
-      var cred = await fb.auth.createUserWithEmailAndPassword(Core.usernameToAuthEmail(user), pw);
+      var cred = await fb.auth.createUserWithEmailAndPassword(
+        Core.usernameToAuthEmail(user), pw
+      );
 
-      // Firestore 학교 문서 생성(uid를 문서 ID로)
+      // Firestore 학교 문서 생성(uid를 문서 ID로, NEIS 데이터 포함)
       await fb.db.collection("schools").doc(cred.user.uid).set({
-        schoolName: school,
-        username: user,
-        email: email,
+        schoolName:  school.name,
+        neisCode:    school.neisCode,
+        schoolType:  school.type,
+        officeCode:  school.officeCode,
+        officeNm:    school.officeNm,
+        username:    user,
+        email:       email,
         contactName: name || "",
-        status: "pending",
-        shortCode: "",
+        status:      "pending",
+        shortCode:   "",
         connection: { deploymentId: "", apiKey: "", webAppUrl: "" },
         lastActiveAt: null,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        approvedAt: null,
-        consentAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+        approvedAt:  null,
+        consentAt:   firebase.firestore.FieldValue.serverTimestamp(),
       });
 
       await fb.auth.signOut(); // 승인 전이므로 바로 로그아웃
@@ -386,26 +509,49 @@ git commit -m "feat: load firebase SDK and account modules in index.html"
     }
   }
 
+  // app.js의 escapeHtml이 전역 노출이 안 될 수 있으므로 자체 이스케이프
+  function escapeHtmlSafe(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
   // 전역 노출(이후 Task에서 확장)
   global.account = global.account || {};
   global.account.openRegister = openRegisterModal;
+  global.account._searchNeisSchools = searchNeisSchools; // 콘솔 검증용
 })(window);
 ```
 
-- [ ] **Step 2: 수동 검증 (Phase 0 설정 완료 후)**
+- [ ] **Step 2: 콘솔 검증 — NEIS API 호출**
 
-1. 로컬에서 페이지 열기 → 콘솔에서 `account.openRegister()` 실행.
-2. 잘못된 입력(아이디 2자, 동의 미체크 등) → 적절한 경고.
-3. 정상 입력 → "가입 신청이 접수되었습니다" → Firebase 콘솔 Firestore `schools`에 `status:"pending"` 문서 생성 확인, Authentication에 사용자 생성 확인.
-4. 같은 아이디로 재가입 → "이미 사용 중인 아이디입니다".
+브라우저 콘솔에서 (Firebase 설정 전이면 `fb.db` 없으므로 Firestore 조회는 건너뜀):
+```javascript
+// 키 없이 직접 fetch
+fetch("https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=5&SCHUL_NM=서울초")
+  .then(r => r.json())
+  .then(j => console.log(j.schoolInfo?.[1]?.row?.map(r => r.SCHUL_NM)));
+```
+Expected: 학교 이름 배열 출력(예: `["서울초등학교", "서울초당초등학교", ...]`).
 
-Expected: pending 문서 1개 생성, 중복 차단 동작.
+CORS 오류 시: 브라우저 콘솔에서 `Access-Control-Allow-Origin` 헤더가 없다는 오류가 나면 Netlify Function 프록시를 만들어 경유해야 한다(비고: 오픈 NEIS API는 CORS를 지원하므로 정상 환경에서는 오류 없음).
 
-- [ ] **Step 3: 커밋**
+- [ ] **Step 3: 수동 검증 (Firebase 설정 완료 후)**
+
+1. 콘솔에서 `account.openRegister()` → 학교 검색창 표시.
+2. "서울초" 검색 → 목록 표시, 클릭 → 선택 표시 + 계정 입력 영역 노출.
+3. "다시 검색" → 초기화.
+4. 계정 입력 후 동의 없이 가입 → 경고.
+5. 정상 입력 → "가입 신청이 접수되었습니다" → Firestore `schools` 문서에 `neisCode`, `schoolType`, `officeCode` 필드 포함 확인.
+6. 같은 아이디 재가입 → "이미 사용 중인 아이디".
+
+Expected: NEIS 데이터(neisCode 등)가 schools 문서에 정확히 저장됨.
+
+- [ ] **Step 4: 커밋**
 
 ```bash
 git add account-ui.js
-git commit -m "feat: add school registration with consent (pending doc)"
+git commit -m "feat: school registration with NEIS search + consent (pending doc)"
 ```
 
 ---
@@ -621,6 +767,145 @@ Expected: 승인 시 shortCode 생성, 권한 없는 계정 차단.
 ```bash
 git add account-ui.js
 git commit -m "feat: add super-admin dashboard (google login, approve/reject/suspend, short code)"
+```
+
+### Task 6-N: 총괄관리자 NEIS API 키 설정
+
+**Files:**
+- Modify: `account-ui.js` (대시보드 모달에 설정 탭/섹션 추가)
+
+총괄관리자 대시보드 모달에 "NEIS 설정" 섹션을 추가한다. 현재 저장된 키를 표시하고, 새 키를 저장할 수 있게 한다.
+
+- [ ] **Step 1: 대시보드 HTML에 NEIS 설정 섹션 추가**
+
+`renderDashboard` 함수 안의 modal body를 열기 전에 NEIS 현재 키를 읽어온 뒤, 테이블 위에 설정 섹션을 추가한다. `renderDashboard` 함수를 아래로 교체:
+
+```javascript
+  async function renderDashboard() {
+    // NEIS 현재 키 조회
+    var neisSnap = await fb.db.collection("settings").doc("neis").get();
+    var currentNeisKey = (neisSnap.exists && neisSnap.data().apiKey) ? neisSnap.data().apiKey : "";
+
+    var snap = await fb.db.collection("schools").orderBy("createdAt", "desc").get();
+    var now = Date.now();
+    var rows = snap.docs.map(function (doc) {
+      var d = doc.data();
+      var lastMs = d.lastActiveAt && d.lastActiveAt.toMillis ? d.lastActiveAt.toMillis() : 0;
+      var inactive = d.status === "approved" && Core.isInactive(lastMs, now);
+      var statusBadge =
+        d.status === "pending" ? '<span class="badge orange">승인대기</span>' :
+        d.status === "approved" ? '<span class="badge green">승인됨</span>' :
+        d.status === "suspended" ? '<span class="badge gray">정지</span>' :
+        '<span class="badge gray">거부</span>';
+      var useBadge = d.status === "approved"
+        ? (inactive ? '<span class="badge orange">미활용(30일+)</span>' : '<span class="badge green">활용중</span>')
+        : "";
+      var lastTxt = lastMs ? new Date(lastMs).toLocaleDateString() : "기록 없음";
+      var schoolInfo = escapeHtmlSafe(d.schoolName) +
+        (d.schoolType ? ' <small style="color:var(--text2);">(' + escapeHtmlSafe(d.schoolType) + ')</small>' : "");
+      var actions = "";
+      if (d.status === "pending") {
+        actions = '<button class="primary compact" data-approve="' + doc.id + '">승인</button> ' +
+                  '<button class="ghost compact" data-reject="' + doc.id + '">거부</button>';
+      } else if (d.status === "approved") {
+        actions = '<button class="ghost compact" data-suspend="' + doc.id + '">정지</button>';
+      } else {
+        actions = '<button class="ghost compact" data-approve="' + doc.id + '">승인</button>';
+      }
+      return '<tr><td>' + schoolInfo + '</td><td>' + statusBadge + ' ' + useBadge +
+             '</td><td>' + escapeHtmlSafe(d.email || "") + '</td><td>' + lastTxt +
+             '</td><td>' + actions + '</td></tr>';
+    }).join("");
+
+    var modal = global.openModal({
+      title: "총괄관리자 대시보드",
+      submitText: "닫기",
+      onSubmit: function () { return true; },
+      body:
+        // NEIS 설정 섹션
+        '<div class="settings-block" style="margin-bottom:16px;">' +
+        '<div class="settings-block-head">나이스(NEIS) API 키 설정</div>' +
+        '<p class="helper">학교 가입 시 나이스 학교 검색에 사용됩니다. ' +
+        '<a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 발급.</p>' +
+        '<span style="display:flex;gap:6px;align-items:center;">' +
+        '<input id="neisKeyInput" type="text" placeholder="발급받은 인증키 붙여넣기" ' +
+        'value="' + escapeHtmlSafe(currentNeisKey) + '" style="flex:1;" />' +
+        '<button class="primary compact" id="neisKeySave" type="button">저장</button>' +
+        '</span>' +
+        (currentNeisKey
+          ? '<p class="helper" style="margin-top:4px;">현재 키: ' + escapeHtmlSafe(currentNeisKey.slice(0, 8)) + '…(저장됨)</p>'
+          : '<p class="helper" style="margin-top:4px;color:var(--text2);">미설정 — 키 없이도 학교 검색 가능(일 300건 제한).</p>') +
+        '</div>' +
+
+        // 학교 목록
+        '<div style="overflow:auto;max-height:55vh;"><table class="table"><thead><tr>' +
+        '<th>학교</th><th>상태</th><th>연락 이메일</th><th>마지막 활동</th><th>작업</th>' +
+        '</tr></thead><tbody>' +
+        (rows || '<tr><td colspan="5">가입한 학교가 없습니다.</td></tr>') +
+        '</tbody></table></div>',
+    });
+
+    // NEIS 키 저장
+    modal.querySelector("#neisKeySave").addEventListener("click", async function () {
+      var key = modal.querySelector("#neisKeyInput").value.trim();
+      try {
+        await fb.db.collection("settings").doc("neis").set({ apiKey: key }, { merge: true });
+        alert(key ? "NEIS API 키를 저장했습니다." : "NEIS API 키를 삭제했습니다.");
+        modal.remove();
+        renderDashboard();
+      } catch (e) { alert("저장 실패: " + (e && e.message ? e.message : e)); }
+    });
+
+    // 승인/거부/정지 버튼
+    modal.addEventListener("click", async function (ev) {
+      var t = ev.target;
+      var approve = t.getAttribute && t.getAttribute("data-approve");
+      var reject = t.getAttribute && t.getAttribute("data-reject");
+      var suspend = t.getAttribute && t.getAttribute("data-suspend");
+      try {
+        if (approve) {
+          var code = await issueUniqueShortCode();
+          var sref = fb.db.collection("schools").doc(approve);
+          var sdoc = await sref.get();
+          var sconn = (sdoc.data() && sdoc.data().connection) || {};
+          var batch = fb.db.batch();
+          batch.update(sref, { status: "approved", approvedAt: firebase.firestore.FieldValue.serverTimestamp(), shortCode: code });
+          batch.set(fb.db.collection("connections").doc(code), {
+            shortCode: code,
+            deploymentId: sconn.deploymentId || "",
+            apiKey: sconn.apiKey || "",
+            webAppUrl: sconn.webAppUrl || "",
+            lastActiveAt: null,
+          });
+          await batch.commit();
+        } else if (reject) {
+          await fb.db.collection("schools").doc(reject).update({ status: "rejected" });
+        } else if (suspend) {
+          await fb.db.collection("schools").doc(suspend).update({ status: "suspended" });
+        } else return;
+        modal.remove();
+        renderDashboard();
+      } catch (e) { alert("작업 실패: " + (e && e.message ? e.message : e)); }
+    });
+  }
+```
+
+> 주의: Task 6의 원래 `renderDashboard`에는 NEIS 설정 섹션이 없었다. **이 Task 6-N에서 renderDashboard 전체를 위 코드로 교체한다.** 또한 Task 11에서 승인 시 `connections` 생성 로직을 일원화할 예정이므로, 위 approve 분기에 `connections` 생성을 이미 포함해 둔다(Task 11의 approve 수정은 중복, 생략 가능).
+
+- [ ] **Step 2: 수동 검증**
+
+1. `account.openAdminDashboard()` → 대시보드 상단에 "나이스 API 키 설정" 섹션 표시.
+2. 키 입력 → "저장" → Firestore `settings/neis` 문서에 `apiKey` 저장 확인.
+3. 저장 후 가입 모달 열어 학교 검색 → NEIS 호출이 저장된 키로 진행(Network 탭에서 `KEY=` 파라미터 확인).
+4. 학교 목록에 `schoolType`(초/중/고) 표시 확인.
+
+Expected: NEIS 키 저장·조회 정상, 학교 목록에 학교종류 표시.
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add account-ui.js
+git commit -m "feat: super-admin NEIS API key settings in dashboard"
 ```
 
 ---
@@ -882,6 +1167,13 @@ service cloud.firestore {
     match /admins/{email} {
       allow read: if request.auth != null && request.auth.token.email == email;
       allow write: if false; // 콘솔에서만 관리
+    }
+
+    // NEIS API 키: 무로그인 가입자도 읽어야 하므로 공개 읽기
+    // (NEIS 키는 속도제한용 값으로 노출 위험 낮음. 쓰기는 총괄관리자만)
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if isSuper();
     }
 
     match /schools/{uid} {
