@@ -308,6 +308,10 @@ function openLoginModal() {
             처음이신가요? 가입 →
           </button>
         </div>
+        <button class="ghost compact" id="forgotPwBtn" type="button"
+          style="width:100%;font-size:12px;color:var(--ink-mute);margin-top:2px;">
+          비밀번호를 잊으셨나요?
+        </button>
       </div>`,
   });
 
@@ -318,6 +322,75 @@ function openLoginModal() {
   modal.querySelector("#goRegister").addEventListener("click", () => {
     modal.remove();
     openRegisterModal();
+  });
+  modal.querySelector("#forgotPwBtn").addEventListener("click", () => {
+    modal.remove();
+    openForgotPasswordModal();
+  });
+}
+
+// ─── 비밀번호 찾기 (학교 사용자용) ──────────────────────────────────────────
+function openForgotPasswordModal() {
+  if (!fbReady()) return;
+  const modal = window.openModal({
+    title: "비밀번호 찾기",
+    submitText: "닫기",
+    onSubmit: () => true,
+    body: `
+      <div class="acct-form">
+        <p class="acct-hint" style="margin:0;">가입 시 사용한 아이디를 입력하면 등록 연락처를 확인해 드립니다.</p>
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <div class="acct-field" style="flex:1;">
+            <span class="acct-label">아이디</span>
+            <input id="forgotUser" type="text" autocomplete="username" />
+          </div>
+          <button class="primary" id="forgotSubmit" type="button"
+            style="white-space:nowrap;margin-bottom:0;">확인</button>
+        </div>
+        <div id="forgotResult"></div>
+      </div>`,
+  });
+
+  modal.querySelector("#forgotUser").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); modal.querySelector("#forgotSubmit").click(); }
+  });
+
+  modal.querySelector("#forgotSubmit").addEventListener("click", async () => {
+    const username = modal.querySelector("#forgotUser").value.trim().toLowerCase();
+    if (!username) return;
+    const btn = modal.querySelector("#forgotSubmit");
+    btn.textContent = "조회 중…"; btn.disabled = true;
+    try {
+      const db = getDb();
+      const qs = await getDocs(
+        query(collection(db, "schools"), where("username", "==", username), limit(1))
+      );
+      const result = modal.querySelector("#forgotResult");
+      if (qs.empty) {
+        result.innerHTML = `
+          <div class="acct-school-card" style="border-color:var(--danger,#c0392b);">
+            <p style="margin:0;color:var(--danger,#c0392b);">해당 아이디로 가입된 계정을 찾을 수 없습니다.</p>
+          </div>`;
+      } else {
+        const data  = qs.docs[0].data();
+        const email = data.email || "";
+        const masked = email
+          ? email.replace(/^(.{1,2})(.*)(@.+)$/, (_, a, b, c) =>
+              a + "*".repeat(Math.min(b.length, 5)) + c)
+          : "(등록된 이메일 없음)";
+        result.innerHTML = `
+          <div class="acct-school-card">
+            <p style="margin:0 0 6px;font-weight:600;">${esc(data.schoolName)}</p>
+            <p class="acct-hint" style="margin:0 0 4px;">등록 연락 이메일</p>
+            <p style="margin:0 0 12px;font-size:15px;font-weight:600;">${esc(masked)}</p>
+            <p class="acct-hint" style="margin:0;">이 이메일로 총괄관리자(<strong>endeavor1006@naver.com</strong>)에게 문의하시면 비밀번호를 초기화해 드립니다.</p>
+          </div>`;
+      }
+    } catch (e) {
+      alert("조회 실패: " + (e?.message || e));
+    } finally {
+      btn.textContent = "확인"; btn.disabled = false;
+    }
   });
 }
 
@@ -509,78 +582,91 @@ async function renderSuperAdminContent(container) {
   const db   = getDb();
   const Core = window.AccountCore;
 
-  // NEIS 키
-  const neisSnap    = await getDoc(doc(db, "settings", "neis"));
+  container.innerHTML = `<div style="padding:28px;color:var(--ink-mute);">불러오는 중…</div>`;
+
+  const [neisSnap, snap] = await Promise.all([
+    getDoc(doc(db, "settings", "neis")),
+    getDocs(query(collection(db, "schools"), orderBy("createdAt", "desc"))),
+  ]);
   const currentNeis = neisSnap.exists() ? (neisSnap.data().apiKey || "") : "";
+  const now = Date.now();
 
-  // 학교 목록 (최신 가입 순)
-  const snap = await getDocs(query(collection(db, "schools"), orderBy("createdAt", "desc")));
-  const now  = Date.now();
-
-  const rows = snap.docs.map(d => {
+  // ── 탭1: 가입 학교 관리 행 ───────────────────────────────
+  const schoolRows = snap.docs.map(d => {
     const v      = d.data();
     const lastMs = v.lastActiveAt?.toMillis?.() || 0;
     const inactive = v.status === "approved" && Core.isInactive(lastMs, now);
 
     const statusBadge =
       v.status === "pending"   ? '<span class="badge orange">승인대기</span>' :
-      v.status === "approved"  ? '<span class="badge green">승인됨</span>'   :
-      v.status === "suspended" ? '<span class="badge gray">정지</span>'      :
+      v.status === "approved"  ? '<span class="badge green">승인됨</span>'    :
+      v.status === "suspended" ? '<span class="badge gray">정지</span>'       :
                                  '<span class="badge gray">거부</span>';
     const useBadge = v.status === "approved"
-      ? (inactive ? '<span class="badge orange">미활용 30일+</span>' : '<span class="badge green">활용중</span>')
+      ? (inactive ? '<span class="badge orange">미활용</span>' : '<span class="badge green">활용중</span>')
       : "";
-    const lastTxt    = lastMs ? new Date(lastMs).toLocaleDateString("ko-KR") : "기록 없음";
-    const shortLink  = v.shortCode ? `<a href="/?s=${esc(v.shortCode)}" target="_blank" class="helper">${esc(v.shortCode)}</a>` : "-";
-    const schoolLabel = esc(v.schoolName) +
-      (v.schoolType ? ` <small style="color:var(--text2);">(${esc(v.schoolType)})</small>` : "");
+    const lastTxt   = lastMs ? new Date(lastMs).toLocaleDateString("ko-KR") : "−";
+    const shortLink = v.shortCode
+      ? `<a href="/?s=${esc(v.shortCode)}" target="_blank">${esc(v.shortCode)}</a>`
+      : "−";
 
-    let statusActions = "";
+    let actions = "";
     if (v.status === "pending") {
-      statusActions = `<button class="primary compact" data-approve="${d.id}">승인</button>
-                       <button class="ghost compact" data-reject="${d.id}">거부</button>`;
+      actions = `<button class="primary compact" data-approve="${d.id}">승인</button>
+                 <button class="ghost compact"   data-reject="${d.id}">거부</button>`;
     } else if (v.status === "approved") {
-      statusActions = `<button class="ghost compact" data-suspend="${d.id}">정지</button>`;
+      actions = `<button class="ghost compact" data-suspend="${d.id}">정지</button>`;
     } else {
-      statusActions = `<button class="ghost compact" data-approve="${d.id}">승인</button>`;
+      actions = `<button class="ghost compact" data-approve="${d.id}">승인</button>`;
     }
-    const actions = `${statusActions}
-                     <button class="ghost compact" data-edit="${d.id}">편집</button>`;
+    actions += ` <button class="ghost compact" data-edit="${d.id}">편집</button>`;
 
     return `<tr>
-      <td>${schoolLabel}</td>
-      <td>${statusBadge} ${useBadge}</td>
+      <td>${esc(v.schoolName)}${v.schoolType ? ` <small style="color:var(--ink-mute);">(${esc(v.schoolType)})</small>` : ""}</td>
+      <td style="white-space:nowrap;">${statusBadge} ${useBadge}</td>
       <td>${esc(v.email || "")}</td>
       <td>${shortLink}</td>
       <td>${lastTxt}</td>
-      <td>${actions}</td>
+      <td style="white-space:nowrap;">${actions}</td>
     </tr>`;
   }).join("");
+
+  // ── 탭2: 아이디 관리 행 ─────────────────────────────────
+  const accountRows = snap.docs.map(d => {
+    const v = d.data();
+    const statusBadge =
+      v.status === "pending"   ? '<span class="badge orange">승인대기</span>' :
+      v.status === "approved"  ? '<span class="badge green">승인됨</span>'    :
+      v.status === "suspended" ? '<span class="badge gray">정지</span>'       :
+                                 '<span class="badge gray">거부</span>';
+    const contact = [v.contactName, v.contactRole].filter(Boolean).join(" · ") || "−";
+    return `<tr>
+      <td>${esc(v.schoolName)}</td>
+      <td>${statusBadge}</td>
+      <td><code style="font-size:13px;">${esc(v.username || "")}</code></td>
+      <td>${esc(v.email || "")}</td>
+      <td>${esc(contact)}</td>
+      <td><button class="ghost compact"
+            data-pwreset="${d.id}"
+            data-username="${esc(v.username || "")}">초기화 안내</button></td>
+    </tr>`;
+  }).join("");
+
+  const empty6 = `<tr><td colspan="6" style="text-align:center;color:var(--ink-mute);padding:28px;">가입한 학교가 없습니다.</td></tr>`;
+  const empty5 = `<tr><td colspan="6" style="text-align:center;color:var(--ink-mute);padding:28px;">등록된 계정이 없습니다.</td></tr>`;
 
   container.innerHTML = `
     <div class="super-admin-dashboard">
 
-      <div class="settings-block first">
-        <div class="settings-block-head">
-          <div>
-            <h3>나이스(NEIS) API 키 설정</h3>
-            <p class="helper">학교 가입 시 학교 검색에 사용됩니다.
-              <a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 신청.
-              미설정 시 일 300건 제한.</p>
-          </div>
-        </div>
-        <span style="display:flex;gap:6px;max-width:480px;">
-          <input id="neisKeyInput" type="text" placeholder="발급받은 인증키 붙여넣기"
-            value="${esc(currentNeis)}" style="flex:1;" />
-          <button class="primary compact" id="neisKeySave" type="button">저장</button>
-        </span>
-        ${currentNeis
-          ? `<p class="helper">현재 키: ${esc(currentNeis.slice(0, 12))}… (저장됨)</p>`
-          : `<p class="helper">미설정 — 저장 없이도 하루 300건까지 검색 가능합니다.</p>`}
-      </div>
+      <nav class="sadmin-tabs">
+        <button class="sadmin-tab active" data-tab="schools"  type="button">가입 학교 관리</button>
+        <button class="sadmin-tab"        data-tab="accounts" type="button">아이디 관리</button>
+        <button class="sadmin-tab"        data-tab="settings" type="button">시스템 설정</button>
+      </nav>
 
-      <div class="settings-block">
-        <div class="settings-block-head">
+      <!-- ── 탭1: 가입 학교 관리 ── -->
+      <div class="sadmin-panel active" id="sadmin-schools">
+        <div class="sadmin-panel-head">
           <div>
             <h3>가입 학교 목록</h3>
             <p class="helper">승인 대기 학교를 확인하고 승인 또는 거부하세요.</p>
@@ -590,19 +676,75 @@ async function renderSuperAdminContent(container) {
         <div style="overflow-x:auto;">
           <table class="table">
             <thead><tr>
-              <th>학교</th><th>상태</th><th>연락 이메일</th><th>접속 코드</th><th>마지막 활동</th><th>작업</th>
+              <th>학교</th><th>상태</th><th>연락 이메일</th>
+              <th>접속 코드</th><th>마지막 활동</th><th>작업</th>
             </tr></thead>
-            <tbody>
-              ${rows || `<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">
-                가입한 학교가 없습니다.</td></tr>`}
-            </tbody>
+            <tbody>${schoolRows || empty6}</tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ── 탭2: 아이디 관리 ── -->
+      <div class="sadmin-panel" id="sadmin-accounts">
+        <div class="sadmin-panel-head">
+          <div>
+            <h3>아이디 관리</h3>
+            <p class="helper">등록된 계정을 확인하고 비밀번호 초기화를 안내할 수 있습니다.</p>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead><tr>
+              <th>학교</th><th>상태</th><th>아이디</th>
+              <th>연락 이메일</th><th>담당자</th><th>비밀번호</th>
+            </tr></thead>
+            <tbody>${accountRows || empty5}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── 탭3: 시스템 설정 ── -->
+      <div class="sadmin-panel" id="sadmin-settings">
+        <div class="sadmin-panel-head">
+          <div>
+            <h3>시스템 설정</h3>
+          </div>
+        </div>
+        <div class="settings-block">
+          <h4 style="margin:0 0 6px;">나이스(NEIS) API 키</h4>
+          <p class="helper" style="margin:0 0 12px;">학교 가입 시 학교 검색에 사용됩니다.
+            <a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>에서 무료 신청.
+            미설정 시 일 300건 제한.</p>
+          <div style="display:flex;gap:8px;max-width:520px;">
+            <input id="neisKeyInput" type="text"
+              placeholder="발급받은 인증키 붙여넣기"
+              value="${esc(currentNeis)}" style="flex:1;" />
+            <button class="primary compact" id="neisKeySave" type="button">저장</button>
+          </div>
+          ${currentNeis
+            ? `<p class="helper" style="margin-top:8px;">현재 키: ${esc(currentNeis.slice(0, 16))}… (저장됨)</p>`
+            : `<p class="helper" style="margin-top:8px;">미설정 상태입니다.</p>`}
         </div>
       </div>
 
     </div>`;
 
-  // NEIS 키 저장
+  // ── 탭 전환 ──────────────────────────────────────────────
+  container.querySelectorAll(".sadmin-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      container.querySelectorAll(".sadmin-tab").forEach(t => t.classList.remove("active"));
+      container.querySelectorAll(".sadmin-panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      container.querySelector(`#sadmin-${tab.dataset.tab}`).classList.add("active");
+    });
+  });
+
+  // ── 새로고침 ─────────────────────────────────────────────
+  container.querySelector("#superAdminRefresh").addEventListener("click", () => {
+    renderSuperAdminContent(container);
+  });
+
+  // ── NEIS 키 저장 ─────────────────────────────────────────
   container.querySelector("#neisKeySave").addEventListener("click", async () => {
     const key = container.querySelector("#neisKeyInput").value.trim();
     try {
@@ -612,55 +754,89 @@ async function renderSuperAdminContent(container) {
     } catch (e) { alert("저장 실패: " + (e?.message || e)); }
   });
 
-  // 새로고침
-  container.querySelector("#superAdminRefresh").addEventListener("click", () => {
-    renderSuperAdminContent(container);
-  });
+  // ── 탭1: 승인·거부·정지·편집 ────────────────────────────
+  container.querySelector("#sadmin-schools tbody")
+    ?.addEventListener("click", async ev => {
+      const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend],[data-edit]");
+      if (!t) return;
+      const approve = t.getAttribute("data-approve");
+      const reject  = t.getAttribute("data-reject");
+      const suspend = t.getAttribute("data-suspend");
+      const edit    = t.getAttribute("data-edit");
 
-  // 승인·거부·정지·편집 — tbody에 직접 달아서 innerHTML 교체 시 자동 정리
-  const tbody = container.querySelector("tbody");
-  tbody?.addEventListener("click", async ev => {
-    const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend],[data-edit]");
-    if (!t) return;
-    const approve = t.getAttribute("data-approve");
-    const reject  = t.getAttribute("data-reject");
-    const suspend = t.getAttribute("data-suspend");
-    const edit    = t.getAttribute("data-edit");
-
-    // 편집
-    if (edit) {
-      const editSnap = await getDoc(doc(db, "schools", edit));
-      if (editSnap.exists()) openSchoolEditModal(edit, editSnap.data());
-      return;
-    }
-
-    t.disabled = true;
-    try {
-      if (approve) {
-        const code  = await issueUniqueShortCode();
-        const sref  = doc(db, "schools", approve);
-        const sdoc  = await getDoc(sref);
-        const sconn = sdoc.data()?.connection || {};
-        const batch = writeBatch(db);
-        batch.update(sref, { status: "approved", approvedAt: serverTimestamp(), shortCode: code });
-        batch.set(doc(db, "connections", code), {
-          shortCode:    code,
-          deploymentId: sconn.deploymentId || "",
-          apiKey:       sconn.apiKey       || "",
-          webAppUrl:    sconn.webAppUrl    || "",
-          lastActiveAt: null,
-        });
-        await batch.commit();
-      } else if (reject) {
-        await updateDoc(doc(db, "schools", reject), { status: "rejected" });
-      } else if (suspend) {
-        await updateDoc(doc(db, "schools", suspend), { status: "suspended" });
+      if (edit) {
+        const editSnap = await getDoc(doc(db, "schools", edit));
+        if (editSnap.exists()) openSchoolEditModal(edit, editSnap.data());
+        return;
       }
-      renderSuperAdminContent(container);
-    } catch (e) {
-      t.disabled = false;
-      alert("작업 실패: " + (e?.message || e));
-    }
+
+      t.disabled = true;
+      try {
+        if (approve) {
+          const code  = await issueUniqueShortCode();
+          const sref  = doc(db, "schools", approve);
+          const sdoc  = await getDoc(sref);
+          const sconn = sdoc.data()?.connection || {};
+          const batch = writeBatch(db);
+          batch.update(sref, { status: "approved", approvedAt: serverTimestamp(), shortCode: code });
+          batch.set(doc(db, "connections", code), {
+            shortCode:    code,
+            deploymentId: sconn.deploymentId || "",
+            apiKey:       sconn.apiKey       || "",
+            webAppUrl:    sconn.webAppUrl    || "",
+            lastActiveAt: null,
+          });
+          await batch.commit();
+        } else if (reject) {
+          await updateDoc(doc(db, "schools", reject), { status: "rejected" });
+        } else if (suspend) {
+          await updateDoc(doc(db, "schools", suspend), { status: "suspended" });
+        }
+        renderSuperAdminContent(container);
+      } catch (e) {
+        t.disabled = false;
+        alert("작업 실패: " + (e?.message || e));
+      }
+    });
+
+  // ── 탭2: 비밀번호 초기화 안내 ───────────────────────────
+  container.querySelector("#sadmin-accounts tbody")
+    ?.addEventListener("click", ev => {
+      const t = ev.target.closest("[data-pwreset]");
+      if (!t) return;
+      openPasswordResetGuideModal(t.dataset.username);
+    });
+}
+
+// ─── 비밀번호 초기화 안내 모달 (총괄관리자용) ────────────────────────────────
+function openPasswordResetGuideModal(username) {
+  const Core = window.AccountCore;
+  const authEmail = Core.usernameToAuthEmail(username);
+  window.openModal({
+    title: "비밀번호 초기화 안내",
+    submitText: "확인",
+    onSubmit: () => true,
+    body: `
+      <div class="acct-form">
+        <p style="margin:0;">Firebase 콘솔에서 아래 계정의 비밀번호를 직접 초기화하세요.</p>
+        <div class="acct-school-card">
+          <div style="margin-bottom:8px;">
+            <span class="acct-label">아이디</span>
+            <code style="font-size:14px;display:block;margin-top:2px;">${esc(username)}</code>
+          </div>
+          <div>
+            <span class="acct-label">Firebase 인증 이메일</span>
+            <code style="font-size:13px;display:block;margin-top:2px;word-break:break-all;">${esc(authEmail)}</code>
+          </div>
+        </div>
+        <ol style="margin:0;padding-left:22px;line-height:2;font-size:14px;">
+          <li>Firebase 콘솔 → Authentication → Users 탭</li>
+          <li>위 인증 이메일로 계정 검색</li>
+          <li>⋮ Actions → <strong>Reset password</strong> 또는 비밀번호 직접 수정</li>
+          <li>새 비밀번호를 담당자에게 안전하게 전달</li>
+        </ol>
+        <p class="acct-hint" style="margin:0;">※ 담당자는 로그인 후 비밀번호를 직접 변경하도록 안내하세요.</p>
+      </div>`,
   });
 }
 

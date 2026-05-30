@@ -2658,10 +2658,50 @@ body.super-admin-mode .app-shell {
 
 /* 대시보드 본문 */
 .super-admin-dashboard {
-  padding: 0 0 48px;
-  max-width: 960px;
+  padding: 8px 28px 48px;
+  max-width: 1000px;
   width: 100%;
+  box-sizing: border-box;
 }
+
+/* 총괄관리자 내부 탭 네비게이션 */
+.sadmin-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 28px;
+}
+.sadmin-tab {
+  padding: 10px 22px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  transition: color 0.15s, border-color 0.15s;
+}
+.sadmin-tab.active {
+  color: var(--accent, #5B8A6F);
+  border-bottom-color: var(--accent, #5B8A6F);
+  font-weight: 700;
+}
+.sadmin-tab:hover:not(.active) { color: var(--ink); }
+
+.sadmin-panel { display: none; }
+.sadmin-panel.active { display: block; }
+
+.sadmin-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sadmin-panel-head h3 { margin: 0 0 4px; font-size: 16px; }
+.sadmin-panel-head .helper { margin: 0; }
 
 /* ─── Account form (login / register modals) ─── */
 .acct-form {
