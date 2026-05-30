@@ -8,6 +8,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
+  onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
 import {
@@ -1003,3 +1004,53 @@ document.querySelector("#accountBtn")?.addEventListener("click", openLoginModal)
 document.querySelector("#superAdminBtn")?.addEventListener("click", openGoogleAdminLogin);
 
 resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작
+
+// ─── 세션 복원: 새로고침 후 로그인 상태 자동 복원 ───────────────────────────
+onAuthStateChanged(getAuth(), async (user) => {
+  if (!user) return; // 로그아웃 상태 → 정상 앱 화면 유지
+
+  try {
+    const db = getDb();
+
+    // 총괄관리자 확인 (UID 기반 — username/password 로그인)
+    const adminByUid = await getDoc(doc(db, "admins", user.uid));
+    if (adminByUid.exists() && adminByUid.data().role === "super") {
+      openSuperAdminView();
+      return;
+    }
+
+    // 총괄관리자 확인 (이메일 기반 — Google 로그인)
+    if (user.email) {
+      const adminByEmail = await getDoc(doc(db, "admins", user.email));
+      if (adminByEmail.exists() && adminByEmail.data().role === "super") {
+        openSuperAdminView();
+        return;
+      }
+    }
+
+    // 학교 계정 확인
+    const schoolSnap = await getDoc(doc(db, "schools", user.uid));
+    const data = schoolSnap.exists() ? schoolSnap.data() : null;
+
+    if (!data || data.status !== "approved") {
+      // 미승인·거부·정지 계정 → 조용히 로그아웃
+      await signOut(getAuth());
+      return;
+    }
+
+    // 승인된 학교 계정 → 버튼을 "내 계정" 으로 전환 (모달 자동 오픈 없음)
+    const accountBtn = document.querySelector("#accountBtn");
+    if (accountBtn) {
+      accountBtn.textContent = "내 계정 ✓";
+      accountBtn.style.color = "var(--accent, #5B8A6F)";
+      // 이후 클릭 시 로그인 모달 대신 연결 관리 모달 바로 오픈
+      accountBtn.onclick = (e) => {
+        e.stopImmediatePropagation();
+        openConnectionManager(user.uid, data);
+      };
+    }
+  } catch {
+    // 오류 시 조용히 로그아웃 (Firestore 접근 실패 등)
+    signOut(getAuth()).catch(() => {});
+  }
+});
