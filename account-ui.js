@@ -105,7 +105,7 @@ function openRegisterModal() {
           <button class="ghost compact" id="regSchoolReset" type="button" style="margin-top:4px;">다시 검색</button>
         </div>
 
-        <div id="regAccountSection" class="acct-form" style="display:none;">
+        <div id="regAccountSection" class="acct-form" style="display:none;gap:20px;">
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
             <div class="acct-field" style="flex:1;min-width:120px;">
               <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
@@ -142,7 +142,7 @@ function openRegisterModal() {
                 <span class="acct-label">담당자 업무</span>
                 <span class="acct-hint">선택</span>
               </div>
-              <input id="regRole" type="text" placeholder="예) 교무부장" />
+              <input id="regRole" type="text" />
             </div>
           </div>
           <div class="acct-consent-box">
