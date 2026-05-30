@@ -270,18 +270,20 @@ function openLoginModal() {
     onSubmit: () => true,
     body: `
       <div class="acct-form">
-        <div class="acct-field">
-          <span class="acct-label">아이디</span>
-          <input id="loginUser" type="text" autocomplete="username" style="max-width:260px;" />
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="acct-field" style="flex:1;min-width:120px;">
+            <span class="acct-label">아이디</span>
+            <input id="loginUser" type="text" autocomplete="username" />
+          </div>
+          <div class="acct-field" style="flex:1;min-width:120px;">
+            <span class="acct-label">비밀번호</span>
+            <input id="loginPw" type="password" autocomplete="current-password" />
+          </div>
         </div>
-        <div class="acct-field">
-          <span class="acct-label">비밀번호</span>
-          <input id="loginPw" type="password" autocomplete="current-password" style="max-width:260px;" />
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
-          <button class="primary" id="loginSubmit" type="button" style="width:100%;max-width:260px;">로그인</button>
-          <button class="ghost compact" id="goRegister" type="button" style="width:100%;max-width:260px;">
-            처음이신가요? 학교 계정 가입 →
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+          <button class="primary" id="loginSubmit" type="button" style="flex:1;">로그인</button>
+          <button class="ghost compact" id="goRegister" type="button" style="flex:1;">
+            처음이신가요? 가입 →
           </button>
         </div>
       </div>`,
