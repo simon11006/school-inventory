@@ -9,6 +9,7 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
 import {
@@ -96,6 +97,34 @@ function openRegisterModal() {
 
         <ul id="regSearchResults" style="list-style:none;margin:0;padding:0;
           max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:8px;display:none;"></ul>
+
+        <div id="regManualSection" style="display:none;" class="acct-form">
+          <p class="acct-hint" style="margin:0;">나이스에 없는 경우 직접 입력하세요.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="acct-field" style="flex:2;min-width:150px;">
+              <span class="acct-label">학교 이름</span>
+              <input id="manualSchoolName" type="text" placeholder="○○초등학교" />
+            </div>
+            <div class="acct-field" style="flex:1;min-width:100px;">
+              <span class="acct-label">학교 종류</span>
+              <select id="manualSchoolType">
+                <option value="초등학교">초등학교</option>
+                <option value="중학교">중학교</option>
+                <option value="고등학교">고등학교</option>
+                <option value="특수학교">특수학교</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+          </div>
+          <div class="acct-field">
+            <span class="acct-label">주소 (선택)</span>
+            <input id="manualSchoolAddr" type="text" placeholder="○○시 ○○구..." />
+          </div>
+          <button class="primary compact" id="manualSchoolConfirm" type="button">이 학교로 선택</button>
+        </div>
+
+        <button class="ghost compact" id="regManualToggle" type="button"
+          style="font-size:12px;color:var(--ink-mute);">나이스에 없는 학교라면?</button>
 
         <div id="regSelectedSchool" class="acct-school-card" style="display:none;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -212,6 +241,30 @@ function openRegisterModal() {
     }
   });
 
+  // 나이스에 없는 학교 직접 입력 토글
+  modal.querySelector("#regManualToggle").addEventListener("click", () => {
+    const sec = modal.querySelector("#regManualSection");
+    const visible = sec.style.display !== "none";
+    sec.style.display = visible ? "none" : "block";
+    modal.querySelector("#regManualToggle").textContent = visible ? "나이스에 없는 학교라면?" : "▲ 직접 입력 닫기";
+  });
+
+  // 직접 입력 학교 선택
+  modal.querySelector("#manualSchoolConfirm").addEventListener("click", () => {
+    const name = modal.querySelector("#manualSchoolName").value.trim();
+    const type = modal.querySelector("#manualSchoolType").value;
+    const addr = modal.querySelector("#manualSchoolAddr").value.trim();
+    if (!name) return alert("학교 이름을 입력하세요.");
+    selectedSchool = { name, type, location: addr, address: addr, neisCode: "", officeCode: "", officeNm: "" };
+    modal.querySelector("#regSchoolName").textContent    = name;
+    modal.querySelector("#regSchoolType").textContent    = type;
+    modal.querySelector("#regSchoolAddress").textContent = addr;
+    modal.querySelector("#regSelectedSchool").style.display  = "block";
+    modal.querySelector("#regManualSection").style.display   = "none";
+    modal.querySelector("#regManualToggle").style.display    = "none";
+    modal.querySelector("#regAccountSection").style.display  = "block";
+  });
+
   // 다시 검색
   modal.querySelector("#regSchoolReset").addEventListener("click", () => {
     selectedSchool = null;
@@ -251,8 +304,8 @@ async function handleRegister(modal, school) {
     const dup = await getDocs(query(collection(db, "schools"), where("username", "==", user), limit(1)));
     if (!dup.empty) { submitBtn.textContent = "가입 신청"; submitBtn.disabled = false; return alert("이미 사용 중인 아이디입니다."); }
 
-    // Firebase Auth 사용자 생성 (합성 이메일)
-    const cred = await createUserWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), pw);
+    // Firebase Auth 사용자 생성 (실제 연락 이메일 사용 → 비밀번호 재설정 이메일 발송 가능)
+    const cred = await createUserWithEmailAndPassword(auth, email, pw);
 
     // Firestore 학교 문서 생성 (uid = 문서 ID)
     await setDoc(doc(db, "schools", cred.user.uid), {
@@ -375,17 +428,19 @@ function openForgotPasswordModal() {
       } else {
         const data  = qs.docs[0].data();
         const email = data.email || "";
-        const masked = email
-          ? email.replace(/^(.{1,2})(.*)(@.+)$/, (_, a, b, c) =>
-              a + "*".repeat(Math.min(b.length, 5)) + c)
-          : "(등록된 이메일 없음)";
-        result.innerHTML = `
-          <div class="acct-school-card">
-            <p style="margin:0 0 6px;font-weight:600;">${esc(data.schoolName)}</p>
-            <p class="acct-hint" style="margin:0 0 4px;">등록 연락 이메일</p>
-            <p style="margin:0 0 12px;font-size:15px;font-weight:600;">${esc(masked)}</p>
-            <p class="acct-hint" style="margin:0;">이 이메일로 총괄관리자(<strong>endeavor1006@naver.com</strong>)에게 문의하시면 비밀번호를 초기화해 드립니다.</p>
-          </div>`;
+        if (!email) {
+          result.innerHTML = `<div class="acct-school-card"><p style="margin:0;color:var(--danger,#c0392b);">등록된 이메일이 없습니다. 총괄관리자에게 문의하세요.</p></div>`;
+        } else {
+          await sendPasswordResetEmail(getAuth(), email);
+          const masked = email.replace(/^(.{1,2})(.*)(@.+)$/, (_, a, b, c) =>
+            a + "*".repeat(Math.min(b.length, 5)) + c);
+          result.innerHTML = `
+            <div class="acct-school-card">
+              <p style="margin:0 0 6px;font-weight:600;">${esc(data.schoolName)}</p>
+              <p style="margin:0 0 8px;">📧 <strong>${esc(masked)}</strong> 으로<br/>비밀번호 재설정 링크를 발송했습니다.</p>
+              <p class="acct-hint" style="margin:0;">이메일을 확인해 링크를 클릭하면 새 비밀번호를 설정할 수 있습니다.</p>
+            </div>`;
+        }
       }
     } catch (e) {
       alert("조회 실패: " + (e?.message || e));
@@ -399,7 +454,7 @@ async function handleLogin(modal) {
   const user = modal.querySelector("#loginUser").value.trim().toLowerCase();
   const pw   = modal.querySelector("#loginPw").value;
   const Core = window.AccountCore;
-  if (!Core.isValidUsername(user) || !pw) return alert("아이디/비밀번호를 확인하세요.");
+  if (!user || !pw) return alert("아이디/비밀번호를 확인하세요.");
 
   const btn = modal.querySelector("#loginSubmit");
   btn.textContent = "로그인 중…";
@@ -408,7 +463,17 @@ async function handleLogin(modal) {
   try {
     const auth = getAuth();
     const db   = getDb();
-    const cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), pw);
+
+    // 아이디로 Firestore 학교 조회 → 실제 이메일 확인
+    let authEmail = Core.usernameToAuthEmail(user); // 기본값: 합성 이메일(어드민용)
+    let schoolData = null;
+    const qs = await getDocs(query(collection(db, "schools"), where("username", "==", user), limit(1)));
+    if (!qs.empty) {
+      schoolData = qs.docs[0].data();
+      authEmail = schoolData.email; // 학교 계정: 실제 연락 이메일로 로그인
+    }
+
+    const cred = await signInWithEmailAndPassword(auth, authEmail, pw);
 
     // 총괄관리자 확인 (uid 기반)
     const adminSnap = await getDoc(doc(db, "admins", cred.user.uid));
@@ -419,9 +484,7 @@ async function handleLogin(modal) {
     }
 
     // 일반 학교 계정 확인
-    const snap = await getDoc(doc(db, "schools", cred.user.uid));
-    const data = snap.exists() ? snap.data() : null;
-
+    const data = schoolData || (await getDoc(doc(db, "schools", cred.user.uid))).data();
     if (!data) {
       await signOut(auth);
       return alert("계정 정보를 찾을 수 없습니다. 관리자에게 문의하세요.");
@@ -430,7 +493,6 @@ async function handleLogin(modal) {
     if (data.status === "rejected")  { await signOut(auth); return alert("가입이 거부되었습니다. 총괄관리자에게 문의하세요."); }
     if (data.status === "suspended") { await signOut(auth); return alert("정지된 계정입니다. 총괄관리자에게 문의하세요."); }
 
-    // approved → 연결 관리 모달로
     modal.remove();
     openConnectionManager(cred.user.uid, data);
   } catch {
@@ -445,39 +507,99 @@ async function handleLogin(modal) {
 function openConnectionManager(uid, data) {
   const shortLink = data.shortCode ? `${location.origin}/?s=${data.shortCode}` : null;
   const conn      = data.connection || {};
+  const hasConn   = !!(conn.webAppUrl && conn.apiKey);
 
   const modal = window.openModal({
-    title: `${esc(data.schoolName)} — 연결 관리`,
+    title: `${esc(data.schoolName)}`,
     submitText: "닫기",
     onSubmit: () => true,
     body: `
-      <div style="padding:8px 10px;background:var(--surface2,#f0f4f0);border-radius:6px;font-size:13px;margin-bottom:12px;">
-        <strong>${esc(data.schoolName)}</strong>
-        ${data.schoolType ? `<span class="badge green" style="font-size:11px;">${esc(data.schoolType)}</span>` : ""}
-        <br/><span style="color:var(--text2);">${esc(data.officeNm || "")}</span>
-      </div>
+      <div class="acct-form">
 
-      <p class="helper">스프레드시트 웹앱을 배포한 뒤 아래에 연결정보를 저장하세요.</p>
-      <label>웹앱 URL (/exec 로 끝나는 주소)
-        <input id="connUrl" type="url" value="${esc(conn.webAppUrl || "")}"
-          placeholder="https://script.google.com/macros/s/.../exec" />
-      </label>
-      <label>연결 키 (API_KEY)
-        <input id="connKey" type="text" value="${esc(conn.apiKey || "")}" />
-      </label>
-      <button class="primary" id="connSave" type="button" style="width:100%;margin:8px 0;">연결정보 저장</button>
+        <!-- 학교 정보 -->
+        <div class="acct-school-card" style="display:flex;align-items:center;gap:8px;">
+          <div>
+            <strong>${esc(data.schoolName)}</strong>
+            ${data.schoolType ? `<span class="badge green" style="font-size:11px;margin-left:4px;">${esc(data.schoolType)}</span>` : ""}
+            <br/><span class="acct-hint">${esc(data.officeNm || "")}</span>
+          </div>
+        </div>
 
-      ${shortLink ? `
-      <div style="margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:8px;">
-        <strong>교사용 짧은 접속 주소</strong><br/>
-        <code id="shortLinkText" style="font-size:13px;word-break:break-all;">${esc(shortLink)}</code><br/>
-        <button class="ghost compact" id="copyShort" type="button" style="margin-top:6px;">복사</button>
-        <p class="helper" style="margin-top:6px;">학교 내부 메신저로만 공유하세요. 외부에 공개하지 마세요.</p>
-      </div>` : `<p class="helper">승인 후 짧은 접속 주소가 발급됩니다.</p>`}`,
+        ${shortLink ? `
+        <!-- ✅ 연결 완료 상태 -->
+        <div style="padding:14px 16px;background:var(--surface2,#f0f8f4);border:1px solid var(--accent,#5B8A6F);border-radius:10px;">
+          <p style="margin:0 0 10px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 연결 완료</p>
+          <p class="acct-hint" style="margin:0 0 4px;">교사들에게 아래 주소를 공유하세요.</p>
+          <code id="shortLinkText" style="font-size:13px;word-break:break-all;display:block;margin-bottom:8px;">${esc(shortLink)}</code>
+          <div style="display:flex;gap:8px;">
+            <button class="primary compact" id="copyShort" type="button">주소 복사</button>
+            <button class="ghost compact" id="showConnEdit" type="button">연결 정보 수정</button>
+          </div>
+          <p class="acct-hint" style="margin:8px 0 0;color:var(--danger-mute,#c0392b);">⚠️ 학교 내부 메신저로만 공유하세요. 외부에 공개 금지.</p>
+        </div>
+        ` : `
+        <!-- ⚠️ 미연결 상태 -->
+        <div style="padding:14px 16px;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;">
+          <p style="margin:0;font-weight:600;color:#a07000;">⏳ 승인 대기 중이거나 연결이 아직 설정되지 않았습니다.</p>
+          <p class="acct-hint" style="margin:6px 0 0;">총괄관리자 승인 후 아래 단계를 진행하세요.</p>
+        </div>
+        `}
+
+        <!-- 연결 정보 입력 영역 (수정 시 또는 미연결 시) -->
+        <div id="connEditArea" style="display:${hasConn ? "none" : "block"};">
+          <div style="padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface2,#f9f9f9);">
+            <p style="margin:0 0 12px;font-weight:600;">📋 구글 스프레드시트 연결 설정</p>
+
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.7;">
+              <strong>Step 1.</strong> 학교에서 받은 <strong>처음 설정 가이드</strong>를 열어<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 스프레드시트 웹앱 배포까지 완료하세요.<br/>
+              <strong>Step 2.</strong> 배포 후 나타나는 주소와 연결 키를 아래에 붙여넣으세요.
+            </p>
+            <a href="./처음설정가이드.html" target="_blank" rel="noopener"
+              class="ghost compact" style="display:inline-block;margin-bottom:14px;font-size:13px;">
+              📖 처음 설정 가이드 열기
+            </a>
+
+            <div class="acct-field" style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                <span class="acct-label">웹앱 주소</span>
+                <span class="acct-hint">배포 후 나타나는 /exec 로 끝나는 주소</span>
+              </div>
+              <input id="connUrl" type="url" value="${esc(conn.webAppUrl || "")}"
+                placeholder="https://script.google.com/macros/s/.../exec" />
+            </div>
+            <div class="acct-field" style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                <span class="acct-label">연결 키</span>
+                <span class="acct-hint">스프레드시트 설정 시트의 API_KEY 값</span>
+              </div>
+              <input id="connKey" type="text" value="${esc(conn.apiKey || "")}" />
+            </div>
+            <button class="primary" id="connSave" type="button" style="width:100%;">저장</button>
+          </div>
+        </div>
+
+      </div>`,
+  });
+
+  // 주소 복사
+  const copyBtn = modal.querySelector("#copyShort");
+  if (copyBtn && shortLink) {
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(shortLink).then(() => {
+        copyBtn.textContent = "복사됨 ✓";
+        setTimeout(() => { copyBtn.textContent = "주소 복사"; }, 2000);
+      });
+    });
+  }
+
+  // 연결 정보 수정 토글
+  modal.querySelector("#showConnEdit")?.addEventListener("click", () => {
+    modal.querySelector("#connEditArea").style.display = "block";
   });
 
   // 연결정보 저장
-  modal.querySelector("#connSave").addEventListener("click", async () => {
+  modal.querySelector("#connSave")?.addEventListener("click", async () => {
     const url = modal.querySelector("#connUrl").value.trim();
     const key = modal.querySelector("#connKey").value.trim();
     if (!url.includes("/macros/s/") || !url.endsWith("/exec"))
@@ -501,25 +623,15 @@ function openConnectionManager(uid, data) {
           webAppUrl: url, apiKey: key, deploymentId,
         });
       }
-      alert("연결정보를 저장했습니다.");
+      alert("저장했습니다. 페이지를 새로고침하면 적용됩니다.");
+      modal.remove();
     } catch (e) {
       alert("저장 실패: " + (e?.message || e));
     } finally {
-      btn.textContent = "연결정보 저장";
+      btn.textContent = "저장";
       btn.disabled = false;
     }
   });
-
-  // 짧은 주소 복사
-  const copyBtn = modal.querySelector("#copyShort");
-  if (copyBtn && shortLink) {
-    copyBtn.addEventListener("click", () => {
-      navigator.clipboard.writeText(shortLink).then(() => {
-        copyBtn.textContent = "복사됨 ✓";
-        setTimeout(() => { copyBtn.textContent = "복사"; }, 2000);
-      });
-    });
-  }
 }
 
 // ─── 총괄관리자 Google 로그인 ────────────────────────────────────────────────
@@ -682,7 +794,8 @@ async function renderSuperAdminContent(container) {
       <td>${esc(contact)}</td>
       <td><button class="ghost compact"
             data-pwreset="${d.id}"
-            data-username="${esc(v.username || "")}">초기화 안내</button></td>
+            data-username="${esc(v.username || "")}"
+            data-email="${esc(v.email || "")}">재설정 이메일</button></td>
     </tr>`;
   }).join("");
 
@@ -820,39 +933,50 @@ async function renderSuperAdminContent(container) {
     ?.addEventListener("click", ev => {
       const t = ev.target.closest("[data-pwreset]");
       if (!t) return;
-      openPasswordResetGuideModal(t.dataset.username);
+      openPasswordResetGuideModal(t.dataset.username, t.dataset.email);
     });
 }
 
-// ─── 비밀번호 초기화 안내 모달 (총괄관리자용) ────────────────────────────────
-function openPasswordResetGuideModal(username) {
-  const Core = window.AccountCore;
-  const authEmail = Core.usernameToAuthEmail(username);
-  window.openModal({
-    title: "비밀번호 초기화 안내",
-    submitText: "확인",
+// ─── 비밀번호 재설정 이메일 발송 (총괄관리자용) ──────────────────────────────
+function openPasswordResetGuideModal(username, contactEmail) {
+  const modal = window.openModal({
+    title: "비밀번호 재설정",
+    submitText: "닫기",
     onSubmit: () => true,
     body: `
       <div class="acct-form">
-        <p style="margin:0;">Firebase 콘솔에서 아래 계정의 비밀번호를 직접 초기화하세요.</p>
         <div class="acct-school-card">
-          <div style="margin-bottom:8px;">
+          <div class="acct-field">
             <span class="acct-label">아이디</span>
-            <code style="font-size:14px;display:block;margin-top:2px;">${esc(username)}</code>
+            <code style="font-size:14px;">${esc(username)}</code>
           </div>
-          <div>
-            <span class="acct-label">Firebase 인증 이메일</span>
-            <code style="font-size:13px;display:block;margin-top:2px;word-break:break-all;">${esc(authEmail)}</code>
+          <div class="acct-field" style="margin-top:8px;">
+            <span class="acct-label">연락 이메일</span>
+            <code style="font-size:13px;">${esc(contactEmail || "(없음)")}</code>
           </div>
         </div>
-        <ol style="margin:0;padding-left:22px;line-height:2;font-size:14px;">
-          <li>Firebase 콘솔 → Authentication → Users 탭</li>
-          <li>위 인증 이메일로 계정 검색</li>
-          <li>⋮ Actions → <strong>Reset password</strong> 또는 비밀번호 직접 수정</li>
-          <li>새 비밀번호를 담당자에게 안전하게 전달</li>
-        </ol>
-        <p class="acct-hint" style="margin:0;">※ 담당자는 로그인 후 비밀번호를 직접 변경하도록 안내하세요.</p>
+        <p class="acct-hint" style="margin:0;">버튼을 누르면 위 이메일로 비밀번호 재설정 링크가 발송됩니다.<br/>담당자가 이메일의 링크를 클릭해 새 비밀번호를 설정합니다.</p>
+        <button class="primary" id="sendResetBtn" type="button" style="width:100%;"
+          ${contactEmail ? "" : "disabled"}>
+          📧 재설정 이메일 발송
+        </button>
+        <div id="resetResult"></div>
       </div>`,
+  });
+
+  modal.querySelector("#sendResetBtn")?.addEventListener("click", async () => {
+    const btn = modal.querySelector("#sendResetBtn");
+    btn.textContent = "발송 중…"; btn.disabled = true;
+    try {
+      await sendPasswordResetEmail(getAuth(), contactEmail);
+      modal.querySelector("#resetResult").innerHTML = `
+        <div class="acct-school-card" style="border-color:var(--accent,#5B8A6F);">
+          <p style="margin:0;color:var(--accent,#5B8A6F);">✓ 재설정 이메일을 발송했습니다.</p>
+        </div>`;
+    } catch (e) {
+      btn.textContent = "📧 재설정 이메일 발송"; btn.disabled = false;
+      alert("발송 실패: " + (e?.message || e));
+    }
   });
 }
 
