@@ -62,10 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
   render();
   runStartupSync().then(finalizeSetupAfterLink).catch(e => console.warn("Setup finalize error:", e));
-  if (!canUseRemoteSync() && !justConnectedViaLink && !sessionStorage.getItem("wizardShown")) {
-    sessionStorage.setItem("wizardShown", "1");
-    setTimeout(openSetupWizardModal, 800);
-  }
+  // 자동 마법사 팝업 제거 — 새 계정 시스템 도입으로 "학교 계정" 버튼으로 유도
   startPolling();
   sendUsagePing();
   document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -1023,6 +1020,14 @@ function renderTodayLabel() {
 
 function renderHero() {
   if (!els.heroTitle) return;
+  if (!canUseRemoteSync()) {
+    // 미연결 상태 — 학교 계정 시스템으로 유도
+    els.heroTitle.textContent = "학교 계정으로 시작하세요";
+    els.heroSub.classList.remove("hero-sub-notice");
+    els.heroSub.innerHTML = `<button class="primary compact" id="heroAccountBtn" type="button">학교 계정 로그인 · 가입</button>`;
+    els.heroSub.querySelector("#heroAccountBtn").addEventListener("click", () => window.account?.openLogin?.());
+    return;
+  }
   if (!state.schoolName?.trim()) {
     els.heroTitle.textContent = "학교 설정을 먼저 완료해주세요";
     els.heroSub.classList.remove("hero-sub-notice");
@@ -1400,11 +1405,24 @@ function shouldBlockUnconnectedTeacher() {
 function renderConnectionRequiredView() {
   els.mainView.innerHTML = `
     <div class="empty-state connection-required">
-      <h4>학교 전용 접속 링크가 필요합니다</h4>
-      <p>관리자가 공유한 교사용 링크나 QR코드로 접속하면 우리 학교 물품 목록이 자동으로 연결됩니다.</p>
-      <p class="helper">일반 웹앱 주소로 접속하면 학교 데이터를 불러올 수 없습니다.</p>
+      <h4>학교 데이터에 아직 연결되지 않았어요</h4>
+      <div class="conn-req-cards">
+        <div class="conn-req-card">
+          <div class="conn-req-icon">📋</div>
+          <strong>학교 담당자라면</strong>
+          <p>학교 계정으로 로그인하거나 가입 신청하세요.<br/>승인 후 교사용 접속 링크를 발급받을 수 있습니다.</p>
+          <button class="primary compact" id="connReqAccountBtn" type="button">학교 계정 로그인 · 가입</button>
+        </div>
+        <div class="conn-req-card">
+          <div class="conn-req-icon">👩‍🏫</div>
+          <strong>교사라면</strong>
+          <p>담당자가 공유한 짧은 주소나 QR코드로 접속하세요.</p>
+          <p class="helper">링크를 열면 학교 데이터가 자동으로 연결됩니다.</p>
+        </div>
+      </div>
     </div>
   `;
+  document.querySelector("#connReqAccountBtn")?.addEventListener("click", () => window.account?.openLogin?.());
 }
 
 function getReservationRowsForCurrentMode() {

@@ -2627,6 +2627,45 @@ td strong {
   font-size: 13px;
 }
 
+/* ─── Connection required — two-card layout ─── */
+.conn-req-cards {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.conn-req-card {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card-soft, var(--surface));
+  text-align: left;
+}
+
+.conn-req-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.conn-req-card strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.conn-req-card p {
+  font-size: 13px;
+  margin: 0;
+}
+
 /* ─── Import view ─── */
 
 .import-zone {
