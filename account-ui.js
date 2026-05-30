@@ -426,7 +426,14 @@ async function openGoogleAdminLogin() {
 /** 로그인 후 메인 뷰 전체를 총괄관리자 대시보드로 전환 */
 function openSuperAdminView() {
   window._superAdminMode = true;
-  document.body.classList.add("super-admin-mode"); // CSS로 불필요 UI 일괄 숨김
+  document.body.classList.add("super-admin-mode");
+
+  // 상단 학교명 영역 → 총괄관리자 표시
+  const schoolNameEl = document.querySelector("#schoolName");
+  if (schoolNameEl) {
+    schoolNameEl.textContent = "총괄관리자 모드";
+    schoolNameEl.classList.remove("needs-setup");
+  }
 
   // Hero 영역 업데이트
   const heroTitle = document.querySelector("#heroTitle");
@@ -481,15 +488,17 @@ async function renderSuperAdminContent(container) {
     const schoolLabel = esc(v.schoolName) +
       (v.schoolType ? ` <small style="color:var(--text2);">(${esc(v.schoolType)})</small>` : "");
 
-    let actions = "";
+    let statusActions = "";
     if (v.status === "pending") {
-      actions = `<button class="primary compact" data-approve="${d.id}">승인</button>
-                 <button class="ghost compact" data-reject="${d.id}">거부</button>`;
+      statusActions = `<button class="primary compact" data-approve="${d.id}">승인</button>
+                       <button class="ghost compact" data-reject="${d.id}">거부</button>`;
     } else if (v.status === "approved") {
-      actions = `<button class="ghost compact" data-suspend="${d.id}">정지</button>`;
+      statusActions = `<button class="ghost compact" data-suspend="${d.id}">정지</button>`;
     } else {
-      actions = `<button class="ghost compact" data-approve="${d.id}">승인</button>`;
+      statusActions = `<button class="ghost compact" data-approve="${d.id}">승인</button>`;
     }
+    const actions = `${statusActions}
+                     <button class="ghost compact" data-edit="${d.id}">편집</button>`;
 
     return `<tr>
       <td>${schoolLabel}</td>
@@ -561,14 +570,23 @@ async function renderSuperAdminContent(container) {
     renderSuperAdminContent(container);
   });
 
-  // 승인·거부·정지 — tbody에 직접 달아서 innerHTML 교체 시 자동 정리
+  // 승인·거부·정지·편집 — tbody에 직접 달아서 innerHTML 교체 시 자동 정리
   const tbody = container.querySelector("tbody");
   tbody?.addEventListener("click", async ev => {
-    const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend]");
+    const t       = ev.target.closest("[data-approve],[data-reject],[data-suspend],[data-edit]");
     if (!t) return;
     const approve = t.getAttribute("data-approve");
     const reject  = t.getAttribute("data-reject");
     const suspend = t.getAttribute("data-suspend");
+    const edit    = t.getAttribute("data-edit");
+
+    // 편집
+    if (edit) {
+      const editSnap = await getDoc(doc(db, "schools", edit));
+      if (editSnap.exists()) openSchoolEditModal(edit, editSnap.data());
+      return;
+    }
+
     t.disabled = true;
     try {
       if (approve) {
@@ -595,6 +613,86 @@ async function renderSuperAdminContent(container) {
     } catch (e) {
       t.disabled = false;
       alert("작업 실패: " + (e?.message || e));
+    }
+  });
+}
+
+// ─── 학교 편집 모달 ──────────────────────────────────────────────────────────
+function openSchoolEditModal(schoolId, data) {
+  const db   = getDb();
+  const conn = data.connection || {};
+
+  const modal = window.openModal({
+    title: `편집: ${esc(data.schoolName)}`,
+    submitText: "닫기",
+    onSubmit: () => true,
+    body: `
+      <div style="padding:10px 12px;background:var(--surface2,#f0f4f0);border-radius:8px;margin-bottom:16px;">
+        <strong>${esc(data.schoolName)}</strong>
+        ${data.schoolType ? `<span class="badge green" style="font-size:11px;margin-left:4px;">${esc(data.schoolType)}</span>` : ""}
+        <br/><span class="helper">로그인 아이디: <code>${esc(data.username || "")}</code>
+          &nbsp;·&nbsp; 접속 코드: <code>${esc(data.shortCode || "없음")}</code></span>
+      </div>
+
+      <label>연락 이메일
+        <input id="editEmail" type="email" value="${esc(data.email || "")}" />
+      </label>
+      <label>담당자 이름
+        <input id="editContactName" type="text" value="${esc(data.contactName || "")}" />
+      </label>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0 10px;" />
+      <p class="helper" style="margin-bottom:8px;">연결 정보 (학교 담당자가 로그인 후 직접 변경할 수도 있어요)</p>
+
+      <label>웹앱 URL
+        <input id="editWebAppUrl" type="url" value="${esc(conn.webAppUrl || "")}"
+          placeholder="https://script.google.com/macros/s/.../exec" />
+      </label>
+      <label>연결 키 (API_KEY)
+        <input id="editApiKey" type="text" value="${esc(conn.apiKey || "")}" />
+      </label>
+
+      <button class="primary" id="editSaveBtn" type="button" style="width:100%;margin-top:14px;">저장</button>
+
+      <div style="margin-top:12px;padding:10px;background:var(--surface2,#f0f4f0);
+        border-radius:6px;font-size:12px;color:var(--ink-mute);">
+        비밀번호 변경은 Firebase 콘솔 → Authentication에서 해당 계정을 찾아 직접 처리하세요.
+      </div>`,
+  });
+
+  modal.querySelector("#editSaveBtn").addEventListener("click", async () => {
+    const newEmail = modal.querySelector("#editEmail").value.trim();
+    const newCName = modal.querySelector("#editContactName").value.trim();
+    const newUrl   = modal.querySelector("#editWebAppUrl").value.trim();
+    const newKey   = modal.querySelector("#editApiKey").value.trim();
+    const btn      = modal.querySelector("#editSaveBtn");
+    btn.textContent = "저장 중…"; btn.disabled = true;
+    try {
+      const m        = newUrl.match(/\/macros\/s\/([^/]+)\/exec/);
+      const deployId = m ? m[1] : (conn.deploymentId || "");
+
+      await updateDoc(doc(db, "schools", schoolId), {
+        email:                     newEmail,
+        contactName:               newCName,
+        "connection.webAppUrl":    newUrl,
+        "connection.apiKey":       newKey,
+        "connection.deploymentId": deployId,
+      });
+
+      // connections 미러도 동기화
+      if (data.shortCode) {
+        await updateDoc(doc(db, "connections", data.shortCode), {
+          webAppUrl: newUrl, apiKey: newKey, deploymentId: deployId,
+        });
+      }
+
+      alert("저장했습니다.");
+      modal.remove();
+      const container = document.querySelector("#mainView");
+      if (container) renderSuperAdminContent(container);
+    } catch (e) {
+      alert("저장 실패: " + (e?.message || e));
+      btn.textContent = "저장"; btn.disabled = false;
     }
   });
 }

@@ -2647,18 +2647,20 @@ body.super-admin-mode .hero-illust {
   display: none !important;
 }
 
-/* 사이드바 하단 날짜만 남기고 여백 정리 */
-body.super-admin-mode .sidebar {
-  justify-content: flex-end;
+/* 사이드바·워크패널 완전 숨김 + 그리드 단일 컬럼으로 전환 */
+body.super-admin-mode .sidebar,
+body.super-admin-mode .work-panel {
+  display: none !important;
 }
-body.super-admin-mode .side-foot {
-  margin-top: 0;
+body.super-admin-mode .app-shell {
+  grid-template-columns: minmax(0, 1fr);
 }
 
-/* 대시보드 본문 패딩 */
+/* 대시보드 본문 */
 .super-admin-dashboard {
-  padding: 8px 0 40px;
-  max-width: 900px;
+  padding: 0 0 48px;
+  max-width: 960px;
+  width: 100%;
 }
 
 /* ─── Connection required — two-card layout ─── */
