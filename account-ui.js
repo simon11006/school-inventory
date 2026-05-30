@@ -272,17 +272,18 @@ function openLoginModal() {
       <div class="acct-form">
         <div class="acct-field">
           <span class="acct-label">아이디</span>
-          <span class="acct-hint">이메일이 아니라 가입 시 직접 정한 영문 아이디입니다</span>
-          <input id="loginUser" type="text" placeholder="예) myschool-admin" autocomplete="username" />
+          <input id="loginUser" type="text" autocomplete="username" style="max-width:260px;" />
         </div>
         <div class="acct-field">
           <span class="acct-label">비밀번호</span>
-          <input id="loginPw" type="password" autocomplete="current-password" />
+          <input id="loginPw" type="password" autocomplete="current-password" style="max-width:260px;" />
         </div>
-        <button class="primary" id="loginSubmit" type="button" style="width:100%;margin-top:4px;">로그인</button>
-        <button class="ghost" id="goRegister" type="button" style="width:100%;">
-          처음이신가요? 학교 계정 가입 →
-        </button>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+          <button class="primary" id="loginSubmit" type="button" style="width:100%;max-width:260px;">로그인</button>
+          <button class="ghost compact" id="goRegister" type="button" style="width:100%;max-width:260px;">
+            처음이신가요? 학교 계정 가입 →
+          </button>
+        </div>
       </div>`,
   });
 
