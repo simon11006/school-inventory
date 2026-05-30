@@ -602,5 +602,8 @@ window.account = {
   _searchNeisSchools: searchNeisSchools, // 브라우저 콘솔 테스트용
 };
 
-// ─── 부팅: 짧은 주소 해석 ────────────────────────────────────────────────────
+// ─── 부팅: 버튼 연결 + 짧은 주소 해석 ──────────────────────────────────────
+document.querySelector("#accountBtn")?.addEventListener("click", openLoginModal);
+document.querySelector("#superAdminBtn")?.addEventListener("click", openAdminDashboard);
+
 resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작

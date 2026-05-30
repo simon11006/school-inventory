@@ -197,6 +197,7 @@ function bindMobileEvents() {
       if (action === "help") openHelpModal();
       else if (action === "adminMode") toggleAdminMode();
       else if (action === "schoolSettings") openSchoolSettingsModal();
+      else if (action === "account") window.account?.openLogin?.();
     });
   });
 

@@ -35,6 +35,7 @@
         </label>
         <span class="mobile-admin-badge" id="mobileAdminBadge" aria-hidden="true">관리자</span>
         <div class="topbar-buttons">
+          <button class="ghost" id="accountBtn" type="button">학교 계정</button>
           <button class="ghost" id="helpBtn" type="button">
             <span class="help-mark" aria-hidden="true">?</span>사용법
           </button>
@@ -46,6 +47,7 @@
             <a class="ghost guide-link global-admin-only" id="setupGuideLink" href="./처음설정가이드.html" target="_blank" rel="noopener">처음 설정 가이드</a>
             <button class="ghost" id="schoolSettingsBtn" type="button">학교 설정</button>
             <button class="ghost global-admin-only" id="handoverBtn" type="button">인계 점검</button>
+            <button class="ghost" id="superAdminBtn" type="button">총괄 대시보드</button>
           </div>
         </div>
       </div>
@@ -206,6 +208,7 @@
   <div class="mobile-more-sheet" id="mobileMoreSheet" aria-hidden="true">
     <div class="mobile-drag-handle" aria-hidden="true"></div>
     <div class="mobile-more-content">
+      <button class="mob-more-item" data-mob-action="account" type="button">학교 계정</button>
       <button class="mob-more-item" data-mob-action="help" type="button">사용법</button>
       <button class="mob-more-item" data-mob-action="adminMode" type="button">관리자 모드</button>
       <button class="mob-more-item admin-only" data-mob-action="schoolSettings" type="button">학교 설정</button>
