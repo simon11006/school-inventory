@@ -1269,6 +1269,7 @@ function renderLocationFilter() {
 }
 
 function renderStatusGrid() {
+  if (window._superAdminMode) return;
   const location = els.locationFilter.value;
   const itemsInLocation = new Set(
     state.items.filter((item) => isItemInAdminScope(item) && (!location || item.location === location)).map((item) => item.id)

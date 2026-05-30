@@ -5,6 +5,8 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
@@ -259,6 +261,20 @@ function openLoginModal() {
       <button class="primary" id="loginSubmit" type="button" style="width:100%;margin-top:8px;">로그인</button>
       <button class="ghost compact" id="goRegister" type="button" style="width:100%;margin-top:8px;">
         처음이신가요? 학교 가입
+      </button>
+      <div style="display:flex;align-items:center;gap:8px;margin:16px 0 4px;">
+        <hr style="flex:1;border:none;border-top:1px solid var(--line);" />
+        <span style="font-size:12px;color:var(--ink-mute);white-space:nowrap;">총괄관리자</span>
+        <hr style="flex:1;border:none;border-top:1px solid var(--line);" />
+      </div>
+      <button class="ghost" id="googleAdminBtn" type="button" style="width:100%;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        Google 계정으로 총괄관리자 로그인
       </button>`,
   });
 
@@ -269,6 +285,10 @@ function openLoginModal() {
   modal.querySelector("#goRegister").addEventListener("click", () => {
     modal.remove();
     openRegisterModal();
+  });
+  modal.querySelector("#googleAdminBtn").addEventListener("click", () => {
+    modal.remove();
+    openGoogleAdminLogin();
   });
 }
 
@@ -287,15 +307,7 @@ async function handleLogin(modal) {
     const db   = getDb();
     const cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), pw);
 
-    // ① 총괄관리자 확인 (uid 기반)
-    const adminSnap = await getDoc(doc(db, "admins", cred.user.uid));
-    if (adminSnap.exists() && adminSnap.data().role === "super") {
-      modal.remove();
-      openSuperAdminView();
-      return;
-    }
-
-    // ② 일반 학교 계정
+    // 일반 학교 계정 확인 (총괄관리자는 Google 로그인으로 별도 처리)
     const snap = await getDoc(doc(db, "schools", cred.user.uid));
     const data = snap.exists() ? snap.data() : null;
 
@@ -399,11 +411,32 @@ function openConnectionManager(uid, data) {
   }
 }
 
+// ─── 총괄관리자 Google 로그인 ────────────────────────────────────────────────
+async function openGoogleAdminLogin() {
+  if (!fbReady()) return;
+  try {
+    const result = await signInWithPopup(getAuth(), new GoogleAuthProvider());
+    const email  = result.user.email;
+    const snap   = await getDoc(doc(getDb(), "admins", email));
+    if (!snap.exists() || snap.data().role !== "super") {
+      await signOut(getAuth());
+      return alert("총괄관리자 권한이 없는 계정입니다:\n" + email +
+        "\n\nFirestore admins 컬렉션에 이 이메일로 role:super 문서를 추가하세요.");
+    }
+    openSuperAdminView();
+  } catch (e) {
+    if (e.code !== "auth/popup-closed-by-user") {
+      alert("Google 로그인 실패: " + (e?.message || e));
+    }
+  }
+}
+
 // ─── 총괄관리자 대시보드 (메인 뷰에 렌더링) ────────────────────────────────
 
 /** 로그인 후 메인 뷰 전체를 총괄관리자 대시보드로 전환 */
 function openSuperAdminView() {
-  window._superAdminMode = true; // app.js의 renderMainView/renderHero가 덮어쓰지 않도록
+  window._superAdminMode = true;
+  document.body.classList.add("super-admin-mode"); // CSS로 불필요 UI 일괄 숨김
 
   // Hero 영역 업데이트
   const heroTitle = document.querySelector("#heroTitle");
@@ -415,6 +448,7 @@ function openSuperAdminView() {
     heroSub.querySelector("#superAdminLogoutBtn").addEventListener("click", async () => {
       await signOut(getAuth());
       window._superAdminMode = false;
+      document.body.classList.remove("super-admin-mode");
       location.reload();
     });
   }

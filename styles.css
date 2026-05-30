@@ -2627,6 +2627,40 @@ td strong {
   font-size: 13px;
 }
 
+/* ─── 총괄관리자 모드 — 학교용 UI 일괄 숨김 ─── */
+body.super-admin-mode .teacher-select,
+body.super-admin-mode #mobileAdminBadge,
+body.super-admin-mode #adminModeBtn,
+body.super-admin-mode .admin-tools,
+body.super-admin-mode #accountBtn,
+body.super-admin-mode #helpBtn,
+body.super-admin-mode .sidebar-room-select,
+body.super-admin-mode #sideMenuLabel,
+body.super-admin-mode .nav-item,
+body.super-admin-mode .side-sync-card,
+body.super-admin-mode .mobile-room-row,
+body.super-admin-mode #statusGrid,
+body.super-admin-mode .toolbar,
+body.super-admin-mode .work-panel,
+body.super-admin-mode #mobileTabBar,
+body.super-admin-mode .hero-illust {
+  display: none !important;
+}
+
+/* 사이드바 하단 날짜만 남기고 여백 정리 */
+body.super-admin-mode .sidebar {
+  justify-content: flex-end;
+}
+body.super-admin-mode .side-foot {
+  margin-top: 0;
+}
+
+/* 대시보드 본문 패딩 */
+.super-admin-dashboard {
+  padding: 8px 0 40px;
+  max-width: 900px;
+}
+
 /* ─── Connection required — two-card layout ─── */
 .conn-req-cards {
   display: flex;
