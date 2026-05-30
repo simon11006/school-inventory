@@ -289,7 +289,15 @@ async function handleLogin(modal) {
     const db   = getDb();
     const cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), pw);
 
-    // 일반 학교 계정 확인 (총괄관리자는 Google 로그인으로 별도 처리)
+    // 총괄관리자 확인 (uid 기반)
+    const adminSnap = await getDoc(doc(db, "admins", cred.user.uid));
+    if (adminSnap.exists() && adminSnap.data().role === "super") {
+      modal.remove();
+      openSuperAdminView();
+      return;
+    }
+
+    // 일반 학교 계정 확인
     const snap = await getDoc(doc(db, "schools", cred.user.uid));
     const data = snap.exists() ? snap.data() : null;
 
