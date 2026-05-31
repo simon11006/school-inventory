@@ -795,12 +795,18 @@ function restoreAdminSession() {
       adminMode = true;
       adminScope = saved.adminScope;
       document.body.classList.add("is-admin");
+      // 세션 복원으로 관리자 모드 재진입 시에도 총괄 대시보드 버튼 숨김
+      if (saved.adminScope.type === "global") {
+        document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
+      }
     }
   } catch {}
 }
 
 // 학교 계정 로그인 성공 시 account-ui.js 에서 호출 → PIN 없이 전체 관리자 모드 진입
 window.enterSchoolAdminMode = function () {
+  // 총괄 대시보드는 서비스 운영자 전용 — 경로에 관계없이 항상 숨김
+  document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
   if (adminMode && isGlobalAdmin()) { persistAdminSession(); return; } // 이미 전체관리자
   adminMode  = true;
   adminScope = { type: "global", locations: [], teacher: GLOBAL_ADMIN_VALUE };
@@ -808,8 +814,6 @@ window.enterSchoolAdminMode = function () {
   if (els.teacherSelect && els.teacherSelect.value !== GLOBAL_ADMIN_VALUE) {
     els.teacherSelect.value = GLOBAL_ADMIN_VALUE;
   }
-  // 총괄 대시보드는 서비스 운영자 전용 — 학교 관리자에게는 숨김
-  document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
   persistAdminSession();
   render();
 };
