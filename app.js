@@ -122,6 +122,7 @@ function bindEvents() {
 
   els.teacherSelect.addEventListener("change", () => {
     saveSelectedTeacher(els.teacherSelect.value);
+    renderAdminVisibility(); // 교사 선택에 따라 실별 관리자 로그인 버튼 표시 여부 갱신
     renderMainView();
     renderWorkPanel();
   });
@@ -142,6 +143,7 @@ function bindEvents() {
   document.querySelector("#handoverBtn")?.addEventListener("click", renderHandoverPanel);
   // setupGuideLink 는 <a href="./처음설정가이드.html">로 최신 가이드를 새 탭에서 엶 (기본 동작 사용)
   document.querySelector("#adminModeBtn").addEventListener("click", toggleAdminMode);
+  document.querySelector("#roomAdminBtn")?.addEventListener("click", toggleAdminMode);
   els.themeToggleBtn.addEventListener("click", toggleTheme);
   document.querySelector("#helpBtn").addEventListener("click", openHelpModal);
   document.querySelector("#copySupportEmailBtn")?.addEventListener("click", copySupportEmail);
@@ -1223,12 +1225,38 @@ async function toggleAdminMode() {
 }
 
 function renderAdminVisibility() {
+  const isFirebase = !!(syncConfig.schoolCode);
+  const selectedTeacher = els.teacherSelect?.value || "";
+  const hasTeacherSelected = selectedTeacher && selectedTeacher !== GLOBAL_ADMIN_VALUE;
+
   const adminButton = document.querySelector("#adminModeBtn");
-  adminButton.classList.toggle("admin-mode-on", adminMode);
-  adminButton.setAttribute("aria-pressed", String(adminMode));
-  adminButton.innerHTML = adminMode
-    ? `<span class="admin-dot" aria-hidden="true"></span><span>${escapeHtml(getAdminModeLabel())}</span><strong>종료</strong>`
-    : `<span class="key-dot" aria-hidden="true"></span>관리자 모드`;
+  const roomAdminBtn = document.querySelector("#roomAdminBtn");
+
+  if (adminMode) {
+    // 관리자 모드 켜짐 — 종료 버튼 표시 (항상)
+    adminButton.classList.add("admin-mode-on");
+    adminButton.setAttribute("aria-pressed", "true");
+    adminButton.innerHTML = `<span class="admin-dot" aria-hidden="true"></span><span>${escapeHtml(getAdminModeLabel())}</span><strong>종료</strong>`;
+    adminButton.hidden = false;
+    if (roomAdminBtn) roomAdminBtn.hidden = true;
+  } else if (isFirebase) {
+    // Firebase 연결 학교: 학교 관리자는 계정 로그인 → 일반 "관리자 모드" 버튼 숨김
+    // 교사 이름 선택 시 "실별 관리자 로그인" 버튼만 표시
+    adminButton.classList.remove("admin-mode-on");
+    adminButton.setAttribute("aria-pressed", "false");
+    adminButton.hidden = true;
+    if (roomAdminBtn) {
+      roomAdminBtn.hidden = !hasTeacherSelected;
+    }
+  } else {
+    // 독립 모드(비Firebase): 기존 "관리자 모드" 버튼 표시
+    adminButton.classList.remove("admin-mode-on");
+    adminButton.setAttribute("aria-pressed", "false");
+    adminButton.innerHTML = `<span class="key-dot" aria-hidden="true"></span>관리자 모드`;
+    adminButton.hidden = false;
+    if (roomAdminBtn) roomAdminBtn.hidden = true;
+  }
+
   document.querySelectorAll(".admin-only").forEach((element) => {
     element.hidden = !adminMode;
   });
@@ -1248,11 +1276,17 @@ function renderAdminVisibility() {
 async function requestAdminScope() {
   const selected = els.teacherSelect.value;
   if (!selected) {
-    alert("먼저 이름 선택에서 본인 이름 또는 전체 관리자를 선택하세요.");
+    alert("먼저 이름 선택에서 본인 이름을 선택하세요.");
     return null;
   }
 
-  const rawPin = prompt(selected === GLOBAL_ADMIN_VALUE ? "전체 관리자 PIN을 입력하세요." : "담당자 PIN을 입력하세요.");
+  // Firebase 연결 학교: 학교 관리자(전체) 로그인은 계정 버튼으로만 가능
+  if (syncConfig.schoolCode && selected === GLOBAL_ADMIN_VALUE) {
+    alert("학교 관리자 로그인은 '학교 계정' 버튼을 이용하세요.");
+    return null;
+  }
+
+  const rawPin = prompt(selected === GLOBAL_ADMIN_VALUE ? "학교 관리자 PIN을 입력하세요." : "담당자 PIN을 입력하세요.");
   if (rawPin === null) return null;
   const pin = String(rawPin).trim();
 
