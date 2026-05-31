@@ -795,7 +795,6 @@ function restoreAdminSession() {
       document.body.classList.add("is-admin");
       // 세션 복원으로 관리자 모드 재진입 시에도 총괄 대시보드 버튼 숨김
       if (saved.adminScope.type === "global") {
-        document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
       }
     }
   } catch {}
@@ -804,7 +803,6 @@ function restoreAdminSession() {
 // 학교 계정 로그인 성공 시 account-ui.js 에서 호출 → PIN 없이 전체 관리자 모드 진입
 window.enterSchoolAdminMode = function () {
   // 총괄 대시보드는 서비스 운영자 전용 — 경로에 관계없이 항상 숨김
-  document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
   if (adminMode && isGlobalAdmin()) { persistAdminSession(); return; } // 이미 전체관리자
   adminMode  = true;
   adminScope = { type: "global", locations: [], teacher: GLOBAL_ADMIN_VALUE };
@@ -1265,7 +1263,6 @@ function renderAdminVisibility() {
     element.hidden = !isGlobalAdmin();
   });
   // 총괄 대시보드는 서비스 운영자 전용 — 어떤 관리자 모드에서도 학교 사용자에게는 숨김
-  if (adminMode) document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
   // 처음 설정 가이드: 스프레드시트 연결 완료 후에는 불필요 → 숨김
   const setupGuideLink = document.querySelector("#setupGuideLink");
   if (setupGuideLink) setupGuideLink.hidden = !isGlobalAdmin() || canUseRemoteSync();

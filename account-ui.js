@@ -1318,7 +1318,6 @@ window.account = {
 
 // ─── 부팅: 버튼 연결 + 짧은 주소 해석 ──────────────────────────────────────
 document.querySelector("#accountBtn")?.addEventListener("click", openLoginModal);
-document.querySelector("#superAdminBtn")?.addEventListener("click", openGoogleAdminLogin);
 
 resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작
 
