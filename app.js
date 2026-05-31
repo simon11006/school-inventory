@@ -1342,7 +1342,7 @@ function renderTeacherSelect() {
       : "";
   els.teacherSelect.innerHTML = [
     `<option value="">이름 선택</option>`,
-    `<option value="${GLOBAL_ADMIN_VALUE}">전체 관리자</option>`,
+    `<option value="${GLOBAL_ADMIN_VALUE}">학교 관리자</option>`,
     ...state.teachers.map((teacher) => `<option value="${escapeHtml(teacher)}">${escapeHtml(teacher)}</option>`),
   ]
     .join("");

@@ -1334,6 +1334,15 @@ onAuthStateChanged(getAuth(), async (user) => {
       return;
     }
 
+    // 학교 연결이 현재 세션에 없으면 (루트 URL 직접 로그인 등) 자동 복원 후 리로드
+    const conn = data.connection || {};
+    if (data.shortCode && conn.webAppUrl && conn.apiKey &&
+        window.getSchoolCode?.() !== data.shortCode) {
+      window.applyConnectionFromAccount?.({ ...conn, shortCode: data.shortCode, schoolName: data.schoolName });
+      location.reload();
+      return;
+    }
+
     // 승인된 학교 계정 → 관리자 모드 자동 진입 + 버튼 전환
     window.enterSchoolAdminMode?.();
     window.setFirebaseSchoolName?.(data.schoolName);
