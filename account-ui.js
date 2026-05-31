@@ -1330,6 +1330,7 @@ onAuthStateChanged(getAuth(), async (user) => {
 
     // 승인된 학교 계정 → 관리자 모드 자동 진입 + 버튼 전환
     window.enterSchoolAdminMode?.();
+    window.setFirebaseSchoolName?.(data.schoolName);
     const accountBtn = document.querySelector("#accountBtn");
     if (accountBtn) {
       accountBtn.textContent = "내 계정 ✓";

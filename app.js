@@ -762,6 +762,14 @@ function applyConnectionFromAccount(conn) {
 window.applyConnectionFromAccount = applyConnectionFromAccount;
 // account-ui.js 가 현재 연결된 schoolCode 를 읽을 수 있게 노출
 window.getSchoolCode = () => syncConfig.schoolCode;
+// 학교 계정 로그인 시 schoolName 이 비어 있으면 Firebase 값으로 자동 세팅
+window.setFirebaseSchoolName = function(name) {
+  if (!state.schoolName?.trim() && name?.trim()) {
+    state.schoolName = name.trim();
+    saveState();
+    render();
+  }
+};
 
 // ── 관리자 권한 세션 유지 (sessionStorage: 새로고침 유지, 창 닫으면 해제) ──
 const ADMIN_SESSION_KEY = "schoolinven_admin_session";
@@ -3078,6 +3086,8 @@ function saveReleaseCheckFromForm(formData, releaseItems) {
 function openSchoolSettingsModal() {
   if (!adminMode) return;
   const isGlobal = isGlobalAdmin();
+  const isFirebaseConnected = !!(syncConfig.schoolCode);
+  const shortCodeUrl = isFirebaseConnected ? `${location.origin}/?s=${syncConfig.schoolCode}` : "";
   const myLocations = isGlobal ? [] : (adminScope?.locations || []).filter((loc) => state.locations.includes(loc));
   const myTeacher = adminScope?.teacher || "";
   const initialCategoryLocation = isGlobal
@@ -3259,15 +3269,7 @@ function openSchoolSettingsModal() {
       </div>
   `;
 
-  const syncSectionHtml = `
-      <div class="settings-block">
-        <div class="settings-block-head">
-          <div>
-            <h3>저장소 연결</h3>
-            <p class="helper">지금은 로컬 저장을 기본으로 쓰고, Google Apps Script 주소를 넣으면 수동 동기화를 시험할 수 있습니다.</p>
-          </div>
-          ${syncConfig.lastSyncedAt ? `<span class="badge green">마지막 동기화 ${formatDateTime(syncConfig.lastSyncedAt)}</span>` : `<span class="badge gray">동기화 전</span>`}
-        </div>
+  const syncInputsHtml = `
         <div class="field-grid">
           <label class="field">
             <span>저장 방식</span>
@@ -3304,8 +3306,56 @@ function openSchoolSettingsModal() {
           <li><strong>스프레드시트에서 가져오기</strong>: 스프레드시트 데이터를 이 화면으로 불러옵니다.</li>
         </ul>
         <div class="helper" id="syncStatusText">처음 설정 가이드에서 학교용 시트 사본을 만든 뒤, 사본에 포함된 Apps Script를 웹앱으로 배포하면 됩니다.</div>
-      </div>
+  `;
 
+  const syncConnectionBlock = isFirebaseConnected ? `
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <div>
+            <h3>저장소 연결</h3>
+            <p class="helper">학교 계정으로 연결되어 있습니다.</p>
+          </div>
+          <span class="badge green">연결됨</span>
+        </div>
+        <p class="helper" style="margin-bottom:8px;">연결 설정을 변경하려면 <strong>내 계정 ✓</strong> 버튼에서 수정하세요.</p>
+        <button class="ghost compact" id="showAdvSyncBtn" type="button">고급: 연결 정보 직접 수정 ▾</button>
+        <div id="advSyncArea" style="display:none;margin-top:12px;">
+          ${syncInputsHtml}
+        </div>
+      </div>
+  ` : `
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <div>
+            <h3>저장소 연결</h3>
+            <p class="helper">지금은 로컬 저장을 기본으로 쓰고, Google Apps Script 주소를 넣으면 수동 동기화를 시험할 수 있습니다.</p>
+          </div>
+          ${syncConfig.lastSyncedAt ? `<span class="badge green">마지막 동기화 ${formatDateTime(syncConfig.lastSyncedAt)}</span>` : `<span class="badge gray">동기화 전</span>`}
+        </div>
+        ${syncInputsHtml}
+      </div>
+  `;
+
+  const inviteLinkBlock = isFirebaseConnected ? `
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <div>
+            <h3>교사 초대 링크</h3>
+            <p class="helper">이 링크를 교사들에게 공유하면 자동으로 우리 학교로 연결됩니다. 학교 내부 메신저로만 공유하세요.</p>
+          </div>
+        </div>
+        <div class="invite-link-area">
+          <input type="text" id="inviteLinkInput" readonly class="invite-link-input" value="${escapeHtml(shortCodeUrl)}" />
+          <button class="primary compact" id="copyInviteLinkBtn" type="button">링크 복사</button>
+          <button class="ghost compact" id="showInviteQrBtn" type="button">QR 보기</button>
+        </div>
+        <div class="invite-qr-area" id="inviteQrArea" hidden>
+          <img id="inviteQrImage" alt="교사용 접속 링크 QR코드" />
+          <p class="helper">QR이 보이지 않으면 링크 복사 버튼으로 교사들에게 공유하세요.</p>
+        </div>
+        <p class="helper" id="inviteLinkHelp">교사들은 이 링크를 즐겨찾기해 두면 편리합니다.</p>
+      </div>
+  ` : `
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
@@ -3324,7 +3374,9 @@ function openSchoolSettingsModal() {
         </div>
         <p class="helper" id="inviteLinkHelp">교사들은 이 링크를 매번 사용해 접속하면 됩니다. 즐겨찾기해 두면 편리합니다.</p>
       </div>
+  `;
 
+  const syncSectionHtml = syncConnectionBlock + inviteLinkBlock + `
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
@@ -3807,9 +3859,16 @@ function openSchoolSettingsModal() {
     button.closest(".location-row").remove();
   });
 
-  modal.querySelector("#diagnoseSyncBtn").addEventListener("click", () => runSyncAction(modal, "diagnose"));
-  modal.querySelector("#pushSyncBtn").addEventListener("click", () => runSyncAction(modal, "save"));
-  modal.querySelector("#pullSyncBtn").addEventListener("click", () => runSyncAction(modal, "load"));
+  modal.querySelector("#diagnoseSyncBtn")?.addEventListener("click", () => runSyncAction(modal, "diagnose"));
+  modal.querySelector("#pushSyncBtn")?.addEventListener("click", () => runSyncAction(modal, "save"));
+  modal.querySelector("#pullSyncBtn")?.addEventListener("click", () => runSyncAction(modal, "load"));
+
+  modal.querySelector("#showAdvSyncBtn")?.addEventListener("click", (e) => {
+    const area = modal.querySelector("#advSyncArea");
+    const isOpen = area.style.display !== "none";
+    area.style.display = isOpen ? "none" : "block";
+    e.currentTarget.textContent = isOpen ? "고급: 연결 정보 직접 수정 ▾" : "고급: 연결 정보 직접 수정 ▴";
+  });
 
   const inviteLinkInput = modal.querySelector("#inviteLinkInput");
   const copyInviteLinkBtn = modal.querySelector("#copyInviteLinkBtn");
@@ -3818,38 +3877,43 @@ function openSchoolSettingsModal() {
   const inviteQrImage = modal.querySelector("#inviteQrImage");
   const inviteLinkHelp = modal.querySelector("#inviteLinkHelp");
 
-  function refreshInviteLink() {
-    const endpoint = modal.querySelector("#syncEndpoint").value.trim();
-    const apiKey = modal.querySelector("#syncApiKey").value.trim();
-    const isValidEndpoint = !endpoint || (endpoint.includes("/macros/s/") && endpoint.endsWith("/exec"));
+  if (isFirebaseConnected) {
+    // Firebase 모드: 초대 링크가 이미 input에 세팅돼 있으므로 QR만 초기화
+    inviteQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shortCodeUrl)}`;
+  } else {
+    function refreshInviteLink() {
+      const endpoint = modal.querySelector("#syncEndpoint").value.trim();
+      const apiKey = modal.querySelector("#syncApiKey").value.trim();
+      const isValidEndpoint = !endpoint || (endpoint.includes("/macros/s/") && endpoint.endsWith("/exec"));
 
-    if (endpoint && apiKey && isValidEndpoint) {
-      const base = window.location.origin + window.location.pathname;
-      const params = new URLSearchParams();
-      const deploymentId = extractDeploymentId(endpoint);
-      if (deploymentId) {
-        params.set("d", deploymentId);
+      if (endpoint && apiKey && isValidEndpoint) {
+        const base = window.location.origin + window.location.pathname;
+        const params = new URLSearchParams();
+        const deploymentId = extractDeploymentId(endpoint);
+        if (deploymentId) {
+          params.set("d", deploymentId);
+        } else {
+          params.set("u", endpoint);
+        }
+        params.set("k", apiKey);
+        inviteLinkInput.value = base + "?" + params.toString();
+        copyInviteLinkBtn.disabled = false;
+        showInviteQrBtn.disabled = false;
+        inviteQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(inviteLinkInput.value)}`;
       } else {
-        params.set("u", endpoint);
+        inviteLinkInput.value = "";
+        inviteLinkInput.placeholder = (endpoint && !isValidEndpoint) ? "올바른 웹앱 URL 형식이 아닙니다" : "위의 저장소 연결에서 웹앱 URL과 연결 키를 먼저 입력하세요";
+        copyInviteLinkBtn.disabled = true;
+        showInviteQrBtn.disabled = true;
+        inviteQrArea.hidden = true;
+        inviteQrImage.removeAttribute("src");
       }
-      params.set("k", apiKey);
-      inviteLinkInput.value = base + "?" + params.toString();
-      copyInviteLinkBtn.disabled = false;
-      showInviteQrBtn.disabled = false;
-      inviteQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(inviteLinkInput.value)}`;
-    } else {
-      inviteLinkInput.value = "";
-      inviteLinkInput.placeholder = (endpoint && !isValidEndpoint) ? "올바른 웹앱 URL 형식이 아닙니다" : "위의 저장소 연결에서 웹앱 URL과 연결 키를 먼저 입력하세요";
-      copyInviteLinkBtn.disabled = true;
-      showInviteQrBtn.disabled = true;
-      inviteQrArea.hidden = true;
-      inviteQrImage.removeAttribute("src");
     }
-  }
 
-  refreshInviteLink();
-  modal.querySelector("#syncEndpoint").addEventListener("input", refreshInviteLink);
-  modal.querySelector("#syncApiKey").addEventListener("input", refreshInviteLink);
+    refreshInviteLink();
+    modal.querySelector("#syncEndpoint").addEventListener("input", refreshInviteLink);
+    modal.querySelector("#syncApiKey").addEventListener("input", refreshInviteLink);
+  }
 
   showInviteQrBtn.addEventListener("click", () => {
     if (!inviteLinkInput.value) {
