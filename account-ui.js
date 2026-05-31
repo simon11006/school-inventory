@@ -151,6 +151,11 @@ function openRegisterModal() {
                 <span class="acct-hint">6자 이상</span>
                 <input id="regPw" type="password" autocomplete="new-password" />
               </div>
+              <div class="acct-field" style="flex:1;">
+                <span class="acct-label">비밀번호 확인</span>
+                <span class="acct-hint">동일하게 입력</span>
+                <input id="regPwConfirm" type="password" autocomplete="new-password" />
+              </div>
             </div>
             <div class="acct-field">
               <span class="acct-label">연락 이메일 <span style="color:var(--danger,#c0392b);">*</span></span>
@@ -281,16 +286,18 @@ function openRegisterModal() {
 
 async function handleRegister(modal, school) {
   if (!school) return alert("학교를 먼저 검색해 선택하세요.");
-  const user    = modal.querySelector("#regUser").value.trim().toLowerCase();
-  const pw      = modal.querySelector("#regPw").value;
-  const email   = modal.querySelector("#regEmail").value.trim();
-  const name    = modal.querySelector("#regName").value.trim();
-  const role    = modal.querySelector("#regRole").value.trim();
-  const consent = modal.querySelector("#regConsent").checked;
-  const Core    = window.AccountCore;
+  const user      = modal.querySelector("#regUser").value.trim().toLowerCase();
+  const pw        = modal.querySelector("#regPw").value;
+  const pwConfirm = modal.querySelector("#regPwConfirm").value;
+  const email     = modal.querySelector("#regEmail").value.trim();
+  const name      = modal.querySelector("#regName").value.trim();
+  const role      = modal.querySelector("#regRole").value.trim();
+  const consent   = modal.querySelector("#regConsent").checked;
+  const Core      = window.AccountCore;
 
   if (!Core.isValidUsername(user))  return alert("아이디는 영문 소문자·숫자·-·_ 4~20자입니다.");
   if (pw.length < 6)               return alert("비밀번호는 6자 이상이어야 합니다.");
+  if (pw !== pwConfirm)            return alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
   if (!email)                      return alert("연락 이메일은 필수입니다.");
   if (!consent)                    return alert("개인정보 수집·이용에 동의해야 가입할 수 있습니다.");
 
