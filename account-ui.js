@@ -1127,6 +1127,7 @@ async function renderSuperAdminContent(container) {
           batch.update(sref, { status: "approved", approvedAt: serverTimestamp(), shortCode: code });
           batch.set(doc(db, "connections", code), {
             shortCode:    code,
+            schoolUid:    approve,
             schoolName:   sdoc.data()?.schoolName || "",
             deploymentId: sconn.deploymentId || "",
             apiKey:       sconn.apiKey       || "",
@@ -1381,9 +1382,16 @@ async function heartbeat(code) {
   const last = parseInt(localStorage.getItem(HEARTBEAT_KEY) || "0", 10);
   if (!Core.shouldHeartbeat(last)) return; // 6시간 쓰로틀
   try {
-    await updateDoc(doc(getDb(), "connections", code), {
-      lastActiveAt: serverTimestamp(),
-    });
+    const connRef  = doc(getDb(), "connections", code);
+    const connSnap = await getDoc(connRef);
+    if (!connSnap.exists()) return;
+    const schoolUid = connSnap.data().schoolUid || null;
+    await updateDoc(connRef, { lastActiveAt: serverTimestamp() });
+    if (schoolUid) {
+      updateDoc(doc(getDb(), "schools", schoolUid), {
+        lastActiveAt: serverTimestamp(),
+      }).catch(() => {});
+    }
     localStorage.setItem(HEARTBEAT_KEY, String(Date.now()));
   } catch { /* 조용히 무시 */ }
 }

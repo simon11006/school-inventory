@@ -1047,7 +1047,10 @@ function saveState({ touch = true } = {}) {
     };
   }
   InventoryStorage.writeJson(scopedStorageKey(STORE_KEY), state);
-  if (touch) scheduleAutoPush();
+  if (touch) {
+    scheduleAutoPush();
+    if (syncConfig.schoolCode) window.account?.heartbeat?.(syncConfig.schoolCode);
+  }
 }
 
 function render() {
@@ -1233,6 +1236,7 @@ async function toggleAdminMode() {
   document.body.classList.add("is-admin");
   render();
   toast(scope.type === "global" ? "학교 관리자 모드를 켰어요" : `${scope.locations.join(", ")} 담당자 모드를 켰어요`, "success");
+  if (syncConfig.schoolCode) window.account?.heartbeat?.(syncConfig.schoolCode);
 }
 
 function renderAdminVisibility() {
