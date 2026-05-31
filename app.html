@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>교구이음 · 스마트 교구관리</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-text">
+          <div class="brand-title-row">
+            <h1 class="brand-logo-title">
+              <img class="brand-logo brand-logo-light" src="./asset/logo.png" alt="교구이음" />
+              <img class="brand-logo brand-logo-dark" src="./asset/darklogo.png" alt="" aria-hidden="true" />
+            </h1>
+            <span class="brand-sep" aria-hidden="true"></span>
+            <span class="brand-school" id="schoolName">학교명을 설정해주세요</span>
+          </div>
+          <p class="brand-tagline">선생님의 수업과 교구를 잇는 스마트 교구 관리 플랫폼</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="theme-icon-button" id="themeToggleBtn" type="button" aria-label="다크모드로 전환" title="다크모드">
+          <span id="themeIcon" aria-hidden="true">◐</span>
+        </button>
+        <button class="ghost" id="helpBtn" type="button">
+          <span class="help-mark" aria-hidden="true">?</span>사용법
+        </button>
+        <label class="teacher-select">
+          <span>사용 교사</span>
+          <select id="teacherSelect"></select>
+        </label>
+        <span class="mobile-admin-badge" id="mobileAdminBadge" aria-hidden="true">관리자</span>
+        <div class="topbar-buttons">
+          <button class="ghost" id="roomAdminBtn" type="button" hidden>
+            <span class="key-dot" aria-hidden="true"></span>실별 관리자 로그인
+          </button>
+          <button class="ghost" id="accountBtn" type="button">학교 관리자 로그인</button>
+          <button class="ghost" id="adminModeBtn" type="button">
+            <span class="key-dot" aria-hidden="true"></span>관리자 모드
+          </button>
+          <div class="admin-tools admin-only" aria-label="관리자 도구">
+            <span class="admin-tools-label">관리자 도구</span>
+            <a class="ghost guide-link global-admin-only" id="setupGuideLink" href="./처음설정가이드.html" target="_blank" rel="noopener">처음 설정 가이드</a>
+            <button class="ghost" id="schoolSettingsBtn" type="button">학교 설정</button>
+            <button class="ghost global-admin-only" id="handoverBtn" type="button">인계 점검</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <label class="sidebar-room-select">
+        <span>물품실 선택</span>
+        <select id="locationFilter"></select>
+      </label>
+
+      <p class="side-label" id="sideMenuLabel">교사용 메뉴</p>
+      <button class="nav-item active" data-view="dashboard" type="button">
+        <span class="nav-glyph" data-glyph="today" aria-hidden="true"></span>
+        물품 사용 예약
+      </button>
+      <button class="nav-item" data-view="reservations" type="button">
+        <span class="nav-glyph" data-glyph="reserve" aria-hidden="true"></span>
+        <span id="reservationNavLabel">내 예약·반납</span>
+      </button>
+      <button class="nav-item admin-only" data-view="items" type="button">
+        <span class="nav-glyph" data-glyph="items" aria-hidden="true"></span>
+        물품 관리
+      </button>
+      <button class="nav-item admin-only" data-view="purchaseRequests" type="button">
+        <span class="nav-glyph" data-glyph="items" aria-hidden="true"></span>
+        구입 요청
+      </button>
+      <button class="nav-item admin-only" data-view="import" type="button">
+        <span class="nav-glyph" data-glyph="import" aria-hidden="true"></span>
+        일괄 등록
+      </button>
+      <button class="nav-item admin-only" data-view="records" type="button">
+        <span class="nav-glyph" data-glyph="records" aria-hidden="true"></span>
+        사용 기록
+      </button>
+
+      <div class="side-foot">
+        <p class="side-foot-title">오늘은</p>
+        <p class="side-foot-date" id="todayLabel"></p>
+        <p class="side-foot-note">물품실을 고른 뒤 예약할 물품을 찾아보세요.</p>
+      </div>
+      <div class="side-sync-card" aria-label="정보 업데이트 상태">
+        <div class="side-sync-head">
+          <span class="side-sync-title">정보 업데이트</span>
+          <strong id="syncStatusLabel"></strong>
+        </div>
+        <div class="side-support-row">
+          <span class="side-support-text">웹앱 수정 요청 문의</span>
+          <button
+            class="mail-icon-button"
+            id="copySupportEmailBtn"
+            type="button"
+            aria-label="문의 메일 주소 복사"
+            title="endeavor1006@naver.com"
+          >
+            <span aria-hidden="true">✉</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="mobile-room-row" aria-hidden="false">
+        <label class="mobile-room-select">
+          <span>물품실</span>
+          <select id="mobileLocationFilter"></select>
+        </label>
+      </div>
+      <section class="hero">
+        <div class="hero-text">
+          <h2 id="heroTitle">예약 한 건씩 차근차근 확인해요</h2>
+          <p class="hero-sub" id="heroSub">왼쪽 메뉴에서 화면을 바꿀 수 있어요.</p>
+        </div>
+        <div class="hero-illust" aria-hidden="true">
+          <svg viewBox="0 0 220 110" width="220" height="110">
+            <rect x="6" y="14" width="180" height="86" rx="10" fill="#fff" stroke="#E4D9BF" stroke-width="1.4" />
+            <rect x="20" y="30" width="100" height="8" rx="4" fill="#E9DEC3" />
+            <rect x="20" y="46" width="150" height="6" rx="3" fill="#F1E8D2" />
+            <rect x="20" y="58" width="120" height="6" rx="3" fill="#F1E8D2" />
+            <rect x="20" y="70" width="80" height="6" rx="3" fill="#F1E8D2" />
+            <circle cx="184" cy="22" r="14" fill="#D08B3C" opacity="0.9" />
+            <path d="M178 22 l4 4 l8 -8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M150 92 q20 -16 50 -4" stroke="#5B8A6F" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg>
+        </div>
+      </section>
+
+      <section class="status-grid" id="statusGrid"></section>
+
+      <section class="toolbar">
+        <div class="search-wrap">
+          <label for="searchInput">검색</label>
+          <div class="search-input">
+            <span class="search-icon" aria-hidden="true">🔎</span>
+            <input id="searchInput" type="search" placeholder="예약할 물품명을 적어보세요" />
+          </div>
+        </div>
+        <div class="toolbar-actions">
+          <button class="primary" id="newReservationBtn" type="button">+ 새 예약</button>
+          <button class="ghost admin-only" id="newItemBtn" type="button">물품 추가</button>
+        </div>
+      </section>
+
+      <section id="mainView" class="main-view"></section>
+    </main>
+
+    <aside class="work-panel" id="workPanel" aria-live="polite">
+      <div class="mobile-drag-handle" aria-hidden="true"></div>
+      <div class="panel-empty">
+        <div class="panel-empty-illust" aria-hidden="true">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <rect x="14" y="18" width="52" height="48" rx="8" fill="#FBF4E2" stroke="#E4D9BF" stroke-width="1.4" />
+            <path d="M24 32 H56 M24 42 H50 M24 52 H44" stroke="#C9B98E" stroke-width="1.6" stroke-linecap="round" />
+            <circle cx="60" cy="20" r="6" fill="#5B8A6F" />
+          </svg>
+        </div>
+        <p class="panel-title">작업 패널</p>
+        <p class="panel-empty-text">왼쪽 목록에서 물품이나 예약을 고르면<br />여기서 처리할 수 있어요.</p>
+      </div>
+    </aside>
+  </div>
+
+  <nav class="mobile-tab-bar" id="mobileTabBar" aria-label="모바일 하단 탭">
+    <button class="mob-tab active" data-view="dashboard" type="button">
+      <span class="mob-tab-icon" data-glyph="today" aria-hidden="true"></span>
+      <span class="mob-tab-label">물품예약</span>
+    </button>
+    <button class="mob-tab" data-view="reservations" type="button">
+      <span class="mob-tab-icon" data-glyph="reserve" aria-hidden="true"></span>
+      <span class="mob-tab-label" id="mobReservationTabLabel">내 예약</span>
+    </button>
+    <button class="mob-tab admin-only" data-view="items" type="button">
+      <span class="mob-tab-icon" data-glyph="items" aria-hidden="true"></span>
+      <span class="mob-tab-label">물품관리</span>
+    </button>
+    <button class="mob-tab admin-only" data-view="purchaseRequests" type="button">
+      <span class="mob-tab-icon" data-glyph="items" aria-hidden="true"></span>
+      <span class="mob-tab-label">구입요청</span>
+    </button>
+    <button class="mob-tab admin-only" data-view="import" type="button">
+      <span class="mob-tab-icon" data-glyph="import" aria-hidden="true"></span>
+      <span class="mob-tab-label">일괄등록</span>
+    </button>
+    <button class="mob-tab admin-only" data-view="records" type="button">
+      <span class="mob-tab-icon" data-glyph="records" aria-hidden="true"></span>
+      <span class="mob-tab-label">사용기록</span>
+    </button>
+    <button class="mob-tab" data-mob-action="more" type="button">
+      <span class="mob-tab-icon" data-glyph="more" aria-hidden="true"></span>
+      <span class="mob-tab-label">더보기</span>
+    </button>
+  </nav>
+
+  <div class="mobile-sheet-backdrop" id="mobileSheetBackdrop" aria-hidden="true"></div>
+
+  <div class="mobile-more-sheet" id="mobileMoreSheet" aria-hidden="true">
+    <div class="mobile-drag-handle" aria-hidden="true"></div>
+    <div class="mobile-more-content">
+      <button class="mob-more-item" data-mob-action="account" type="button">학교 계정</button>
+      <button class="mob-more-item" data-mob-action="help" type="button">사용법</button>
+      <button class="mob-more-item" data-mob-action="adminMode" type="button">관리자 모드</button>
+      <button class="mob-more-item admin-only" data-mob-action="schoolSettings" type="button">학교 설정</button>
+    </div>
+  </div>
+
+  <template id="modalTemplate">
+    <div class="modal-backdrop">
+      <form class="modal" id="modalForm">
+        <div class="modal-header">
+          <h2 id="modalTitle"></h2>
+          <button class="icon-button" data-close-modal type="button" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer">
+          <button class="ghost" data-close-modal type="button">취소</button>
+          <button class="primary" id="modalSubmit" type="submit">저장</button>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <div id="toastRoot" class="toast-root" aria-live="polite"></div>
+
+  <script src="./account-core.js"></script>
+  <script src="./vendor/xlsx.full.min.js"></script>
+  <script src="./inventory-storage.js"></script>
+  <script src="./inventory-core.js"></script>
+  <script src="./app.js"></script>
+  <!-- Firebase 12.14.0 모듈 스크립트 (type="module" → 자동 defer, app.js 이후 실행) -->
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./account-ui.js"></script>
+</body>
+
+</html>

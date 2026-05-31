@@ -1,248 +1,513 @@
 <!doctype html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>교구이음 · 스마트 교구관리</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <title>교구이음 · 스마트 교구 관리 플랫폼</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --white: #ffffff;
+      --black: #000000;
+      --graphite: #0f0f0f;
+      --ash: #8d8d8d;
+      --btn-black: #0d111b;
+      --teal: #0098f2;
+      --cream: #f7fafc;
+      --border: #e8e8e8;
+      --navy: #0f2a4a;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --max: 1120px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--white); color: var(--graphite); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+    }
+    .nav-inner { max-width: var(--max); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .nav-logo { display: flex; align-items: center; text-decoration: none; }
+    .nav-logo img { height: 28px; width: auto; display: block; }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { font-size: 14px; color: var(--ash); text-decoration: none; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--black); }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .nav-login { font-size: 14px; color: var(--ash); text-decoration: none; cursor: pointer; background: none; border: none; font-family: var(--font); }
+    .nav-login:hover { color: var(--black); }
+    .btn-primary {
+      background: var(--btn-black); color: #fff;
+      border-radius: 100px; padding: 7px 16px;
+      font-size: 14px; font-weight: 500;
+      text-decoration: none; border: none; cursor: pointer;
+      display: inline-block; font-family: var(--font);
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+
+    /* ── HERO ── */
+    .hero { padding: 96px 40px 0; text-align: center; }
+    .hero-inner { max-width: var(--max); margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f0f6ff; color: var(--teal);
+      border-radius: 100px; padding: 4px 14px;
+      font-size: 13px; font-weight: 500; margin-bottom: 28px;
+    }
+    .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+    .hero h1 { font-size: 60px; font-weight: 600; color: var(--black); letter-spacing: -2px; line-height: 1.13; margin-bottom: 20px; }
+    .hero h1 em { font-style: normal; color: var(--teal); }
+    .hero > .hero-inner > p { font-size: 18px; color: var(--ash); max-width: 480px; margin: 0 auto 36px; line-height: 1.6; }
+    .hero-cta { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+    .btn-ghost {
+      background: none; border: 1px solid var(--border);
+      color: var(--graphite); border-radius: 100px;
+      padding: 7px 18px; font-size: 14px;
+      cursor: pointer; font-family: var(--font); text-decoration: none;
+    }
+    .hero-feats { display: flex; justify-content: center; gap: 24px; margin-bottom: 56px; flex-wrap: wrap; }
+    .hero-feat { font-size: 13px; color: var(--ash); display: flex; align-items: center; gap: 6px; }
+    .hero-feat::before { content: '✓'; color: var(--teal); font-weight: 600; }
+
+    /* ── APP MOCKUP ── */
+    .hero-screen {
+      max-width: 900px; margin: 0 auto;
+      background: var(--cream);
+      border-radius: 16px 16px 0 0;
+      border: 1px solid var(--border); border-bottom: none;
+      overflow: hidden;
+      box-shadow: 0 -4px 40px rgba(0,0,0,0.06);
+    }
+    .screen-topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .screen-body { padding: 20px; display: grid; grid-template-columns: 180px 1fr; gap: 16px; height: 320px; }
+    .screen-sidebar { background: #fff; border-radius: 10px; border: 1px solid var(--border); padding: 14px; }
+    .screen-sidebar-logo { margin-bottom: 16px; }
+    .screen-sidebar-logo img { height: 20px; width: auto; }
+    .screen-nav-item { font-size: 10px; color: var(--ash); padding: 6px 8px; border-radius: 6px; margin-bottom: 2px; }
+    .screen-nav-item.active { background: #f0f6ff; color: var(--teal); font-weight: 500; }
+    .screen-main { display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+    .screen-head { display: flex; align-items: center; justify-content: space-between; }
+    .screen-head h3 { font-size: 13px; font-weight: 600; color: var(--black); }
+    .screen-btn { background: var(--btn-black); color: #fff; border-radius: 100px; padding: 4px 10px; font-size: 9px; border: none; cursor: pointer; font-family: var(--font); }
+    .screen-table { background: #fff; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; flex: 1; }
+    .screen-table-head { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 80px; background: var(--cream); border-bottom: 1px solid var(--border); padding: 8px 14px; }
+    .screen-table-head span { font-size: 9px; color: var(--ash); font-weight: 500; }
+    .screen-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 80px; padding: 8px 14px; border-bottom: 1px solid #f5f5f5; align-items: center; }
+    .screen-row:last-child { border-bottom: none; }
+    .item-name { font-size: 10px; font-weight: 500; color: var(--black); }
+    .item-meta { font-size: 9px; color: var(--ash); }
+    .badge-ok { background: #e8f8f0; color: #1a9e5c; border-radius: 100px; padding: 2px 8px; font-size: 8px; font-weight: 500; }
+    .badge-warn { background: #fff4e5; color: #e07b00; border-radius: 100px; padding: 2px 8px; font-size: 8px; font-weight: 500; }
+    .row-btn { background: none; border: 1px solid var(--border); border-radius: 100px; padding: 3px 8px; font-size: 8px; color: var(--graphite); cursor: pointer; }
+
+    /* ── SECTIONS ── */
+    section { padding: 96px 40px; }
+    .section-inner { max-width: var(--max); margin: 0 auto; }
+    .section-tag { display: inline-block; font-size: 12px; font-weight: 600; color: var(--teal); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 12px; }
+    .section-title { font-size: 40px; font-weight: 600; color: var(--black); letter-spacing: -1.2px; line-height: 1.2; margin-bottom: 16px; }
+    .section-sub { font-size: 17px; color: var(--ash); line-height: 1.6; max-width: 500px; }
+
+    /* ── FEATURES ── */
+    .features { background: var(--cream); }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 56px; }
+    .feat-card { background: var(--white); border-radius: 20px; padding: 32px; border: 1px solid var(--border); }
+    .feat-icon { width: 44px; height: 44px; background: #f0f6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px; }
+    .feat-title { font-size: 18px; font-weight: 600; color: var(--black); margin-bottom: 10px; letter-spacing: -0.3px; }
+    .feat-desc { font-size: 14px; color: var(--ash); line-height: 1.6; }
+    .feat-list { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; list-style: none; }
+    .feat-list li { font-size: 13px; color: #1e1e1e; display: flex; align-items: center; gap: 7px; }
+    .feat-list li::before { content: '✓'; color: var(--teal); font-weight: 600; font-size: 11px; flex-shrink: 0; }
+
+    /* ── HOW IT WORKS ── */
+    .how { background: var(--white); }
+    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-top: 64px; }
+    .how-steps { display: flex; flex-direction: column; gap: 28px; }
+    .how-step { display: flex; gap: 16px; }
+    .step-num { width: 32px; height: 32px; background: #f0f6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--teal); flex-shrink: 0; margin-top: 2px; }
+    .step-title { font-size: 16px; font-weight: 600; color: var(--black); margin-bottom: 4px; }
+    .step-desc { font-size: 14px; color: var(--ash); line-height: 1.6; }
+    .how-visual { background: var(--cream); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; }
+    .how-visual-head { background: #fff; border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 6px; }
+    .how-visual-body { padding: 16px; }
+    .modal-preview { background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .modal-title { font-size: 12px; font-weight: 600; color: var(--black); margin-bottom: 12px; }
+    .field { margin-bottom: 10px; }
+    .field-label { font-size: 9px; color: var(--ash); margin-bottom: 3px; }
+    .field-input { background: var(--cream); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 10px; color: var(--graphite); width: 100%; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .modal-btn { width: 100%; background: var(--btn-black); color: #fff; border-radius: 100px; padding: 8px; font-size: 11px; font-weight: 500; border: none; cursor: pointer; margin-top: 4px; font-family: var(--font); }
+
+    /* ── START FLOW ── */
+    .flow { background: var(--cream); }
+    .flow-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 56px; position: relative; }
+    .flow-steps::before { content: ''; position: absolute; top: 28px; left: 10%; right: 10%; height: 1px; background: var(--border); z-index: 0; }
+    .flow-step { text-align: center; position: relative; z-index: 1; }
+    .flow-num { width: 56px; height: 56px; background: var(--white); border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 18px; font-weight: 600; color: var(--teal); }
+    .flow-title { font-size: 15px; font-weight: 600; color: var(--black); margin-bottom: 8px; }
+    .flow-desc { font-size: 13px; color: var(--ash); line-height: 1.5; }
+
+    /* ── FAQ ── */
+    .faq { background: var(--white); }
+    .faq-list { margin-top: 56px; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { padding: 24px 28px; font-size: 16px; font-weight: 600; color: var(--black); display: flex; align-items: flex-start; gap: 16px; }
+    .faq-q::before { content: 'Q'; color: var(--teal); font-size: 14px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+    .faq-a { padding: 0 28px 24px 58px; font-size: 15px; color: var(--ash); line-height: 1.7; }
+    .faq-a strong { color: var(--graphite); font-weight: 600; }
+    .faq-a .url-example {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px;
+      font-size: 13px; font-family: monospace;
+      color: var(--graphite); margin: 10px 0;
+    }
+    .faq-a .url-example::before { content: '🔗'; font-size: 12px; }
+
+    /* ── CTA ── */
+    .cta-section { background: var(--navy); padding: 96px 40px; text-align: center; }
+    .cta-inner { max-width: 600px; margin: 0 auto; }
+    .cta-section h2 { font-size: 44px; font-weight: 600; color: #fff; letter-spacing: -1.5px; line-height: 1.15; margin-bottom: 20px; }
+    .cta-section p { font-size: 17px; color: rgba(255,255,255,0.45); margin-bottom: 36px; }
+    .btn-white { background: #fff; color: var(--navy); border-radius: 100px; padding: 12px 28px; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-block; cursor: pointer; border: none; font-family: var(--font); }
+    .btn-white:hover { opacity: 0.92; }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 32px 40px; }
+    .footer-inner { max-width: var(--max); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .footer-logo img { height: 22px; width: auto; }
+    .footer-copy { font-size: 13px; color: var(--ash); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 60px 20px 0; }
+      .hero h1 { font-size: 36px; letter-spacing: -1px; }
+      .hero > .hero-inner > p { font-size: 16px; }
+      .hero-feats { gap: 12px; }
+      .screen-body { grid-template-columns: 1fr; height: auto; }
+      .screen-sidebar { display: none; }
+      section { padding: 60px 20px; }
+      .section-title { font-size: 28px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .how-grid { grid-template-columns: 1fr; gap: 40px; }
+      .flow-steps { grid-template-columns: repeat(2, 1fr); }
+      .flow-steps::before { display: none; }
+      .cta-section { padding: 60px 20px; }
+      .cta-section h2 { font-size: 30px; }
+      footer { padding: 24px 20px; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
 </head>
-
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-text">
-          <div class="brand-title-row">
-            <h1 class="brand-logo-title">
-              <img class="brand-logo brand-logo-light" src="./asset/logo.png" alt="교구이음" />
-              <img class="brand-logo brand-logo-dark" src="./asset/darklogo.png" alt="" aria-hidden="true" />
-            </h1>
-            <span class="brand-sep" aria-hidden="true"></span>
-            <span class="brand-school" id="schoolName">학교명을 설정해주세요</span>
-          </div>
-          <p class="brand-tagline">선생님의 수업과 교구를 잇는 스마트 교구 관리 플랫폼</p>
-        </div>
-      </div>
 
-      <div class="topbar-actions">
-        <button class="theme-icon-button" id="themeToggleBtn" type="button" aria-label="다크모드로 전환" title="다크모드">
-          <span id="themeIcon" aria-hidden="true">◐</span>
-        </button>
-        <button class="ghost" id="helpBtn" type="button">
-          <span class="help-mark" aria-hidden="true">?</span>사용법
-        </button>
-        <label class="teacher-select">
-          <span>사용 교사</span>
-          <select id="teacherSelect"></select>
-        </label>
-        <span class="mobile-admin-badge" id="mobileAdminBadge" aria-hidden="true">관리자</span>
-        <div class="topbar-buttons">
-          <button class="ghost" id="roomAdminBtn" type="button" hidden>
-            <span class="key-dot" aria-hidden="true"></span>실별 관리자 로그인
-          </button>
-          <button class="ghost" id="accountBtn" type="button">학교 관리자 로그인</button>
-          <button class="ghost" id="adminModeBtn" type="button">
-            <span class="key-dot" aria-hidden="true"></span>관리자 모드
-          </button>
-          <div class="admin-tools admin-only" aria-label="관리자 도구">
-            <span class="admin-tools-label">관리자 도구</span>
-            <a class="ghost guide-link global-admin-only" id="setupGuideLink" href="./처음설정가이드.html" target="_blank" rel="noopener">처음 설정 가이드</a>
-            <button class="ghost" id="schoolSettingsBtn" type="button">학교 설정</button>
-            <button class="ghost global-admin-only" id="handoverBtn" type="button">인계 점검</button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <aside class="sidebar">
-      <label class="sidebar-room-select">
-        <span>물품실 선택</span>
-        <select id="locationFilter"></select>
-      </label>
-
-      <p class="side-label" id="sideMenuLabel">교사용 메뉴</p>
-      <button class="nav-item active" data-view="dashboard" type="button">
-        <span class="nav-glyph" data-glyph="today" aria-hidden="true"></span>
-        물품 사용 예약
-      </button>
-      <button class="nav-item" data-view="reservations" type="button">
-        <span class="nav-glyph" data-glyph="reserve" aria-hidden="true"></span>
-        <span id="reservationNavLabel">내 예약·반납</span>
-      </button>
-      <button class="nav-item admin-only" data-view="items" type="button">
-        <span class="nav-glyph" data-glyph="items" aria-hidden="true"></span>
-        물품 관리
-      </button>
-      <button class="nav-item admin-only" data-view="purchaseRequests" type="button">
-        <span class="nav-glyph" data-glyph="items" aria-hidden="true"></span>
-        구입 요청
-      </button>
-      <button class="nav-item admin-only" data-view="import" type="button">
-        <span class="nav-glyph" data-glyph="import" aria-hidden="true"></span>
-        일괄 등록
-      </button>
-      <button class="nav-item admin-only" data-view="records" type="button">
-        <span class="nav-glyph" data-glyph="records" aria-hidden="true"></span>
-        사용 기록
-      </button>
-
-      <div class="side-foot">
-        <p class="side-foot-title">오늘은</p>
-        <p class="side-foot-date" id="todayLabel"></p>
-        <p class="side-foot-note">물품실을 고른 뒤 예약할 물품을 찾아보세요.</p>
-      </div>
-      <div class="side-sync-card" aria-label="정보 업데이트 상태">
-        <div class="side-sync-head">
-          <span class="side-sync-title">정보 업데이트</span>
-          <strong id="syncStatusLabel"></strong>
-        </div>
-        <div class="side-support-row">
-          <span class="side-support-text">웹앱 수정 요청 문의</span>
-          <button
-            class="mail-icon-button"
-            id="copySupportEmailBtn"
-            type="button"
-            aria-label="문의 메일 주소 복사"
-            title="endeavor1006@naver.com"
-          >
-            <span aria-hidden="true">✉</span>
-          </button>
-        </div>
-      </div>
-    </aside>
-
-    <main class="content">
-      <div class="mobile-room-row" aria-hidden="false">
-        <label class="mobile-room-select">
-          <span>물품실</span>
-          <select id="mobileLocationFilter"></select>
-        </label>
-      </div>
-      <section class="hero">
-        <div class="hero-text">
-          <h2 id="heroTitle">예약 한 건씩 차근차근 확인해요</h2>
-          <p class="hero-sub" id="heroSub">왼쪽 메뉴에서 화면을 바꿀 수 있어요.</p>
-        </div>
-        <div class="hero-illust" aria-hidden="true">
-          <svg viewBox="0 0 220 110" width="220" height="110">
-            <rect x="6" y="14" width="180" height="86" rx="10" fill="#fff" stroke="#E4D9BF" stroke-width="1.4" />
-            <rect x="20" y="30" width="100" height="8" rx="4" fill="#E9DEC3" />
-            <rect x="20" y="46" width="150" height="6" rx="3" fill="#F1E8D2" />
-            <rect x="20" y="58" width="120" height="6" rx="3" fill="#F1E8D2" />
-            <rect x="20" y="70" width="80" height="6" rx="3" fill="#F1E8D2" />
-            <circle cx="184" cy="22" r="14" fill="#D08B3C" opacity="0.9" />
-            <path d="M178 22 l4 4 l8 -8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"
-              stroke-linejoin="round" />
-            <path d="M150 92 q20 -16 50 -4" stroke="#5B8A6F" stroke-width="2" fill="none" stroke-linecap="round" />
-          </svg>
-        </div>
-      </section>
-
-      <section class="status-grid" id="statusGrid"></section>
-
-      <section class="toolbar">
-        <div class="search-wrap">
-          <label for="searchInput">검색</label>
-          <div class="search-input">
-            <span class="search-icon" aria-hidden="true">🔎</span>
-            <input id="searchInput" type="search" placeholder="예약할 물품명을 적어보세요" />
-          </div>
-        </div>
-        <div class="toolbar-actions">
-          <button class="primary" id="newReservationBtn" type="button">+ 새 예약</button>
-          <button class="ghost admin-only" id="newItemBtn" type="button">물품 추가</button>
-        </div>
-      </section>
-
-      <section id="mainView" class="main-view"></section>
-    </main>
-
-    <aside class="work-panel" id="workPanel" aria-live="polite">
-      <div class="mobile-drag-handle" aria-hidden="true"></div>
-      <div class="panel-empty">
-        <div class="panel-empty-illust" aria-hidden="true">
-          <svg viewBox="0 0 80 80" width="80" height="80">
-            <rect x="14" y="18" width="52" height="48" rx="8" fill="#FBF4E2" stroke="#E4D9BF" stroke-width="1.4" />
-            <path d="M24 32 H56 M24 42 H50 M24 52 H44" stroke="#C9B98E" stroke-width="1.6" stroke-linecap="round" />
-            <circle cx="60" cy="20" r="6" fill="#5B8A6F" />
-          </svg>
-        </div>
-        <p class="panel-title">작업 패널</p>
-        <p class="panel-empty-text">왼쪽 목록에서 물품이나 예약을 고르면<br />여기서 처리할 수 있어요.</p>
-      </div>
-    </aside>
-  </div>
-
-  <nav class="mobile-tab-bar" id="mobileTabBar" aria-label="모바일 하단 탭">
-    <button class="mob-tab active" data-view="dashboard" type="button">
-      <span class="mob-tab-icon" data-glyph="today" aria-hidden="true"></span>
-      <span class="mob-tab-label">물품예약</span>
-    </button>
-    <button class="mob-tab" data-view="reservations" type="button">
-      <span class="mob-tab-icon" data-glyph="reserve" aria-hidden="true"></span>
-      <span class="mob-tab-label" id="mobReservationTabLabel">내 예약</span>
-    </button>
-    <button class="mob-tab admin-only" data-view="items" type="button">
-      <span class="mob-tab-icon" data-glyph="items" aria-hidden="true"></span>
-      <span class="mob-tab-label">물품관리</span>
-    </button>
-    <button class="mob-tab admin-only" data-view="purchaseRequests" type="button">
-      <span class="mob-tab-icon" data-glyph="items" aria-hidden="true"></span>
-      <span class="mob-tab-label">구입요청</span>
-    </button>
-    <button class="mob-tab admin-only" data-view="import" type="button">
-      <span class="mob-tab-icon" data-glyph="import" aria-hidden="true"></span>
-      <span class="mob-tab-label">일괄등록</span>
-    </button>
-    <button class="mob-tab admin-only" data-view="records" type="button">
-      <span class="mob-tab-icon" data-glyph="records" aria-hidden="true"></span>
-      <span class="mob-tab-label">사용기록</span>
-    </button>
-    <button class="mob-tab" data-mob-action="more" type="button">
-      <span class="mob-tab-icon" data-glyph="more" aria-hidden="true"></span>
-      <span class="mob-tab-label">더보기</span>
-    </button>
-  </nav>
-
-  <div class="mobile-sheet-backdrop" id="mobileSheetBackdrop" aria-hidden="true"></div>
-
-  <div class="mobile-more-sheet" id="mobileMoreSheet" aria-hidden="true">
-    <div class="mobile-drag-handle" aria-hidden="true"></div>
-    <div class="mobile-more-content">
-      <button class="mob-more-item" data-mob-action="account" type="button">학교 계정</button>
-      <button class="mob-more-item" data-mob-action="help" type="button">사용법</button>
-      <button class="mob-more-item" data-mob-action="adminMode" type="button">관리자 모드</button>
-      <button class="mob-more-item admin-only" data-mob-action="schoolSettings" type="button">학교 설정</button>
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">
+      <img src="./asset/logo.png" alt="교구이음">
+    </a>
+    <div class="nav-links">
+      <a href="#features">기능 소개</a>
+      <a href="#how">사용 방법</a>
+      <a href="#faq">자주 묻는 질문</a>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-login" id="landingLoginBtn">로그인</button>
+      <button class="btn-primary" id="landingStartBtn">우리 학교에 도입하기</button>
     </div>
   </div>
+</nav>
 
-  <template id="modalTemplate">
-    <div class="modal-backdrop">
-      <form class="modal" id="modalForm">
-        <div class="modal-header">
-          <h2 id="modalTitle"></h2>
-          <button class="icon-button" data-close-modal type="button" aria-label="닫기">×</button>
-        </div>
-        <div class="modal-body" id="modalBody"></div>
-        <div class="modal-footer">
-          <button class="ghost" data-close-modal type="button">취소</button>
-          <button class="primary" id="modalSubmit" type="submit">저장</button>
-        </div>
-      </form>
+<!-- HERO -->
+<section id="hero" class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">학교 교구 관리 플랫폼</div>
+    <h1>선생님의 수업과<br><em>교구</em>를 잇다</h1>
+    <p>교구 예약부터 재고 관리, 구입 요청까지.<br>복잡한 교구 관리를 단 하나의 플랫폼으로.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" id="heroStartBtn">우리 학교에 도입하기 →</button>
+      <a href="#how" class="btn-ghost">사용 방법 보기</a>
     </div>
-  </template>
+    <div class="hero-feats">
+      <span class="hero-feat">가입 즉시 사용 가능</span>
+      <span class="hero-feat">설치 불필요</span>
+      <span class="hero-feat">완전 무료</span>
+    </div>
+    <!-- 앱 화면 목업 -->
+    <div class="hero-screen">
+      <div class="screen-topbar">
+        <div class="dot" style="background:#ff5f57"></div>
+        <div class="dot" style="background:#ffbd2e"></div>
+        <div class="dot" style="background:#28c840"></div>
+      </div>
+      <div class="screen-body">
+        <div class="screen-sidebar">
+          <div class="screen-sidebar-logo">
+            <img src="./asset/logo.png" alt="교구이음">
+          </div>
+          <div class="screen-nav-item active">대시보드</div>
+          <div class="screen-nav-item">물품 관리</div>
+          <div class="screen-nav-item">예약 목록</div>
+          <div class="screen-nav-item">구입 요청</div>
+          <div class="screen-nav-item">사용 기록</div>
+        </div>
+        <div class="screen-main">
+          <div class="screen-head">
+            <h3>사용 예약할 물품 선택</h3>
+            <button class="screen-btn">+ 새 예약</button>
+          </div>
+          <div class="screen-table">
+            <div class="screen-table-head">
+              <span>물품명</span><span>물품실</span><span>사용 가능</span><span>상태</span><span>예약</span>
+            </div>
+            <div class="screen-row">
+              <div><div class="item-name">미술 가위 세트</div><div class="item-meta">소모품 · 미술실</div></div>
+              <div class="item-meta">미술실</div>
+              <div class="item-meta">12 / 15 개</div>
+              <div><span class="badge-ok">사용 가능</span></div>
+              <div><button class="row-btn">예약하기</button></div>
+            </div>
+            <div class="screen-row">
+              <div><div class="item-name">무선 마우스</div><div class="item-meta">전자기기 · 컴퓨터실</div></div>
+              <div class="item-meta">컴퓨터실</div>
+              <div class="item-meta">3 / 20 개</div>
+              <div><span class="badge-warn">일부 대출중</span></div>
+              <div><button class="row-btn">예약하기</button></div>
+            </div>
+            <div class="screen-row">
+              <div><div class="item-name">블루투스 스피커</div><div class="item-meta">음향기기 · 강당</div></div>
+              <div class="item-meta">강당</div>
+              <div class="item-meta">2 / 2 개</div>
+              <div><span class="badge-ok">사용 가능</span></div>
+              <div><button class="row-btn">예약하기</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <div id="toastRoot" class="toast-root" aria-live="polite"></div>
+<!-- FEATURES -->
+<section id="features" class="features">
+  <div class="section-inner">
+    <span class="section-tag">핵심 기능</span>
+    <h2 class="section-title">교구 관리의 모든 것,<br>한 곳에서</h2>
+    <p class="section-sub">예약부터 재고, 구입 요청까지 — 교무실과 창고를 오가는 번거로움을 없앱니다.</p>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">📦</div>
+        <div class="feat-title">스마트 예약</div>
+        <div class="feat-desc">교사가 직접 물품을 검색하고 날짜를 선택해 예약합니다. 실시간 재고 현황을 확인하며 중복 예약을 방지합니다.</div>
+        <ul class="feat-list">
+          <li>실시간 재고 현황 확인</li>
+          <li>날짜·수량 지정 예약</li>
+          <li>예약 현황 한눈에 보기</li>
+        </ul>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🗂️</div>
+        <div class="feat-title">재고 관리</div>
+        <div class="feat-desc">관리자가 물품실별로 물품을 등록하고 관리합니다. 카테고리, 수량, 상태를 체계적으로 기록합니다.</div>
+        <ul class="feat-list">
+          <li>물품실·카테고리별 분류</li>
+          <li>물품 상태 실시간 추적</li>
+          <li>엑셀 일괄 가져오기</li>
+        </ul>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🛒</div>
+        <div class="feat-title">구입 요청</div>
+        <div class="feat-desc">필요한 물품을 교사가 직접 요청하고, 관리자가 검토·승인합니다. 구입 이력도 자동으로 기록됩니다.</div>
+        <ul class="feat-list">
+          <li>교사 → 관리자 요청 흐름</li>
+          <li>요청 현황 및 처리 상태</li>
+          <li>구입 이력 자동 기록</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <script src="./account-core.js"></script>
-  <script src="./vendor/xlsx.full.min.js"></script>
-  <script src="./inventory-storage.js"></script>
-  <script src="./inventory-core.js"></script>
-  <script src="./app.js"></script>
-  <!-- Firebase 12.14.0 모듈 스크립트 (type="module" → 자동 defer, app.js 이후 실행) -->
-  <script type="module" src="./firebase-config.js"></script>
-  <script type="module" src="./account-ui.js"></script>
+<!-- HOW IT WORKS -->
+<section id="how" class="how">
+  <div class="section-inner">
+    <span class="section-tag">이렇게 작동합니다</span>
+    <h2 class="section-title">물품 예약, 3단계면 끝</h2>
+    <div class="how-grid">
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">물품 검색</div>
+            <div class="step-desc">물품실을 선택하거나 검색어를 입력해 원하는 물품을 찾습니다. 실시간 재고와 대출 현황을 바로 확인할 수 있습니다.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">날짜·수량 선택</div>
+            <div class="step-desc">사용 날짜와 필요한 수량을 입력합니다. 이미 예약된 날짜는 자동으로 표시되어 중복을 방지합니다.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">예약 완료</div>
+            <div class="step-desc">확인 버튼 하나로 예약이 완료됩니다. 관리자 화면에도 즉시 반영됩니다.</div>
+          </div>
+        </div>
+      </div>
+      <div class="how-visual">
+        <div class="how-visual-head">
+          <div class="dot" style="background:#ff5f57"></div>
+          <div class="dot" style="background:#ffbd2e"></div>
+          <div class="dot" style="background:#28c840"></div>
+        </div>
+        <div class="how-visual-body">
+          <div class="modal-preview">
+            <div class="modal-title">📦 블루투스 스피커 예약</div>
+            <div class="field">
+              <div class="field-label">사용 날짜</div>
+              <div class="field-input">2026년 6월 3일 (화)</div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">수량</div>
+                <div class="field-input">1 개</div>
+              </div>
+              <div class="field">
+                <div class="field-label">사용 교사</div>
+                <div class="field-input">김선생님</div>
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">사용 목적 (선택)</div>
+              <div class="field-input" style="color:#8d8d8d;">예: 음악 수업</div>
+            </div>
+            <button class="modal-btn">예약 확정하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- START FLOW -->
+<section class="flow">
+  <div class="section-inner">
+    <span class="section-tag">시작 방법</span>
+    <h2 class="section-title">오늘 바로 시작할 수 있습니다</h2>
+    <p class="section-sub">복잡한 설치나 설정 없이, 4단계만으로 우리 학교 교구 관리 시스템을 만드세요.</p>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-title">학교 계정 생성</div>
+        <div class="flow-desc">이메일로 가입하고 학교 이름을 설정합니다. 1분이면 완료.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-title">물품 등록</div>
+        <div class="flow-desc">물품실을 만들고 교구를 하나씩 또는 엑셀로 한 번에 등록합니다.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-title">교사 초대</div>
+        <div class="flow-desc">초대 링크를 공유하면 교사들이 바로 접속해 예약을 시작합니다.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-title">예약 시작</div>
+        <div class="flow-desc">이제 교사들이 스스로 교구를 검색하고 예약합니다. 관리 부담이 줄어듭니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq">
+  <div class="section-inner">
+    <span class="section-tag">자주 묻는 질문</span>
+    <h2 class="section-title">궁금한 점이 있으신가요?</h2>
+    <p class="section-sub">학교에서 가장 많이 물어보시는 질문들을 모았습니다.</p>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <div class="faq-q">교구이음을 만든 사람이 우리 학교 데이터를 볼 수 있나요?</div>
+        <div class="faq-a">
+          <strong>볼 수 없습니다.</strong> 각 학교의 물품 목록, 예약 내역, 교사 정보는 해당 학교 관리자만 접근할 수 있습니다. 교구이음 운영자는 개별 학교 데이터에 접근하지 않으며, 학교별 데이터는 완전히 독립된 공간에 저장됩니다.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">다른 학교에서 우리 학교 물품 목록이나 예약 내역을 볼 수 있나요?</div>
+        <div class="faq-a">
+          <strong>볼 수 없습니다.</strong> 우리 학교 페이지는 관리자가 교사들에게 공유하는 <strong>고유한 내부 주소</strong>를 통해서만 접근할 수 있습니다.
+          <div class="url-example">school-inventory.web.app/?school=oo초등학교</div>
+          이 주소를 공유하지 않는 한, 외부인은 우리 학교 데이터에 접근할 방법이 없습니다. 주소를 알더라도 학교 계정으로 로그인하지 않으면 내용을 볼 수 없습니다.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">학교 관리자는 누가 되나요? 관리자 권한은 어떻게 부여되나요?</div>
+        <div class="faq-a">
+          처음 학교 계정을 생성한 분이 자동으로 <strong>학교 관리자</strong>가 됩니다. 관리자는 물품 등록·수정·삭제, 교사 초대, 구입 요청 승인 등 모든 권한을 가집니다. 일반 교사는 물품 조회와 예약만 할 수 있어, 실수로 데이터를 수정하거나 삭제할 걱정이 없습니다.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">교사가 실수로 물품을 삭제하거나 데이터를 망가뜨릴 수 있나요?</div>
+        <div class="faq-a">
+          <strong>그럴 수 없습니다.</strong> 물품 추가·수정·삭제는 관리자 권한이 있어야만 가능합니다. 교사는 물품을 검색하고 예약하는 것만 할 수 있어, 데이터가 의도치 않게 변경되는 상황을 구조적으로 방지합니다.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2>지금 우리 학교<br>교구이음을 시작하세요</h2>
+    <p>설치 없이 바로 사용할 수 있습니다.</p>
+    <button class="btn-white" id="ctaStartBtn">우리 학교에 도입하기 →</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">
+      <img src="./asset/logo.png" alt="교구이음">
+    </div>
+    <span class="footer-copy">© 2026 교구이음. 모든 학교를 위해 무료로 제공됩니다.</span>
+  </div>
+</footer>
+
+<script>
+  // 모든 CTA 버튼 → 앱의 계정 로그인 모달로 이동
+  function goToApp(openLogin) {
+    const url = openLogin ? './app.html?openLogin=1' : './app.html';
+    window.location.href = url;
+  }
+
+  document.getElementById('landingLoginBtn').addEventListener('click', () => goToApp(true));
+  document.getElementById('landingStartBtn').addEventListener('click', () => goToApp(true));
+  document.getElementById('heroStartBtn').addEventListener('click', () => goToApp(true));
+  document.getElementById('ctaStartBtn').addEventListener('click', () => goToApp(true));
+</script>
+
 </body>
-
 </html>
