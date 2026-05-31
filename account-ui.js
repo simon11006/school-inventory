@@ -830,22 +830,29 @@ function openSuperAdminView() {
     schoolNameEl.classList.remove("needs-setup");
   }
 
-  // Hero 영역: 제목 + 로그아웃 버튼
+  // Hero 영역: 제목·로그아웃 버튼 제거 (헤더로 이동)
   const heroTitle = document.querySelector("#heroTitle");
   const heroSub   = document.querySelector("#heroSub");
-  if (heroTitle) heroTitle.textContent = "총괄관리자 대시보드";
-  if (heroSub) {
-    heroSub.classList.remove("hero-sub-notice");
-    heroSub.innerHTML = `<button class="ghost compact" id="superAdminLogoutBtn" type="button">로그아웃</button>`;
-    heroSub.querySelector("#superAdminLogoutBtn").addEventListener("click", async () => {
+  if (heroTitle) heroTitle.textContent = "";
+  if (heroSub)  { heroSub.classList.remove("hero-sub-notice"); heroSub.innerHTML = ""; }
+
+  // 헤더 오른쪽에 로그아웃 버튼 추가
+  const topbarButtons = document.querySelector(".topbar-buttons");
+  if (topbarButtons && !topbarButtons.querySelector("#superAdminLogoutBtn")) {
+    const logoutBtn = document.createElement("button");
+    logoutBtn.className = "ghost";
+    logoutBtn.id = "superAdminLogoutBtn";
+    logoutBtn.textContent = "로그아웃";
+    logoutBtn.addEventListener("click", async () => {
       await signOut(getAuth());
       window._superAdminMode = false;
       document.body.classList.remove("super-admin-mode");
-      // 사이드바 복원
       const sadminNav = document.querySelector("#sadminSideNav");
       if (sadminNav) sadminNav.remove();
+      logoutBtn.remove();
       location.reload();
     });
+    topbarButtons.prepend(logoutBtn);
   }
 
   // ── 사이드바에 관리자 메뉴 주입 ─────────────────────────
