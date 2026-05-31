@@ -319,7 +319,25 @@ async function handleRegister(modal, school) {
 
     // Firebase Auth 세션용 내부 토큰 생성 (사용자에게 노출 안 됨)
     const authToken = Core.generateShortCode(16);
-    const cred = await createUserWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), authToken);
+    let cred;
+    try {
+      cred = await createUserWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), authToken);
+    } catch (authErr) {
+      if (authErr.code === "auth/email-already-in-use") {
+        // 이전에 삭제된 학교의 아이디 — Firestore 문서는 없지만 Auth 계정이 남아있는 경우
+        // 기존 Auth 계정에 새 토큰으로 로그인해서 재사용
+        const deletedDoc = await getDocs(query(collection(db, "deletedSchools"), where("username", "==", user), limit(1)));
+        if (!deletedDoc.empty) {
+          const oldToken = deletedDoc.docs[0].data()._authToken;
+          cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), oldToken);
+        } else {
+          submitBtn.textContent = "가입 신청"; submitBtn.disabled = false;
+          return alert("이미 사용 중인 아이디입니다. 다른 아이디를 선택해주세요.");
+        }
+      } else {
+        throw authErr;
+      }
+    }
 
     // Firestore 학교 문서 생성 — password: 실제 사용자 비밀번호, _authToken: Firebase Auth용
     await setDoc(doc(db, "schools", cred.user.uid), {
@@ -1076,10 +1094,19 @@ async function renderSuperAdminContent(container) {
         t.disabled = true;
         try {
           const sSnap = await getDoc(doc(db, "schools", del));
-          const shortCode = sSnap.data()?.shortCode;
+          const sData = sSnap.data() || {};
+          const shortCode = sData.shortCode;
           const batch = writeBatch(db);
           batch.delete(doc(db, "schools", del));
           if (shortCode) batch.delete(doc(db, "connections", shortCode));
+          // 삭제된 아이디 기록 — 재가입 시 Firebase Auth 계정 재사용에 필요
+          if (sData.username) {
+            batch.set(doc(db, "deletedSchools", del), {
+              username: sData.username,
+              _authToken: sData._authToken || "",
+              deletedAt: serverTimestamp(),
+            });
+          }
           await batch.commit();
           renderSuperAdminContent(container);
         } catch (e) {
