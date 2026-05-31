@@ -805,6 +805,8 @@ window.enterSchoolAdminMode = function () {
   if (els.teacherSelect && els.teacherSelect.value !== GLOBAL_ADMIN_VALUE) {
     els.teacherSelect.value = GLOBAL_ADMIN_VALUE;
   }
+  // 총괄 대시보드는 서비스 운영자 전용 — 학교 관리자에게는 숨김
+  document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
   persistAdminSession();
   render();
 };
