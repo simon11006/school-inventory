@@ -2,6 +2,13 @@
 // index.html 에서 <script type="module" src="./account-ui.js"> 로 로드 (app.js 뒤)
 // Firebase 12.14.0 modular SDK 사용
 
+// ─── EmailJS 설정 (신규 가입 알림용) ────────────────────────────────────────
+// https://www.emailjs.com/ 에서 계정 생성 후 아래 값을 채워주세요.
+const EMAILJS_PUBLIC_KEY  = "";   // Account > API Keys > Public Key
+const EMAILJS_SERVICE_ID  = "";   // Email Services > Service ID
+const EMAILJS_TEMPLATE_ID = "";   // Email Templates > Template ID
+// 템플릿 변수: {{school_name}}, {{username}}, {{email}}, {{time}}
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -341,6 +348,19 @@ async function handleRegister(modal, school) {
 
     await signOut(auth); // 승인 전이므로 즉시 로그아웃
 
+    // 관리자에게 가입 알림 이메일 발송 (EmailJS 설정된 경우)
+    if (EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID) {
+      try {
+        window.emailjs?.init({ publicKey: EMAILJS_PUBLIC_KEY });
+        await window.emailjs?.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          school_name: school.name,
+          username:    user,
+          email:       email,
+          time:        new Date().toLocaleString("ko-KR"),
+        });
+      } catch { /* 알림 실패 시 가입 흐름에 영향 없음 */ }
+    }
+
     // alert 대신 모달 내용을 완료 화면으로 교체
     const body = modal.querySelector("#modalBody");
     const footer = modal.querySelector(".modal-footer, .modal-actions");
@@ -350,11 +370,13 @@ async function handleRegister(modal, school) {
           <div style="font-size:40px;margin-bottom:16px;">✅</div>
           <h3 style="margin:0 0 12px;font-size:18px;">가입 신청이 접수되었습니다</h3>
           <p style="margin:0 0 8px;line-height:1.7;color:var(--ink-mute);">
-            총괄관리자 검토 후 승인되면<br/>
-            등록하신 이메일로 안내가 발송됩니다.
-          </p>
-          <p style="margin:0;font-size:13px;color:var(--ink-mute);">
+            보통 <strong>1~2일 내</strong>에 승인됩니다.<br/>
             승인 완료 전까지는 로그인이 제한됩니다.
+          </p>
+          <p style="margin:8px 0 0;font-size:13px;color:var(--ink-mute);">
+            기간이 지나도 승인되지 않으면<br/>
+            화면 왼쪽 하단 <strong>웹앱 수정 요청 문의</strong> 버튼으로<br/>
+            문의해 주세요.
           </p>
           <button class="primary" id="regDoneBtn" type="button"
             style="margin-top:24px;min-width:120px;">확인</button>
