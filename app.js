@@ -66,6 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
   bindElements();
   bindEvents();
   restoreAdminSession(); // 새로고침 후에도 같은 세션 동안 관리자 권한 유지
+  const viewParam = new URL(location.href).searchParams.get("view");
+  const validViews = ["dashboard", "items", "purchaseRequests", "reservations", "import", "records"];
+  if (viewParam && validViews.includes(viewParam)) currentView = viewParam;
   render();
   runStartupSync().then(finalizeSetupAfterLink).catch(e => console.warn("Setup finalize error:", e));
   // 자동 마법사 팝업 제거 — 새 계정 시스템 도입으로 "학교 계정" 버튼으로 유도
@@ -98,6 +101,14 @@ function bindElements() {
 }
 
 function bindEvents() {
+  window.addEventListener("popstate", (e) => {
+    const view = e.state?.view ?? "dashboard";
+    switchView(view, { pushHistory: false });
+    selectedReservationId = null;
+    selectedItemId = null;
+    render();
+  });
+
   // 로고 클릭 → 첫화면(대시보드)으로 이동
   document.querySelector(".brand-logo-title")?.addEventListener("click", () => {
     if (window._superAdminMode) {
@@ -1510,9 +1521,18 @@ function getStatusCardAction(action) {
   return null;
 }
 
-function switchView(nextView) {
+function switchView(nextView, { pushHistory = true } = {}) {
   if (nextView && nextView !== currentView && els.searchInput) els.searchInput.value = "";
   currentView = nextView || currentView;
+  if (pushHistory && nextView) {
+    const url = new URL(location.href);
+    if (nextView === "dashboard") {
+      url.searchParams.delete("view");
+    } else {
+      url.searchParams.set("view", nextView);
+    }
+    history.pushState({ view: nextView }, "", url);
+  }
 }
 
 function handleStatusCardAction(action) {
