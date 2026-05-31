@@ -340,8 +340,31 @@ async function handleRegister(modal, school) {
     });
 
     await signOut(auth); // 승인 전이므로 즉시 로그아웃
-    alert("가입 신청이 접수되었습니다.\n총괄관리자 승인 후 로그인할 수 있습니다.");
-    modal.remove();
+
+    // alert 대신 모달 내용을 완료 화면으로 교체
+    const body = modal.querySelector("#modalBody");
+    const footer = modal.querySelector(".modal-footer, .modal-actions");
+    if (body) {
+      body.innerHTML = `
+        <div style="text-align:center;padding:24px 8px;">
+          <div style="font-size:40px;margin-bottom:16px;">✅</div>
+          <h3 style="margin:0 0 12px;font-size:18px;">가입 신청이 접수되었습니다</h3>
+          <p style="margin:0 0 8px;line-height:1.7;color:var(--ink-mute);">
+            총괄관리자 검토 후 승인되면<br/>
+            등록하신 이메일로 안내가 발송됩니다.
+          </p>
+          <p style="margin:0;font-size:13px;color:var(--ink-mute);">
+            승인 완료 전까지는 로그인이 제한됩니다.
+          </p>
+          <button class="primary" id="regDoneBtn" type="button"
+            style="margin-top:24px;min-width:120px;">확인</button>
+        </div>
+      `;
+      modal.querySelector("#regDoneBtn")?.addEventListener("click", () => modal.remove());
+    } else {
+      alert("가입 신청이 접수되었습니다.\n총괄관리자 승인 후 로그인할 수 있습니다.");
+      modal.remove();
+    }
   } catch (e) {
     submitBtn.textContent = "가입 신청";
     submitBtn.disabled = false;
