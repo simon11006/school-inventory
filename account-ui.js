@@ -503,11 +503,39 @@ async function handleLogin(modal) {
   }
 }
 
+// 스프레드시트가 만든 "접속 링크"에서 웹앱 URL·연결 키를 자동 추출
+// 지원 형식: ?d=배포ID&k=키 / ?u=URL&k=키 / ?gs_url=&gs_key= / 순수 /exec URL
+function parseConnectionLink(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return null;
+  const PREFIX = "https://script.google.com/macros/s/";
+  const SUFFIX = "/exec";
+  let params;
+  try {
+    params = new URL(text).searchParams;
+  } catch {
+    const q = text.indexOf("?");
+    params = new URLSearchParams(q >= 0 ? text.slice(q + 1) : text);
+  }
+  const apiKey = params.get("k") || params.get("gs_key") || "";
+  let webAppUrl = params.get("u") || params.get("gs_url") || "";
+  const d = params.get("d");
+  if (!webAppUrl && d) webAppUrl = PREFIX + d + SUFFIX;
+  // 파라미터 없이 /exec 주소만 붙여넣은 경우
+  if (!webAppUrl && text.includes("/macros/s/") && text.includes("/exec")) {
+    webAppUrl = text.split(/[?#]/)[0];
+  }
+  if (!webAppUrl || !apiKey) return null;
+  const m = webAppUrl.match(/\/macros\/s\/([^/]+)\/exec/);
+  return { webAppUrl, apiKey, deploymentId: m ? m[1] : "" };
+}
+
 // ─── 연결 관리(로그인 후) ──────────────────────────────────────────────────
 function openConnectionManager(uid, data) {
-  const shortLink = data.shortCode ? `${location.origin}/?s=${data.shortCode}` : null;
-  const conn      = data.connection || {};
-  const hasConn   = !!(conn.webAppUrl && conn.apiKey);
+  const shortLink      = data.shortCode ? `${location.origin}/?s=${data.shortCode}` : null;
+  const conn           = data.connection || {};
+  const hasConn        = !!(conn.webAppUrl && conn.apiKey);
+  const fullyConnected = shortLink && hasConn;   // 승인 + 웹앱 설정 모두 완료
 
   const modal = window.openModal({
     title: `${esc(data.schoolName)}`,
@@ -527,59 +555,73 @@ function openConnectionManager(uid, data) {
             style="white-space:nowrap;font-size:12px;">로그아웃</button>
         </div>
 
-        ${shortLink ? `
-        <!-- ✅ 연결 완료 상태 -->
-        <div style="padding:14px 16px;background:var(--surface2,#f0f8f4);border:1px solid var(--accent,#5B8A6F);border-radius:10px;">
-          <p style="margin:0 0 10px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 연결 완료</p>
-          <p class="acct-hint" style="margin:0 0 4px;">교사들에게 아래 주소를 공유하세요.</p>
-          <code id="shortLinkText" style="font-size:13px;word-break:break-all;display:block;margin-bottom:8px;">${esc(shortLink)}</code>
+        ${!shortLink ? `
+        <!-- 상태 1: 승인 대기 -->
+        <div style="padding:14px 16px;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;">
+          <p style="margin:0;font-weight:600;color:#a07000;">⏳ 총괄관리자 승인을 기다리고 있습니다.</p>
+          <p class="acct-hint" style="margin:6px 0 0;">승인 후 로그인하면 다음 설정을 진행할 수 있습니다.</p>
+        </div>
+
+        ` : !hasConn ? `
+        <!-- 상태 2: 승인됨 — 구글 스프레드시트 연결 설정 필요 -->
+        <div style="padding:14px 16px;background:#f0f8f4;border:1px solid var(--accent,#5B8A6F);border-radius:10px;margin-bottom:4px;">
+          <p style="margin:0;font-weight:600;color:var(--accent,#5B8A6F);">✅ 계정 승인 완료 — 아래 설정을 진행하세요</p>
+        </div>
+
+        ` : `
+        <!-- 상태 3: 완전 연결 완료 -->
+        <div style="padding:14px 16px;background:#f0f8f4;border:1px solid var(--accent,#5B8A6F);border-radius:10px;">
+          <p style="margin:0 0 8px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 설정 완료 — 교사 초대 주소</p>
+          <code id="shortLinkText" style="font-size:13px;word-break:break-all;display:block;margin-bottom:10px;">${esc(shortLink)}</code>
           <div style="display:flex;gap:8px;">
             <button class="primary compact" id="copyShort" type="button">주소 복사</button>
             <button class="ghost compact" id="showConnEdit" type="button">연결 정보 수정</button>
           </div>
-          <p class="acct-hint" style="margin:8px 0 0;color:var(--danger-mute,#c0392b);">⚠️ 학교 내부 메신저로만 공유하세요. 외부에 공개 금지.</p>
-        </div>
-        ` : `
-        <!-- ⚠️ 미연결 상태 -->
-        <div style="padding:14px 16px;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;">
-          <p style="margin:0;font-weight:600;color:#a07000;">⏳ 승인 대기 중이거나 연결이 아직 설정되지 않았습니다.</p>
-          <p class="acct-hint" style="margin:6px 0 0;">총괄관리자 승인 후 아래 단계를 진행하세요.</p>
+          <p class="acct-hint" style="margin:8px 0 0;color:#c0392b;">⚠️ 학교 내부 메신저로만 공유. 외부 공개 금지.</p>
         </div>
         `}
 
-        <!-- 연결 정보 입력 영역 (수정 시 또는 미연결 시) -->
+        <!-- 연결 정보 입력 영역: 미설정이거나 수정 버튼 클릭 시 표시 -->
+        ${shortLink ? `
         <div id="connEditArea" style="display:${hasConn ? "none" : "block"};">
-          <div style="padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface2,#f9f9f9);">
-            <p style="margin:0 0 12px;font-weight:600;">📋 구글 스프레드시트 연결 설정</p>
-
-            <p style="margin:0 0 8px;font-size:13px;line-height:1.7;">
-              <strong>Step 1.</strong> 학교에서 받은 <strong>처음 설정 가이드</strong>를 열어<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 스프레드시트 웹앱 배포까지 완료하세요.<br/>
-              <strong>Step 2.</strong> 배포 후 나타나는 주소와 연결 키를 아래에 붙여넣으세요.
+          <div style="padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface2,#f9f9f9);">
+            <p style="margin:0 0 6px;font-weight:600;font-size:14px;">📋 구글 스프레드시트 연결</p>
+            <p style="margin:0 0 10px;font-size:13px;line-height:1.7;color:var(--ink-mute);">
+              아직 스프레드시트를 안 만드셨다면 가이드를 먼저 따라 하세요.
             </p>
             <a href="./처음설정가이드.html" target="_blank" rel="noopener"
-              class="ghost compact" style="display:inline-block;margin-bottom:14px;font-size:13px;">
-              📖 처음 설정 가이드 열기
+              style="display:inline-block;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--accent,#5B8A6F);">
+              📖 처음 설정 가이드 열기 →
             </a>
 
-            <div class="acct-field" style="margin-bottom:12px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div class="acct-field">
+              <span class="acct-label">접속 링크 붙여넣기</span>
+              <span class="acct-hint">스프레드시트 메뉴 [교구이음 → ④ 우리 학교 접속 링크]에서 복사한 주소</span>
+              <input id="connLink" type="text"
+                placeholder="https://item-school.netlify.app/?d=...&k=..." />
+            </div>
+            <button class="primary" id="connSave" type="button" style="width:100%;margin-top:12px;">연결하기</button>
+
+            <button class="ghost compact" id="connAdvToggle" type="button"
+              style="width:100%;font-size:12px;color:var(--ink-mute);margin-top:8px;">
+              링크가 없으면 · URL과 연결 키 직접 입력
+            </button>
+            <div id="connAdvArea" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">
+              <div class="acct-field" style="margin-bottom:12px;">
                 <span class="acct-label">웹앱 주소</span>
-                <span class="acct-hint">배포 후 나타나는 /exec 로 끝나는 주소</span>
+                <span class="acct-hint">/exec 로 끝나는 배포 주소</span>
+                <input id="connUrl" type="url" value="${esc(conn.webAppUrl || "")}"
+                  placeholder="https://script.google.com/macros/s/.../exec" />
               </div>
-              <input id="connUrl" type="url" value="${esc(conn.webAppUrl || "")}"
-                placeholder="https://script.google.com/macros/s/.../exec" />
-            </div>
-            <div class="acct-field" style="margin-bottom:14px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <div class="acct-field">
                 <span class="acct-label">연결 키</span>
-                <span class="acct-hint">스프레드시트 설정 시트의 API_KEY 값</span>
+                <span class="acct-hint">시트 settings 탭의 API_KEY 값</span>
+                <input id="connKey" type="text" value="${esc(conn.apiKey || "")}" />
               </div>
-              <input id="connKey" type="text" value="${esc(conn.apiKey || "")}" />
             </div>
-            <button class="primary" id="connSave" type="button" style="width:100%;">저장</button>
           </div>
         </div>
+        ` : ""}
 
       </div>`,
   });
@@ -613,37 +655,58 @@ function openConnectionManager(uid, data) {
     modal.querySelector("#connEditArea").style.display = "block";
   });
 
-  // 연결정보 저장
+  // URL·키 직접 입력 토글
+  modal.querySelector("#connAdvToggle")?.addEventListener("click", () => {
+    const adv = modal.querySelector("#connAdvArea");
+    adv.style.display = adv.style.display === "none" ? "block" : "none";
+  });
+
+  // 연결정보 저장 — 링크 우선, 없으면 직접 입력
   modal.querySelector("#connSave")?.addEventListener("click", async () => {
-    const url = modal.querySelector("#connUrl").value.trim();
-    const key = modal.querySelector("#connKey").value.trim();
-    if (!url.includes("/macros/s/") || !url.endsWith("/exec"))
-      return alert("웹앱 URL은 /macros/s/... 로 시작하고 /exec 로 끝나야 합니다.");
-    if (!key) return alert("연결 키를 입력하세요.");
-    const m = url.match(/\/macros\/s\/([^/]+)\/exec/);
-    const deploymentId = m ? m[1] : "";
+    const link = modal.querySelector("#connLink").value.trim();
+    let parsed = null;
+
+    if (link) {
+      parsed = parseConnectionLink(link);
+      if (!parsed)
+        return alert("올바른 접속 링크가 아닙니다.\n스프레드시트 [교구이음 → ④ 우리 학교 접속 링크]에서 복사한 주소를 그대로 붙여넣으세요.");
+    } else {
+      const url = modal.querySelector("#connUrl").value.trim();
+      const key = modal.querySelector("#connKey").value.trim();
+      if (!url && !key)
+        return alert("접속 링크를 붙여넣거나, URL·연결 키를 직접 입력하세요.");
+      if (!url.includes("/macros/s/") || !url.endsWith("/exec"))
+        return alert("웹앱 URL은 /macros/s/... 로 시작하고 /exec 로 끝나야 합니다.");
+      if (!key) return alert("연결 키를 입력하세요.");
+      const m = url.match(/\/macros\/s\/([^/]+)\/exec/);
+      parsed = { webAppUrl: url, apiKey: key, deploymentId: m ? m[1] : "" };
+    }
+
     const btn = modal.querySelector("#connSave");
-    btn.textContent = "저장 중…";
+    btn.textContent = "연결 중…";
     btn.disabled = true;
     try {
       const db = getDb();
       await updateDoc(doc(db, "schools", uid), {
-        "connection.webAppUrl":    url,
-        "connection.apiKey":       key,
-        "connection.deploymentId": deploymentId,
+        "connection.webAppUrl":    parsed.webAppUrl,
+        "connection.apiKey":       parsed.apiKey,
+        "connection.deploymentId": parsed.deploymentId,
       });
-      // connections 미러도 갱신 (짧은 주소 조회용)
       if (data.shortCode) {
         await updateDoc(doc(db, "connections", data.shortCode), {
-          webAppUrl: url, apiKey: key, deploymentId,
+          webAppUrl: parsed.webAppUrl, apiKey: parsed.apiKey, deploymentId: parsed.deploymentId,
         });
       }
-      alert("저장했습니다. 페이지를 새로고침하면 적용됩니다.");
+      alert("연결됐습니다! 교사 초대 주소를 학교 내부 메신저로 공유하세요.");
       modal.remove();
+      // 갱신된 연결 정보로 모달 재오픈 → 교사 초대 주소·복사 버튼 즉시 표시
+      openConnectionManager(uid, {
+        ...data,
+        connection: { webAppUrl: parsed.webAppUrl, apiKey: parsed.apiKey, deploymentId: parsed.deploymentId },
+      });
     } catch (e) {
       alert("저장 실패: " + (e?.message || e));
-    } finally {
-      btn.textContent = "저장";
+      btn.textContent = "연결하기";
       btn.disabled = false;
     }
   });

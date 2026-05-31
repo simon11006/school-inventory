@@ -152,13 +152,17 @@
           스프레드시트와 Apps Script는 담당자 개인 계정보다 <strong>학교 공용 계정</strong>으로 만드는 것을 권장합니다.
           개인 계정으로 만들면 담당자 변경·퇴직 시 소유권 인계가 어려워질 수 있습니다.
         </p>
+        <p class="notice" style="background:#e7f1ea;border-color:#c7dec8;color:#2c5b3e;">
+          <strong>시작 전에:</strong> 교구이음 앱에서 <strong>[학교 계정] → 가입</strong>으로 학교 계정을 만들고
+          총괄관리자 <strong>승인</strong>을 받아야 합니다. 승인 후 로그인하면 아래 연결 설정을 진행할 수 있습니다.
+        </p>
         <div class="toc">
           <strong>전체 순서 (4단계)</strong>
           <ol>
             <li>학교용 스프레드시트 <strong>사본 만들기</strong></li>
             <li><strong>'교구이음' 메뉴 → ① 처음 설정</strong> 실행 + 권한 승인</li>
-            <li>Apps Script를 <strong>웹앱으로 배포</strong> → URL 저장</li>
-            <li><strong>'우리 학교 접속 링크'</strong> 클릭 → 연결 자동 완료 → 학교 설정 입력</li>
+            <li>Apps Script를 <strong>웹앱으로 배포</strong> → URL 복사</li>
+            <li><strong>'④ 우리 학교 접속 링크'</strong> 복사 → <strong>교구이음 앱 연결 칸에 붙여넣기</strong></li>
           </ol>
         </div>
       </header>
@@ -233,21 +237,24 @@
         </p>
       </div>
 
-      <h2><span class="stage">4단계</span>'우리 학교 접속 링크' 클릭 → 학교 설정 입력</h2>
+      <h2><span class="stage">4단계</span>'④ 우리 학교 접속 링크' 복사 → 교구이음 앱에 붙여넣기</h2>
       <div class="card">
         <ol>
           <li>사본 시트로 돌아가 <strong>교구이음 → ④ 우리 학교 접속 링크</strong>를 클릭합니다.</li>
-          <li>URL 입력창이 뜨면 3단계에서 메모한 웹 앱 URL(<code>/exec</code>로 끝나는 주소)을 붙여넣고 확인을 누릅니다.</li>
-          <li><strong>▶ 우리 학교 앱 열기</strong> 버튼을 클릭합니다.</li>
-          <li>교구이음 앱이 열리며 연결이 자동으로 완료됩니다.</li>
-          <li>앱에서 <strong>관리자 모드</strong>(PIN: <code>1234</code>) → <strong>학교 설정</strong>을 열어 학교명·교사·물품실·담당자·관리자 PIN을 입력하고 저장합니다.</li>
-          <li>저장하는 순간 스프레드시트에 자동으로 데이터가 올라갑니다.</li>
+          <li>URL 입력창이 뜨면 3단계에서 복사한 웹 앱 URL(<code>/exec</code>로 끝나는 주소)을 붙여넣고 확인을 누릅니다.</li>
+          <li>화면에 <strong>접속 링크</strong>(<code>https://item-school.netlify.app/?d=...&k=...</code>)가 만들어집니다.
+            이 <strong>링크 전체를 복사</strong>합니다. <span class="tip" style="display:inline;padding:2px 6px;">이 링크 안에 연결 키가 들어 있어 따로 키를 복사할 필요가 없습니다.</span></li>
+          <li>교구이음 앱으로 돌아가 <strong>[학교 계정]으로 로그인</strong>합니다. (승인된 아이디/비밀번호)</li>
+          <li>로그인하면 뜨는 <strong>연결 설정</strong> 화면의 <strong>'접속 링크 붙여넣기'</strong> 칸에 방금 복사한 링크를 붙여넣고 <strong>[연결하기]</strong>를 누릅니다.</li>
+          <li>"연결됐습니다!" 메시지와 함께 <strong>교사 초대 주소</strong>가 나타나면 성공입니다.</li>
+          <li>이어서 앱에서 <strong>관리자 모드</strong>(PIN: <code>1234</code>) → <strong>학교 설정</strong>을 열어 학교명·교사·물품실·담당자·관리자 PIN을 입력하고 저장합니다.</li>
         </ol>
         <p class="tip">
-          이 링크가 그대로 <strong>교사 초대 링크</strong>입니다. 교사들에게 이 링크를 공유하면 별도 설정 없이 바로 접속할 수 있습니다.
+          연결 후 앱에 표시되는 <strong>교사 초대 주소</strong>(<code>.../?s=짧은코드</code>)가 교사용 링크입니다.
+          교사들에게 이 주소를 공유하면 별도 설정 없이 바로 접속할 수 있습니다.
         </p>
         <p class="warn">
-          이 링크에는 연결 키가 포함되어 있습니다. <strong>학교 내부 메신저</strong>로만 공유하고
+          접속 링크와 교사 초대 주소에는 연결 키가 포함됩니다. <strong>학교 내부 메신저</strong>로만 공유하고
           외부 사이트·SNS·이메일 등에 올리지 마세요.
         </p>
       </div>
@@ -258,8 +265,8 @@
         <p>초기 PIN <code>1234</code>는 누구나 알 수 있으므로, <strong>학교 설정 → 관리자 PIN</strong>에서 반드시 새 PIN으로 변경하세요.</p>
 
         <h3>교사들에게 링크 공유</h3>
-        <p>4단계에서 열린 앱 주소(URL)가 교사 초대 링크입니다. 카카오톡·네이버 밴드 등 <strong>학교 내부 메신저</strong>로 공유하세요.</p>
-        <p style="margin-top:8px;">교사가 링크를 클릭하면 자동으로 학교 데이터가 연결되어 바로 사용할 수 있습니다.</p>
+        <p>연결 완료 후 앱에 표시되는 <strong>교사 초대 주소</strong>(<code>.../?s=짧은코드</code>)를 카카오톡·네이버 밴드 등 <strong>학교 내부 메신저</strong>로 공유하세요.</p>
+        <p style="margin-top:8px;">교사가 이 주소를 클릭하면 자동으로 학교 데이터가 연결되어 바로 사용할 수 있습니다. 교사는 가입·로그인이 필요 없습니다.</p>
 
         <h3>동기화 동작</h3>
         <ul>
@@ -273,7 +280,7 @@
         <ul class="checklist">
           <li>관리자 PIN을 <code>1234</code>에서 학교 운영용 PIN으로 변경했다.</li>
           <li>학교명·교사·물품실이 스프레드시트에 채워져 있다.</li>
-          <li>교사 초대 링크(= 우리 학교 접속 링크)를 학교 내부 메신저로만 공유했다.</li>
+          <li>앱에 표시된 교사 초대 주소(<code>?s=…</code>)를 학교 내부 메신저로만 공유했다.</li>
           <li>다른 교사 PC에서도 링크로 접속해 같은 데이터가 보인다.</li>
           <li>한 PC에서 예약을 만들었을 때, 다른 PC에서 20초 안에 자동 반영된다.</li>
           <li>웹 앱 URL을 메모장 등 안전한 곳에 보관해 두었다.</li>
@@ -294,7 +301,7 @@
         <p>Apps Script → <strong>배포 → 배포 관리</strong>를 열면 기존 URL을 다시 확인할 수 있습니다.</p>
 
         <h3>연결 키가 유출된 것 같습니다</h3>
-        <p>시트에서 <strong>교구이음 → 연결 키 새로 발급(재발급)</strong>을 실행하세요. 이후 <strong>④ 우리 학교 접속 링크</strong>를 다시 실행해 새 링크를 생성하고, 교사들에게 새 링크를 공유하세요.</p>
+        <p>시트에서 <strong>교구이음 → 연결 키 새로 발급(재발급)</strong>을 실행하세요. 이후 <strong>④ 우리 학교 접속 링크</strong>를 다시 실행해 새 링크를 만든 뒤, 교구이음 앱에 로그인해 <strong>[연결 정보 수정]</strong>에서 새 링크를 붙여넣으면 교사 초대 주소가 자동으로 갱신됩니다.</p>
 
         <h3>다른 교사 화면에 내 변경이 안 보입니다</h3>
         <p>최대 20초 안에 반영되는지 확인하세요. 교사가 <strong>교사 초대 링크</strong>로 접속했는지 확인합니다. 일반 주소로 접속하면 동기화 설정이 누락될 수 있습니다.</p>
