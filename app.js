@@ -1142,6 +1142,9 @@ function renderAdminVisibility() {
   document.querySelectorAll(".global-admin-only").forEach((element) => {
     element.hidden = !isGlobalAdmin();
   });
+  // 처음 설정 가이드: 스프레드시트 연결 완료 후에는 불필요 → 숨김
+  const setupGuideLink = document.querySelector("#setupGuideLink");
+  if (setupGuideLink) setupGuideLink.hidden = !isGlobalAdmin() || canUseRemoteSync();
   const newReservationBtn = document.querySelector("#newReservationBtn");
   if (newReservationBtn) newReservationBtn.disabled = shouldBlockUnconnectedTeacher();
 
