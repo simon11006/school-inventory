@@ -482,7 +482,10 @@ async function handleLogin(modal) {
       modal.remove();
       // 학교 계정 인증 완료 → 관리자 모드 자동 진입 (PIN 재입력 불필요)
       window.enterSchoolAdminMode?.();
-      openConnectionManager(cred.user.uid, schoolData);
+      // 설정 완료 상태면 팝업 생략 — 미완료 상태일 때만 연결 관리 화면 표시
+      const conn = schoolData.connection || {};
+      const fullyConnected = !!(schoolData.shortCode && conn.webAppUrl && conn.apiKey);
+      if (!fullyConnected) openConnectionManager(cred.user.uid, schoolData);
       return;
     }
 
