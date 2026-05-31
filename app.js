@@ -71,6 +71,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (viewParam && validViews.includes(viewParam)) currentView = viewParam;
   render();
   runStartupSync().then(finalizeSetupAfterLink).catch(e => console.warn("Setup finalize error:", e));
+  if (new URL(location.href).searchParams.get("openLogin") === "1") {
+    setTimeout(() => window.account?.openLogin?.(), 300);
+  }
   // 자동 마법사 팝업 제거 — 새 계정 시스템 도입으로 "학교 계정" 버튼으로 유도
   startPolling();
   sendUsagePing();
