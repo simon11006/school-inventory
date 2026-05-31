@@ -36,6 +36,9 @@ let syncConfig = loadSyncConfig();
 let justConnectedViaLink = false;
 applySyncFromUrl();
 let state = loadState();
+if (!state.schoolName?.trim() && syncConfig.schoolName?.trim()) {
+  state.schoolName = syncConfig.schoolName;
+}
 let currentView = "dashboard";
 let selectedReservationId = null;
 let selectedItemId = null;
@@ -754,6 +757,7 @@ function applyConnectionFromAccount(conn) {
   syncConfig.endpoint = endpoint;
   syncConfig.apiKey   = conn.apiKey;
   if (conn.shortCode) syncConfig.schoolCode = conn.shortCode;
+  if (conn.schoolName) syncConfig.schoolName = conn.schoolName;
   syncConfig.autoSync = "pullOnStart"; // 교사용: 페이지 로드 시 최신 데이터 당김
   saveSyncConfig();
   justConnectedViaLink = true;

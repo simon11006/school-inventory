@@ -1253,7 +1253,13 @@ async function resolveShortCodeFromUrl() {
   try {
     const connDoc = await getDoc(doc(getDb(), "connections", code));
     if (!connDoc.exists()) return;
-    const conn = { ...connDoc.data(), shortCode: code };
+    const schoolsSnap = await getDocs(query(
+      collection(getDb(), "schools"),
+      where("shortCode", "==", code),
+      limit(1)
+    ));
+    const schoolName = schoolsSnap.empty ? "" : (schoolsSnap.docs[0].data().schoolName || "");
+    const conn = { ...connDoc.data(), shortCode: code, schoolName };
     if (window.applyConnectionFromAccount?.(conn)) {
       // ?s= 파라미터 제거 후 리로드 → 다음 방문에서는 위의 getSchoolCode() 분기 탐
       const newUrl = new URL(location.href);
