@@ -2,12 +2,9 @@
 // index.html 에서 <script type="module" src="./account-ui.js"> 로 로드 (app.js 뒤)
 // Firebase 12.14.0 modular SDK 사용
 
-// ─── EmailJS 설정 (신규 가입 알림용) ────────────────────────────────────────
-// https://www.emailjs.com/ 에서 계정 생성 후 아래 값을 채워주세요.
-const EMAILJS_PUBLIC_KEY  = "";   // Account > API Keys > Public Key
-const EMAILJS_SERVICE_ID  = "";   // Email Services > Service ID
-const EMAILJS_TEMPLATE_ID = "";   // Email Templates > Template ID
-// 템플릿 변수: {{school_name}}, {{username}}, {{email}}, {{time}}
+// ─── 텔레그램 알림 설정 (신규 가입 알림용) ──────────────────────────────────
+const TELEGRAM_BOT_TOKEN = "8859286021:AAHOwpOluLjWFeOBbNNubWuUHNyuiP8V7pI";
+const TELEGRAM_CHAT_ID   = "461325046";
 
 import {
   createUserWithEmailAndPassword,
@@ -348,15 +345,14 @@ async function handleRegister(modal, school) {
 
     await signOut(auth); // 승인 전이므로 즉시 로그아웃
 
-    // 관리자에게 가입 알림 이메일 발송 (EmailJS 설정된 경우)
-    if (EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID) {
+    // 관리자에게 텔레그램 알림 발송
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
       try {
-        window.emailjs?.init({ publicKey: EMAILJS_PUBLIC_KEY });
-        await window.emailjs?.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          school_name: school.name,
-          username:    user,
-          email:       email,
-          time:        new Date().toLocaleString("ko-KR"),
+        const msg = `🏫 새 학교 가입 신청\n\n학교명: ${school.name}\n아이디: ${user}\n이메일: ${email}\n신청 시각: ${new Date().toLocaleString("ko-KR")}`;
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg }),
         });
       } catch { /* 알림 실패 시 가입 흐름에 영향 없음 */ }
     }
