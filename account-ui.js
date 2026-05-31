@@ -648,9 +648,10 @@ function openConnectionManager(uid, data) {
     });
   }
 
-  // 로그아웃
+  // 로그아웃 — 관리자 권한도 함께 해제
   modal.querySelector("#connLogoutBtn").addEventListener("click", async () => {
     await signOut(getAuth());
+    window.exitSchoolAdminMode?.();
     modal.remove();
     const accountBtn = document.querySelector("#accountBtn");
     if (accountBtn) {

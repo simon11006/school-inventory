@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyTheme();
   bindElements();
   bindEvents();
+  restoreAdminSession(); // 새로고침 후에도 같은 세션 동안 관리자 권한 유지
   render();
   runStartupSync().then(finalizeSetupAfterLink).catch(e => console.warn("Setup finalize error:", e));
   // 자동 마법사 팝업 제거 — 새 계정 시스템 도입으로 "학교 계정" 버튼으로 유도
@@ -762,18 +763,46 @@ window.applyConnectionFromAccount = applyConnectionFromAccount;
 // account-ui.js 가 현재 연결된 schoolCode 를 읽을 수 있게 노출
 window.getSchoolCode = () => syncConfig.schoolCode;
 
+// ── 관리자 권한 세션 유지 (sessionStorage: 새로고침 유지, 창 닫으면 해제) ──
+const ADMIN_SESSION_KEY = "schoolinven_admin_session";
+function persistAdminSession() {
+  try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ adminMode, adminScope })); } catch {}
+}
+function clearAdminSession() {
+  try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch {}
+}
+function restoreAdminSession() {
+  try {
+    const raw = sessionStorage.getItem(ADMIN_SESSION_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved && saved.adminMode && saved.adminScope?.type) {
+      adminMode = true;
+      adminScope = saved.adminScope;
+      document.body.classList.add("is-admin");
+    }
+  } catch {}
+}
+
 // 학교 계정 로그인 성공 시 account-ui.js 에서 호출 → PIN 없이 전체 관리자 모드 진입
 window.enterSchoolAdminMode = function () {
-  if (adminMode) return;           // 이미 관리자 모드면 무시
+  if (adminMode && isGlobalAdmin()) { persistAdminSession(); return; } // 이미 전체관리자
   adminMode  = true;
   adminScope = { type: "global", locations: [], teacher: GLOBAL_ADMIN_VALUE };
   document.body.classList.add("is-admin");
-  // 교사 드롭다운을 '전체 관리자'로 맞춤 (이미 선택돼 있지 않은 경우)
   if (els.teacherSelect && els.teacherSelect.value !== GLOBAL_ADMIN_VALUE) {
     els.teacherSelect.value = GLOBAL_ADMIN_VALUE;
   }
+  persistAdminSession();
   render();
-  toast("학교 계정으로 로그인 — 관리자 모드가 자동으로 켜졌어요", "success");
+};
+
+// 로그아웃 시 account-ui.js 에서 호출 → 관리자 권한 완전 해제
+window.exitSchoolAdminMode = function () {
+  adminMode = false;
+  adminScope = null;
+  clearAdminSession();
+  document.body.classList.remove("is-admin");
 };
 
 function extractDeploymentId(endpoint) {
@@ -1056,11 +1085,18 @@ function renderHero() {
   if (!state.schoolName?.trim()) {
     els.heroTitle.textContent = "학교 설정을 먼저 완료해주세요";
     els.heroSub.classList.remove("hero-sub-notice");
-    els.heroSub.innerHTML = `<button class="primary compact" id="heroSetupBtn" type="button">관리자 모드로 학교 설정 열기</button>`;
-    els.heroSub.querySelector("#heroSetupBtn").addEventListener("click", () => {
-      if (isGlobalAdmin()) openSchoolSettingsModal();
-      else toggleAdminMode(); // 관리자 모드 PIN 입력 유도
-    });
+    if (isGlobalAdmin()) {
+      // 이미 학교 계정 로그인(자동 관리자) 상태 → 바로 학교 설정 열기 (PIN 불필요)
+      els.heroSub.innerHTML = `<button class="primary compact" id="heroSetupBtn" type="button">학교 설정 입력하기</button>`;
+      els.heroSub.querySelector("#heroSetupBtn").addEventListener("click", openSchoolSettingsModal);
+    } else {
+      // 로그아웃 상태 → 학교 계정 로그인으로 유도 (로그인하면 자동으로 관리자 모드)
+      els.heroSub.innerHTML = `
+        <button class="primary compact" id="heroLoginBtn" type="button">학교 계정으로 로그인</button>
+        <button class="ghost compact" id="heroPinBtn" type="button" style="margin-left:8px;">관리자 PIN으로 들어가기</button>`;
+      els.heroSub.querySelector("#heroLoginBtn").addEventListener("click", () => window.account?.openLogin?.());
+      els.heroSub.querySelector("#heroPinBtn").addEventListener("click", toggleAdminMode);
+    }
     return;
   }
 
@@ -1120,6 +1156,7 @@ async function toggleAdminMode() {
   if (adminMode) {
     adminMode = false;
     adminScope = null;
+    clearAdminSession();
     if (["records", "items", "import", "purchaseRequests"].includes(currentView)) switchView("dashboard");
     selectedItemId = null;
     selectedReservationId = null;
@@ -1133,6 +1170,7 @@ async function toggleAdminMode() {
   if (!scope) return;
   adminMode = true;
   adminScope = scope;
+  persistAdminSession();
   switchView("reservations");
   selectedItemId = null;
   selectedReservationId = null;
