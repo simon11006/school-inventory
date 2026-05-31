@@ -535,6 +535,26 @@ function parseConnectionLink(raw) {
   return { webAppUrl, apiKey, deploymentId: m ? m[1] : "" };
 }
 
+// ─── 로그아웃 버튼 설정 (헤더 #accountLogoutBtn) ─────────────────────────────
+function setupLogoutBtn(accountBtn) {
+  const logoutBtn = document.querySelector("#accountLogoutBtn");
+  if (!logoutBtn) return;
+  logoutBtn.hidden = false;
+  logoutBtn.onclick = async () => {
+    if (!confirm("학교 계정에서 로그아웃하시겠습니까?")) return;
+    await signOut(getAuth());
+    window.exitSchoolAdminMode?.();
+    if (accountBtn) {
+      accountBtn.textContent = "학교 계정";
+      accountBtn.style.color = "";
+      accountBtn.onclick = null;
+      accountBtn.addEventListener("click", openLoginModal);
+    }
+    logoutBtn.hidden = true;
+    location.reload();
+  };
+}
+
 // ─── 연결 관리(로그인 후) ──────────────────────────────────────────────────
 function openConnectionManager(uid, data) {
   const shortLink      = data.shortCode ? `${location.origin}/?s=${data.shortCode}` : null;
@@ -1362,6 +1382,8 @@ onAuthStateChanged(getAuth(), async (user) => {
       accountBtn.removeEventListener("click", openLoginModal);
       accountBtn.onclick = () => openConnectionManager(user.uid, data);
     }
+    // 로그아웃 버튼 노출 및 연결
+    setupLogoutBtn(accountBtn);
   } catch {
     // 오류 시 조용히 로그아웃 (Firestore 접근 실패 등)
     signOut(getAuth()).catch(() => {});
