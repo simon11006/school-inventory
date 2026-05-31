@@ -322,14 +322,14 @@ function openHelpModal() {
     body: `
       <div class="help-body">
         <div class="help-setup-notice">
-          <strong>처음 사용하는 학교라면</strong> ① 상단 <b>학교 계정 → 가입</b>으로 학교를 등록하고 총괄관리자 <b>승인</b>을 받습니다. ② 승인 후 <b>학교 계정</b>으로 로그인해 <b>처음 설정 가이드</b>대로 구글 스프레드시트를 연결하면 <b>교사 초대 주소</b>가 발급됩니다. ③ 앱 내부 관리 기능(물품·설정 등)은 <b>관리자 모드</b>(초기 PIN <code>1234</code>)로 잠겨 있습니다.
+          <strong>처음 사용하는 학교라면</strong> ① 상단 <b>학교 관리자 로그인 → 가입</b>으로 학교를 등록하고 총괄관리자 <b>승인</b>을 받습니다. ② 승인 후 <b>학교 관리자 로그인</b>으로 로그인해 구글 스프레드시트를 연결하면 <b>교사 초대 주소</b>가 발급됩니다. ③ 교사들에게 초대 주소를 공유하면 바로 사용할 수 있습니다.
         </div>
         <div class="help-intro">
           <ul class="help-intro-list">
             <li>교구이음은 학교마다 각 학교 관리자가 만든 저장소를 연결해 사용합니다.</li>
             <li>선생님이 보는 물품 정보와 예약 내용은 우리 학교 저장소 기준입니다.</li>
             <li>다른 학교 데이터가 함께 보이거나 섞이지 않도록 운영됩니다.</li>
-            <li>우리 학교 관리자가 공유한 학교 전용 링크로 접속해야 우리 학교 정보가 연결됩니다.</li>
+            <li>우리 학교 관리자가 공유한 교사 초대 링크로 접속해야 우리 학교 정보가 연결됩니다.</li>
           </ul>
         </div>
 
@@ -337,7 +337,7 @@ function openHelpModal() {
           <button class="help-role-tab is-active" data-help-tab="layout" type="button">화면 구성</button>
           <button class="help-role-tab" data-help-tab="teacher" type="button">일반 교사용</button>
           <button class="help-role-tab" data-help-tab="roomAdmin" type="button">실별 담당자용</button>
-          <button class="help-role-tab" data-help-tab="globalAdmin" type="button">전체 관리자용</button>
+          <button class="help-role-tab" data-help-tab="globalAdmin" type="button">학교 관리자용</button>
         </div>
 
         <div class="help-panel is-active" data-help-panel="layout">
@@ -345,11 +345,11 @@ function openHelpModal() {
             <h3>화면 구성 한눈에 보기</h3>
             <section>
               <h4>① 상단 바 (헤더)</h4>
-              <p>왼쪽에 학교명과 로고, 오른쪽에 다크모드 아이콘, <strong>사용 교사</strong> 선택, <strong>학교 계정</strong>, <strong>사용법</strong>, <strong>관리자 모드</strong> 버튼이 있습니다. <strong>학교 계정</strong>은 가입·로그인·연결 관리용이며(연결 후 <strong>내 계정</strong>으로 표시), 관리자 모드에 들어가면 <strong>학교 설정</strong>·<strong>처음 설정 가이드</strong>·<strong>인계 점검</strong>이 추가로 나타납니다.</p>
+              <p>왼쪽에 학교명과 로고, 오른쪽에 다크모드 아이콘, <strong>사용법</strong>, <strong>사용 교사</strong> 선택이 있습니다. 교사 이름을 선택하면 <strong>실별 관리자 로그인</strong> 버튼이 나타납니다. <strong>학교 관리자 로그인</strong>은 학교 계정으로 로그인하는 버튼이며, 로그인 후에는 <strong>학교 계정 ✓</strong>으로 바뀌고 <strong>학교 관리자 모드 켜짐 | 종료</strong> 버튼과 함께 <strong>학교 설정</strong>·<strong>인계 점검</strong>이 추가로 나타납니다.</p>
             </section>
             <section>
               <h4>② 왼쪽 사이드바</h4>
-              <p>맨 위 <strong>물품실 선택</strong> 드롭다운으로 어느 물품실을 볼지 고릅니다. 그 아래는 화면 메뉴입니다 — <em>내 예약·반납</em>, <em>물품 사용 예약</em>이 기본이고, 관리자 모드에서는 <em>물품 관리</em>, <em>구입 요청</em>, <em>일괄 등록</em>, <em>사용 기록</em>이 더 보입니다.</p>
+              <p>맨 위 <strong>물품실 선택</strong> 드롭다운으로 어느 물품실을 볼지 고릅니다. 그 아래는 화면 메뉴입니다 — <em>물품 사용 예약</em>, <em>내 예약·반납</em>이 기본이고, 관리자 모드에서는 <em>물품 관리</em>, <em>구입 요청</em>, <em>일괄 등록</em>, <em>사용 기록</em>이 더 보입니다.</p>
             </section>
             <section>
               <h4>③ 가운데 본문</h4>
@@ -371,11 +371,11 @@ function openHelpModal() {
             <h3>일반 교사용</h3>
             <section>
               <h4>1. 학교 전용 링크로 접속하기</h4>
-              <p>학교 관리자가 학교 메신저로 공유한 <strong>교사 초대 링크</strong>를 클릭해 접속합니다. 일반 웹앱 주소(<code>item-school.netlify.app</code>)만 열면 우리 학교 데이터가 자동으로 연결되지 않습니다. 처음 한 번만 초대 링크로 접속하면 이후엔 즐겨찾기에 등록해 그대로 사용해도 됩니다.</p>
+              <p>학교 관리자가 학교 메신저로 공유한 <strong>교사 초대 링크</strong>를 클릭해 접속합니다. 일반 웹앱 주소(<code>item-school.netlify.app</code>)로만 열면 우리 학교 데이터가 자동으로 연결되지 않습니다. 처음 한 번만 초대 링크로 접속하면 이후엔 즐겨찾기에 등록해 그대로 사용해도 됩니다.</p>
             </section>
             <section>
               <h4>2. 본인 이름과 물품실 선택</h4>
-              <p>오른쪽 위 <strong>사용 교사</strong>에서 본인 이름을 고릅니다(이 이름이 예약자로 기록됩니다). 왼쪽 위 <strong>물품실 선택</strong>에서 사용할 물품이 있는 실(체육실·과학실 등)을 고릅니다. 본인 이름이 목록에 없으면 학교 관리자에게 추가 요청하세요.</p>
+              <p>상단 <strong>사용 교사</strong>에서 본인 이름을 고릅니다(이 이름이 예약자로 기록됩니다). 왼쪽 위 <strong>물품실 선택</strong>에서 사용할 물품이 있는 실(체육실·과학실 등)을 고릅니다. 본인 이름이 목록에 없으면 학교 관리자에게 추가 요청하세요.</p>
             </section>
             <section>
               <h4>3. 물품 검색하기</h4>
@@ -412,8 +412,8 @@ function openHelpModal() {
           <div class="help-group">
             <h3>실별 담당자용</h3>
             <section>
-              <h4>1. 담당자 PIN으로 로그인</h4>
-              <p>오른쪽 위 <strong>사용 교사</strong>에서 본인 이름을 고른 뒤 <strong>관리자 모드</strong>를 누르고 본인 <strong>담당자 PIN</strong>을 입력합니다. 로그인하면 본인이 배정된 물품실 한 곳만 편집할 수 있습니다(다른 실 데이터는 보이긴 해도 변경은 안 됩니다).</p>
+              <h4>1. 실별 관리자 로그인</h4>
+              <p>상단 <strong>사용 교사</strong>에서 본인 이름을 고르면 <strong>실별 관리자 로그인</strong> 버튼이 나타납니다. 클릭 후 본인 <strong>담당자 PIN</strong>을 입력하면 담당자 모드로 진입합니다. 로그인하면 본인이 배정된 물품실만 편집할 수 있습니다(다른 실은 조회만 가능).</p>
             </section>
             <section>
               <h4>2. 들어온 예약 처리하기</h4>
@@ -447,7 +447,7 @@ function openHelpModal() {
               <p>왼쪽 메뉴 <strong>사용 기록</strong>에서 본인 실의 처리 내역(분출·반납·손망·취소)을 날짜·종류별로 필터링해 볼 수 있습니다. 분실 사고 추적이나 학기 말 정리에 활용하세요.</p>
             </section>
             <section>
-              <h4>8. 본인 PIN 변경</h4>
+              <h4>8. 담당자 PIN 변경</h4>
               <p>학교 설정 모달의 <strong>본인 담당자 PIN 변경</strong> 섹션에서 현재 PIN과 새 PIN을 입력합니다. 4자리 이상이며, 새 PIN과 확인이 일치해야 저장됩니다. 인계 시 또는 분기마다 한 번씩 변경하길 권장합니다.</p>
             </section>
           </div>
@@ -455,22 +455,22 @@ function openHelpModal() {
 
         <div class="help-panel" data-help-panel="globalAdmin" hidden>
           <div class="help-group">
-            <h3>전체 관리자용</h3>
+            <h3>학교 관리자용</h3>
             <section>
-              <h4>1. 처음 한 번: 학교 계정 가입 → 승인 → 연결</h4>
-              <p>상단 <strong>학교 계정 → 가입</strong>에서 나이스로 학교를 검색(없으면 직접 입력)하고 아이디·비밀번호·연락 이메일을 등록합니다. 총괄관리자 <strong>승인</strong> 후 다시 <strong>학교 계정</strong>으로 로그인하면 연결 설정 화면이 열립니다. 여기서 <strong>처음 설정 가이드</strong>대로 구글 스프레드시트를 만들어 <strong>④ 우리 학교 접속 링크</strong>를 복사해 붙여넣으면 연결이 끝나고 <strong>교사 초대 주소</strong>가 발급됩니다. 처음 한 번만 하면 됩니다.</p>
+              <h4>1. 처음 한 번: 가입 → 승인 → 구글 스프레드시트 연결</h4>
+              <p>상단 <strong>학교 관리자 로그인 → 가입</strong>에서 나이스로 학교를 검색(없으면 직접 입력)하고 아이디·비밀번호·연락 이메일을 등록합니다. 총괄관리자 <strong>승인</strong> 후 다시 <strong>학교 관리자 로그인</strong>으로 로그인하면 연결 설정 화면이 열립니다. 여기서 <strong>처음 설정 가이드</strong>대로 구글 스프레드시트를 만들어 접속 링크를 입력하면 연결이 끝나고 <strong>교사 초대 주소</strong>가 발급됩니다. 처음 한 번만 하면 됩니다.</p>
             </section>
             <section>
-              <h4>2. 전체 관리자 PIN으로 로그인</h4>
-              <p>오른쪽 위 <strong>사용 교사</strong>에서 <strong>전체 관리자</strong>를 고른 뒤 <strong>관리자 모드</strong>를 누르고 전체 관리자 PIN을 입력합니다. 초기 PIN은 <code>1234</code>이며, 운영 시작 전 반드시 학교 운영용 PIN으로 변경하세요.</p>
+              <h4>2. 학교 관리자 로그인</h4>
+              <p>상단 <strong>학교 관리자 로그인</strong>을 클릭해 아이디와 비밀번호를 입력합니다. 로그인하면 자동으로 <strong>학교 관리자 모드</strong>로 진입하며 버튼이 <strong>학교 계정 ✓</strong>으로 바뀝니다. 로그아웃은 상단 <strong>학교 관리자 모드 켜짐 | 종료</strong>의 <strong>종료</strong> 버튼을 누르면 됩니다.</p>
             </section>
             <section>
               <h4>3. 학교 기본 설정</h4>
-              <p>오른쪽 위 <strong>학교 설정</strong>에서 다음을 관리합니다.</p>
+              <p>상단 <strong>학교 설정</strong>에서 다음을 관리합니다.</p>
               <p>· <strong>학교명</strong> — 헤더에 표시되는 이름<br/>
               · <strong>교사 목록</strong> — 사용 교사 드롭다운에 나오는 이름들<br/>
-              · <strong>물품실</strong> — 한 줄에 실 이름·담당자 지정·담당자 PIN·삭제가 모두 들어 있습니다. 새 실 추가 후 담당자를 지정하고 PIN을 발급하세요.<br/>
-              · <strong>카테고리</strong> — 실 드롭다운으로 실을 고른 뒤 그 실의 카테고리 목록을 관리합니다. 실별 담당자에게 직접 등록을 맡길 수도 있습니다.</p>
+              · <strong>물품실</strong> — 실 이름·담당자 지정·담당자 PIN 설정. 새 실 추가 후 담당자를 지정하고 PIN을 발급하세요.<br/>
+              · <strong>카테고리</strong> — 실별로 카테고리를 관리합니다. 실별 담당자에게 직접 등록을 맡길 수도 있습니다.</p>
             </section>
             <section>
               <h4>4. 엑셀로 물품 일괄 등록</h4>
@@ -478,25 +478,21 @@ function openHelpModal() {
             </section>
             <section>
               <h4>5. 교사 초대 주소 공유</h4>
-              <p>학교 계정 연결이 끝나면 <strong>교사 초대 주소</strong>(<code>.../?s=짧은코드</code>)가 발급됩니다. 상단 <strong>학교 계정</strong>(연결 후에는 <strong>내 계정</strong>)을 다시 열면 <strong>주소 복사</strong> 버튼으로 언제든 복사할 수 있습니다. 이 주소를 학교 메신저로 교사들에게 공유하세요.</p>
-              <p>주소에는 연결 키가 포함되어 있으므로 <strong>학교 내부 메신저로만 공유</strong>하고 외부 사이트나 SNS에는 절대 올리지 마세요.</p>
+              <p>학교 계정 연결이 끝나면 <strong>교사 초대 주소</strong>(<code>.../?s=짧은코드</code>)가 발급됩니다. 상단 <strong>학교 계정 ✓</strong>을 클릭하면 <strong>주소 복사</strong> 버튼으로 언제든 복사할 수 있습니다. 이 주소를 학교 메신저로 교사들에게 공유하세요.</p>
+              <p>주소를 받은 교사는 해당 링크로 한 번만 접속하면 이후엔 즐겨찾기로 사용할 수 있습니다.</p>
             </section>
             <section>
               <h4>6. 자동 동기화 모드 설정</h4>
-              <p>학교 설정의 <strong>자동 동기화</strong> 항목을 <strong>저장 후 원격에 자동 올리기</strong>로 두면 변경이 일어날 때마다 즉시 스프레드시트에 저장되고, 20초마다 다른 PC의 변경을 자동으로 가져옵니다. 운영 중에는 이 모드를 권장합니다.</p>
+              <p>학교 설정의 <strong>저장소 연결 → 고급</strong>에서 <strong>자동 동기화</strong>를 <strong>저장 후 원격에 자동 올리기</strong>로 두면 변경이 일어날 때마다 즉시 스프레드시트에 저장되고, 20초마다 다른 PC의 변경을 자동으로 가져옵니다. 운영 중에는 이 모드를 권장합니다.</p>
             </section>
             <section>
               <h4>7. 인계 점검</h4>
-              <p>헤더의 <strong>인계 점검</strong>을 누르면 다음 담당자에게 넘기기 전 직접 확인할 체크리스트가 표시됩니다 — 스프레드시트·Apps Script 소유자 확인, 학교 공용 계정으로 소유권 이전, 웹앱 URL과 연결 키 인계, 새 담당자 PC에서 연결 진단, 관리자 PIN 변경, 백업 1회 생성, 기존 담당자 권한 정리 등입니다.</p>
+              <p>상단 <strong>인계 점검</strong>을 누르면 다음 담당자에게 넘기기 전 직접 확인할 체크리스트가 표시됩니다 — 스프레드시트·Apps Script 소유자 확인, 학교 공용 계정으로 소유권 이전, 새 담당자 PC에서 연결 진단, 관리자 PIN 변경, 백업 생성 등입니다.</p>
               <p>자동 검사는 아니므로 한 줄씩 눈으로 확인하며 진행하세요. 패널 아래 <strong>현재 데이터 내보내기</strong>로 인계 직전 백업 CSV를 받을 수 있습니다.</p>
-            </section>
-            <section>
-              <h4>8. 관리자 PIN 변경</h4>
-              <p>학교 설정의 <strong>관리자 PIN 변경</strong> 섹션에서 현재 PIN과 새 PIN을 입력해 바꿉니다. 운영을 시작하기 전에 반드시 초기 <code>1234</code>에서 학교 운영용 PIN으로 변경하세요. 분기마다 한 번씩 변경을 권장합니다.</p>
             </section>
           </div>
         </div>
-        <p class="help-foot">일반 교사는 예약과 요청 중심으로, 담당자·관리자는 처리와 운영 관리 중심으로 사용합니다.</p>
+        <p class="help-foot">일반 교사는 예약과 요청 중심으로, 실별 담당자는 분출·반납·물품 관리 중심으로, 학교 관리자는 전체 설정과 운영을 담당합니다.</p>
         <section style="margin-top:18px">
           <h4>수집 정보 안내</h4>
           <p>사용 학교명만 수집됩니다. 개별 학교의 물품·개인정보는 수집되지 않습니다.</p>
