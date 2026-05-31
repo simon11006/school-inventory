@@ -706,6 +706,7 @@ function openConnectionManager(uid, data) {
       });
       if (data.shortCode) {
         await updateDoc(doc(db, "connections", data.shortCode), {
+          schoolName:   data.schoolName || "",
           webAppUrl: parsed.webAppUrl, apiKey: parsed.apiKey, deploymentId: parsed.deploymentId,
         });
       }
@@ -1021,6 +1022,7 @@ async function renderSuperAdminContent(container) {
           batch.update(sref, { status: "approved", approvedAt: serverTimestamp(), shortCode: code });
           batch.set(doc(db, "connections", code), {
             shortCode:    code,
+            schoolName:   sdoc.data()?.schoolName || "",
             deploymentId: sconn.deploymentId || "",
             apiKey:       sconn.apiKey       || "",
             webAppUrl:    sconn.webAppUrl    || "",
@@ -1193,6 +1195,7 @@ function openSchoolEditModal(schoolId, data) {
 
       if (data.shortCode) {
         await updateDoc(doc(db, "connections", data.shortCode), {
+          schoolName:   data.schoolName || "",
           webAppUrl: newUrl, apiKey: newKey, deploymentId: deployId,
         });
       }
@@ -1253,13 +1256,7 @@ async function resolveShortCodeFromUrl() {
   try {
     const connDoc = await getDoc(doc(getDb(), "connections", code));
     if (!connDoc.exists()) return;
-    const schoolsSnap = await getDocs(query(
-      collection(getDb(), "schools"),
-      where("shortCode", "==", code),
-      limit(1)
-    ));
-    const schoolName = schoolsSnap.empty ? "" : (schoolsSnap.docs[0].data().schoolName || "");
-    const conn = { ...connDoc.data(), shortCode: code, schoolName };
+    const conn = { ...connDoc.data(), shortCode: code };
     if (window.applyConnectionFromAccount?.(conn)) {
       // ?s= 파라미터 제거 후 리로드 → 다음 방문에서는 위의 getSchoolCode() 분기 탐
       const newUrl = new URL(location.href);
@@ -1337,6 +1334,14 @@ onAuthStateChanged(getAuth(), async (user) => {
     // 승인된 학교 계정 → 관리자 모드 자동 진입 + 버튼 전환
     window.enterSchoolAdminMode?.();
     window.setFirebaseSchoolName?.(data.schoolName);
+    // connections 문서에 schoolName 없으면 채워 넣기 (기존 학교 대응)
+    if (data.shortCode && data.schoolName) {
+      getDoc(doc(getDb(), "connections", data.shortCode)).then((snap) => {
+        if (snap.exists() && !snap.data().schoolName) {
+          updateDoc(doc(getDb(), "connections", data.shortCode), { schoolName: data.schoolName }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
     const accountBtn = document.querySelector("#accountBtn");
     if (accountBtn) {
       accountBtn.textContent = "내 계정 ✓";
