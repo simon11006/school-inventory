@@ -767,6 +767,18 @@ function applyConnectionFromAccount(conn) {
 window.applyConnectionFromAccount = applyConnectionFromAccount;
 // account-ui.js 가 현재 연결된 schoolCode 를 읽을 수 있게 노출
 window.getSchoolCode = () => syncConfig.schoolCode;
+// 학교가 Firebase에서 삭제됐을 때 로컬 연결 초기화 (account-ui.js 에서 호출)
+window.clearSchoolConnection = function() {
+  syncConfig = {
+    ...syncConfig,
+    provider: "local", endpoint: "", apiKey: "",
+    schoolCode: "", schoolName: "", autoSync: "manual",
+  };
+  saveSyncConfig();
+  state.schoolName = "";
+  saveState();
+  sessionStorage.removeItem(SESSION_CONNECTED_KEY);
+};
 // 학교 계정 로그인 시 schoolName 이 비어 있으면 Firebase 값으로 자동 세팅
 window.setFirebaseSchoolName = function(name) {
   if (!state.schoolName?.trim() && name?.trim()) {

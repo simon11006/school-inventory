@@ -1321,6 +1321,19 @@ document.querySelector("#accountBtn")?.addEventListener("click", openLoginModal)
 
 resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작
 
+// 저장된 schoolCode 가 Firebase에서 삭제됐으면 로컬 연결 초기화
+(async function validateStoredConnection() {
+  const code = window.getSchoolCode?.();
+  if (!code || !window.fb) return;
+  try {
+    const snap = await getDoc(doc(getDb(), "connections", code));
+    if (!snap.exists()) {
+      window.clearSchoolConnection?.();
+      location.reload();
+    }
+  } catch { /* Firebase 접근 실패 시 무시 */ }
+})();
+
 // ─── 세션 복원: 새로고침 후 로그인 상태 자동 복원 ───────────────────────────
 onAuthStateChanged(getAuth(), async (user) => {
   if (!user) return; // 로그아웃 상태 → 정상 앱 화면 유지
