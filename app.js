@@ -1219,7 +1219,7 @@ async function toggleAdminMode() {
   if (defaultLocation && !canManageLocation(els.locationFilter.value)) els.locationFilter.value = defaultLocation;
   document.body.classList.add("is-admin");
   render();
-  toast(scope.type === "global" ? "전체 관리자 모드를 켰어요" : `${scope.locations.join(", ")} 담당자 모드를 켰어요`, "success");
+  toast(scope.type === "global" ? "학교 관리자 모드를 켰어요" : `${scope.locations.join(", ")} 담당자 모드를 켰어요`, "success");
 }
 
 function renderAdminVisibility() {
@@ -1326,7 +1326,7 @@ async function requestGlobalAdminScopeFromRemote(pin) {
 
 function getAdminModeLabel() {
   if (!adminMode) return "관리자 모드";
-  if (isGlobalAdmin()) return "전체 관리자 모드 켜짐";
+  if (isGlobalAdmin()) return "학교 관리자 모드 켜짐";
   return `${adminScope.locations.join(", ")} 담당자 모드 켜짐`;
 }
 
@@ -1344,9 +1344,11 @@ function renderTeacherSelect() {
     : validValues.includes(saved)
       ? saved
       : "";
+  // Firebase 계정 연결 학교는 관리자 로그인이 계정으로 이루어지므로 드롭다운에 노출 불필요
+  const showAdminOption = !syncConfig.schoolCode;
   els.teacherSelect.innerHTML = [
     `<option value="">이름 선택</option>`,
-    `<option value="${GLOBAL_ADMIN_VALUE}">학교 관리자</option>`,
+    ...(showAdminOption ? [`<option value="${GLOBAL_ADMIN_VALUE}">학교 관리자</option>`] : []),
     ...state.teachers.map((teacher) => `<option value="${escapeHtml(teacher)}">${escapeHtml(teacher)}</option>`),
   ]
     .join("");
