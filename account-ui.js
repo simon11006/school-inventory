@@ -631,7 +631,7 @@ function openConnectionManager(uid, data) {
   const modal = window.openModal({
     title: `${esc(data.schoolName)}`,
     submitText: "닫기",
-    onSubmit: () => true,
+    onSubmit: () => { location.reload(); return true; },
     body: `
       <div class="acct-form">
 
