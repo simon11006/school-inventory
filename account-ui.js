@@ -1349,10 +1349,9 @@ onAuthStateChanged(getAuth(), async (user) => {
     if (accountBtn) {
       accountBtn.textContent = "내 계정 ✓";
       accountBtn.style.color = "var(--accent, #5B8A6F)";
-      accountBtn.onclick = (e) => {
-        e.stopImmediatePropagation();
-        openConnectionManager(user.uid, data);
-      };
+      // 부팅 시 등록된 openLoginModal 리스너 제거 후 새 핸들러로 교체
+      accountBtn.removeEventListener("click", openLoginModal);
+      accountBtn.onclick = () => openConnectionManager(user.uid, data);
     }
   } catch {
     // 오류 시 조용히 로그아웃 (Firestore 접근 실패 등)
