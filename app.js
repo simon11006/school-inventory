@@ -1264,6 +1264,8 @@ function renderAdminVisibility() {
   document.querySelectorAll(".global-admin-only").forEach((element) => {
     element.hidden = !isGlobalAdmin();
   });
+  // 총괄 대시보드는 서비스 운영자 전용 — 어떤 관리자 모드에서도 학교 사용자에게는 숨김
+  if (adminMode) document.querySelector("#superAdminBtn")?.setAttribute("hidden", "");
   // 처음 설정 가이드: 스프레드시트 연결 완료 후에는 불필요 → 숨김
   const setupGuideLink = document.querySelector("#setupGuideLink");
   if (setupGuideLink) setupGuideLink.hidden = !isGlobalAdmin() || canUseRemoteSync();
