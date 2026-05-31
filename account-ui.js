@@ -571,7 +571,11 @@ function openConnectionManager(uid, data) {
         ` : `
         <!-- 상태 3: 완전 연결 완료 -->
         <div style="padding:14px 16px;background:#f0f8f4;border:1px solid var(--accent,#5B8A6F);border-radius:10px;">
-          <p style="margin:0 0 8px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 설정 완료 — 교사 초대 주소</p>
+          <p style="margin:0 0 10px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 설정 완료</p>
+          <button class="primary" id="openSchoolBtn" type="button" style="width:100%;margin-bottom:12px;">
+            지금 바로 우리 학교 열기 →
+          </button>
+          <p class="acct-hint" style="margin:0 0 4px;">교사 초대 주소</p>
           <code id="shortLinkText" style="font-size:13px;word-break:break-all;display:block;margin-bottom:10px;">${esc(shortLink)}</code>
           <div style="display:flex;gap:8px;">
             <button class="primary compact" id="copyShort" type="button">주소 복사</button>
@@ -624,6 +628,11 @@ function openConnectionManager(uid, data) {
         ` : ""}
 
       </div>`,
+  });
+
+  // 지금 바로 우리 학교 열기 — 검증된 ?s= 접속 경로 재사용(연결 적용 후 리로드)
+  modal.querySelector("#openSchoolBtn")?.addEventListener("click", () => {
+    location.href = shortLink;
   });
 
   // 주소 복사
