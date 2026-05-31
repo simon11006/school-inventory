@@ -535,24 +535,24 @@ function parseConnectionLink(raw) {
   return { webAppUrl, apiKey, deploymentId: m ? m[1] : "" };
 }
 
-// ─── 로그아웃 버튼 설정 (헤더 #accountLogoutBtn) ─────────────────────────────
+// ─── 학교 관리자 로그아웃 (종료 버튼 및 로그아웃 버튼 공통) ──────────────────
+async function doSchoolAdminLogout() {
+  await signOut(getAuth());
+  window.exitSchoolAdminMode?.();
+  const accountBtn = document.querySelector("#accountBtn");
+  if (accountBtn) {
+    accountBtn.textContent = "학교 관리자 로그인";
+    accountBtn.style.color = "";
+    accountBtn.onclick = null;
+    accountBtn.addEventListener("click", openLoginModal);
+  }
+  location.reload();
+}
+
 function setupLogoutBtn(accountBtn) {
+  // 별도 로그아웃 버튼 제거 — 종료 버튼이 로그아웃까지 처리하므로 불필요
   const logoutBtn = document.querySelector("#accountLogoutBtn");
-  if (!logoutBtn) return;
-  logoutBtn.hidden = false;
-  logoutBtn.onclick = async () => {
-    if (!confirm("학교 계정에서 로그아웃하시겠습니까?")) return;
-    await signOut(getAuth());
-    window.exitSchoolAdminMode?.();
-    if (accountBtn) {
-      accountBtn.textContent = "학교 관리자 로그인";
-      accountBtn.style.color = "";
-      accountBtn.onclick = null;
-      accountBtn.addEventListener("click", openLoginModal);
-    }
-    logoutBtn.hidden = true;
-    location.reload();
-  };
+  if (logoutBtn) logoutBtn.hidden = true;
 }
 
 // ─── 연결 관리(로그인 후) ──────────────────────────────────────────────────
@@ -1310,9 +1310,10 @@ async function heartbeat(code) {
 window.account = {
   openRegister:       openRegisterModal,
   openLogin:          openLoginModal,
-  openSuperAdminView,          // 콘솔에서 직접 호출 가능 (로그인 후)
+  openSuperAdminView,
+  schoolAdminLogout:  doSchoolAdminLogout, // app.js 종료 버튼에서 호출
   heartbeat,
-  _searchNeisSchools: searchNeisSchools, // 브라우저 콘솔 테스트용
+  _searchNeisSchools: searchNeisSchools,
 };
 
 // ─── 부팅: 버튼 연결 + 짧은 주소 해석 ──────────────────────────────────────

@@ -1196,6 +1196,11 @@ function toast(message, tone = "") {
 
 async function toggleAdminMode() {
   if (adminMode) {
+    // Firebase 연결 학교: 종료 = 로그아웃까지 함께 처리
+    if (syncConfig.schoolCode) {
+      window.account?.schoolAdminLogout?.();
+      return;
+    }
     adminMode = false;
     adminScope = null;
     clearAdminSession();
