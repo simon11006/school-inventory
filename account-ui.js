@@ -545,7 +545,7 @@ function setupLogoutBtn(accountBtn) {
     await signOut(getAuth());
     window.exitSchoolAdminMode?.();
     if (accountBtn) {
-      accountBtn.textContent = "학교 계정";
+      accountBtn.textContent = "학교 관리자 로그인";
       accountBtn.style.color = "";
       accountBtn.onclick = null;
       accountBtn.addEventListener("click", openLoginModal);
@@ -678,7 +678,7 @@ function openConnectionManager(uid, data) {
     modal.remove();
     const accountBtn = document.querySelector("#accountBtn");
     if (accountBtn) {
-      accountBtn.textContent = "학교 계정";
+      accountBtn.textContent = "학교 관리자 로그인";
       accountBtn.style.color = "";
       accountBtn.onclick = null;
     }
