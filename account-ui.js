@@ -308,7 +308,7 @@ async function handleRegister(modal, school) {
 
     // Firebase Auth 세션용 내부 토큰 생성 (사용자에게 노출 안 됨)
     const authToken = Core.generateShortCode(16);
-    const cred = await createUserWithEmailAndPassword(auth, email, authToken);
+    const cred = await createUserWithEmailAndPassword(auth, Core.usernameToAuthEmail(user), authToken);
 
     // Firestore 학교 문서 생성 — password: 실제 사용자 비밀번호, _authToken: Firebase Auth용
     await setDoc(doc(db, "schools", cred.user.uid), {
@@ -473,7 +473,7 @@ async function handleLogin(modal) {
         btn.textContent = "로그인"; btn.disabled = false;
         return alert("아이디 또는 비밀번호가 올바르지 않습니다.");
       }
-      const cred = await signInWithEmailAndPassword(auth, schoolData.email, schoolData._authToken);
+      const cred = await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(schoolData.username), schoolData._authToken);
 
       if (schoolData.status === "pending")   { await signOut(auth); btn.textContent = "로그인"; btn.disabled = false; return alert("아직 승인 대기 중입니다.\n총괄관리자 승인 후 이용할 수 있습니다."); }
       if (schoolData.status === "rejected")  { await signOut(auth); btn.textContent = "로그인"; btn.disabled = false; return alert("가입이 거부되었습니다. 총괄관리자에게 문의하세요."); }
