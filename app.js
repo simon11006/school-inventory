@@ -1170,7 +1170,8 @@ async function toggleAdminMode() {
   if (!scope) return;
   adminMode = true;
   adminScope = scope;
-  persistAdminSession();
+  // PIN 진입은 세션 저장하지 않음 — 공용 PC에서 새로고침 시 권한이 남지 않도록(안전).
+  // 학교 계정 로그인(enterSchoolAdminMode)만 세션을 유지한다.
   switchView("reservations");
   selectedItemId = null;
   selectedReservationId = null;
