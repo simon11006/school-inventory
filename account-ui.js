@@ -1461,13 +1461,19 @@ onAuthStateChanged(getAuth(), async (user) => {
     // 승인된 학교 계정 → 관리자 모드 자동 진입 + 버튼 전환
     window.enterSchoolAdminMode?.();
     window.setFirebaseSchoolName?.(data.schoolName);
-    // connections 문서: schoolName 채우기 + 마지막 활동 기록 (로그인 = 인증 상태 → 쓰기 가능)
+    // schools 문서: 마지막 활동 기록 (대시보드 활동 시각 표시용)
+    updateDoc(doc(getDb(), "schools", user.uid), {
+      lastActiveAt: serverTimestamp(),
+    }).catch(() => {});
+    // connections 문서: schoolName 채우기
     if (data.shortCode) {
       getDoc(doc(getDb(), "connections", data.shortCode)).then((snap) => {
         if (!snap.exists()) return;
-        const updates = { lastActiveAt: serverTimestamp() };
+        const updates = {};
         if (data.schoolName && !snap.data().schoolName) updates.schoolName = data.schoolName;
-        updateDoc(doc(getDb(), "connections", data.shortCode), updates).catch(() => {});
+        if (Object.keys(updates).length) {
+          updateDoc(doc(getDb(), "connections", data.shortCode), updates).catch(() => {});
+        }
       }).catch(() => {});
     }
     const accountBtn = document.querySelector("#accountBtn");
