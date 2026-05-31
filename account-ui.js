@@ -480,6 +480,8 @@ async function handleLogin(modal) {
       if (schoolData.status === "suspended") { await signOut(auth); btn.textContent = "로그인"; btn.disabled = false; return alert("정지된 계정입니다. 총괄관리자에게 문의하세요."); }
 
       modal.remove();
+      // 학교 계정 인증 완료 → 관리자 모드 자동 진입 (PIN 재입력 불필요)
+      window.enterSchoolAdminMode?.();
       openConnectionManager(cred.user.uid, schoolData);
       return;
     }
@@ -1325,12 +1327,12 @@ onAuthStateChanged(getAuth(), async (user) => {
       return;
     }
 
-    // 승인된 학교 계정 → 버튼을 "내 계정" 으로 전환 (모달 자동 오픈 없음)
+    // 승인된 학교 계정 → 관리자 모드 자동 진입 + 버튼 전환
+    window.enterSchoolAdminMode?.();
     const accountBtn = document.querySelector("#accountBtn");
     if (accountBtn) {
       accountBtn.textContent = "내 계정 ✓";
       accountBtn.style.color = "var(--accent, #5B8A6F)";
-      // 이후 클릭 시 로그인 모달 대신 연결 관리 모달 바로 오픈
       accountBtn.onclick = (e) => {
         e.stopImmediatePropagation();
         openConnectionManager(user.uid, data);

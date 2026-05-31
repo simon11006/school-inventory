@@ -762,6 +762,20 @@ window.applyConnectionFromAccount = applyConnectionFromAccount;
 // account-ui.js 가 현재 연결된 schoolCode 를 읽을 수 있게 노출
 window.getSchoolCode = () => syncConfig.schoolCode;
 
+// 학교 계정 로그인 성공 시 account-ui.js 에서 호출 → PIN 없이 전체 관리자 모드 진입
+window.enterSchoolAdminMode = function () {
+  if (adminMode) return;           // 이미 관리자 모드면 무시
+  adminMode  = true;
+  adminScope = { type: "global", locations: [], teacher: GLOBAL_ADMIN_VALUE };
+  document.body.classList.add("is-admin");
+  // 교사 드롭다운을 '전체 관리자'로 맞춤 (이미 선택돼 있지 않은 경우)
+  if (els.teacherSelect && els.teacherSelect.value !== GLOBAL_ADMIN_VALUE) {
+    els.teacherSelect.value = GLOBAL_ADMIN_VALUE;
+  }
+  render();
+  toast("학교 계정으로 로그인 — 관리자 모드가 자동으로 켜졌어요", "success");
+};
+
 function extractDeploymentId(endpoint) {
   if (!endpoint) return "";
   if (endpoint.startsWith(APPS_SCRIPT_URL_PREFIX) && endpoint.endsWith(APPS_SCRIPT_URL_SUFFIX)) {
