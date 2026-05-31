@@ -135,49 +135,49 @@ function openRegisterModal() {
           <button class="ghost compact" id="regSchoolReset" type="button" style="margin-top:4px;">다시 검색</button>
         </div>
 
-        <div id="regAccountSection" class="acct-form" style="display:none;gap:20px;">
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <div class="acct-field" style="flex:1;min-width:120px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+        <div id="regAccountSection" style="display:none;">
+
+          <!-- 섹션: 계정 정보 -->
+          <p class="reg-section-title">계정 정보</p>
+          <div class="reg-section">
+            <div style="display:flex;gap:12px;">
+              <div class="acct-field" style="flex:1;">
                 <span class="acct-label">로그인 아이디</span>
-                <span class="acct-hint">영문·숫자·-·_ / 4~20자</span>
+                <span class="acct-hint">영문·숫자·- · _ / 4~20자</span>
+                <input id="regUser" type="text" autocomplete="username" />
               </div>
-              <input id="regUser" type="text" autocomplete="username" />
-            </div>
-            <div class="acct-field" style="flex:1;min-width:120px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+              <div class="acct-field" style="flex:1;">
                 <span class="acct-label">비밀번호</span>
                 <span class="acct-hint">6자 이상</span>
+                <input id="regPw" type="password" autocomplete="new-password" />
               </div>
-              <input id="regPw" type="password" autocomplete="new-password" />
             </div>
-          </div>
-          <div class="acct-field">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+            <div class="acct-field">
               <span class="acct-label">연락 이메일 <span style="color:var(--danger,#c0392b);">*</span></span>
-              <span class="acct-hint">가입 승인 안내에 사용됩니다</span>
-            </div>
-            <input id="regEmail" type="email" placeholder="school@example.go.kr" />
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <div class="acct-field" style="flex:1;min-width:120px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
-                <span class="acct-label">담당자 이름</span>
-                <span class="acct-hint">선택</span>
-              </div>
-              <input id="regName" type="text" />
-            </div>
-            <div class="acct-field" style="flex:1;min-width:120px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
-                <span class="acct-label">담당자 업무</span>
-                <span class="acct-hint">선택</span>
-              </div>
-              <input id="regRole" type="text" />
+              <span class="acct-hint">총괄관리자 승인 알림 및 공지에 사용됩니다</span>
+              <input id="regEmail" type="email" placeholder="school@example.go.kr" />
             </div>
           </div>
-          <div class="acct-consent-box">
+
+          <!-- 섹션: 담당자 정보 -->
+          <p class="reg-section-title" style="margin-top:20px;">담당자 정보 <span class="acct-hint" style="font-weight:400;">(선택)</span></p>
+          <div class="reg-section">
+            <div style="display:flex;gap:12px;">
+              <div class="acct-field" style="flex:1;">
+                <span class="acct-label">이름</span>
+                <input id="regName" type="text" />
+              </div>
+              <div class="acct-field" style="flex:1;">
+                <span class="acct-label">업무</span>
+                <input id="regRole" type="text" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 개인정보 동의 -->
+          <div class="acct-consent-box" style="margin-top:20px;">
             <strong>개인정보 수집·이용 동의</strong>
-            <ul style="margin:8px 0 0 0;padding-left:18px;">
+            <ul style="margin:8px 0 0;padding-left:18px;">
               <li>수집 항목: 연락 이메일, (선택) 담당자 이름·업무</li>
               <li>이용 목적: 서비스 장애·공지 연락, 가입 승인 확인</li>
               <li>보유 기간: 학교 계정 해지 시까지</li>
@@ -187,7 +187,9 @@ function openRegisterModal() {
               위 내용에 동의합니다 (필수)
             </label>
           </div>
-          <button class="primary" id="regSubmit" type="button" style="width:100%;">가입 신청</button>
+
+          <button class="primary" id="regSubmit" type="button"
+            style="width:100%;margin-top:20px;">가입 신청</button>
         </div>
       </div>`,
   });

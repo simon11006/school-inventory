@@ -2721,6 +2721,25 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   margin-bottom: 6px;
 }
 
+/* 가입 모달 섹션 구분 */
+.reg-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+.reg-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface2, #f7f7f5);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
 /* ─── Connection required — two-card layout ─── */
 .conn-req-cards {
   display: flex;
