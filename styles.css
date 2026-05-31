@@ -2875,6 +2875,7 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   border: 1px solid var(--line-strong);
   animation: pop-in 0.22s ease;
 }
+.modal.modal-sm { width: min(440px, 100%); }
 
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }

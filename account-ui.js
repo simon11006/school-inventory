@@ -349,28 +349,29 @@ function openLoginModal() {
     onSubmit: () => true,
     body: `
       <div class="acct-form">
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-          <div class="acct-field" style="flex:1;min-width:120px;">
+        <div style="display:flex;gap:12px;">
+          <div class="acct-field" style="flex:1;">
             <span class="acct-label">아이디</span>
             <input id="loginUser" type="text" autocomplete="username" />
           </div>
-          <div class="acct-field" style="flex:1;min-width:120px;">
+          <div class="acct-field" style="flex:1;">
             <span class="acct-label">비밀번호</span>
             <input id="loginPw" type="password" autocomplete="current-password" />
           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-          <button class="primary" id="loginSubmit" type="button" style="flex:1;">로그인</button>
+        <button class="primary" id="loginSubmit" type="button" style="width:100%;">로그인</button>
+        <div style="display:flex;gap:8px;">
           <button class="ghost compact" id="goRegister" type="button" style="flex:1;">
             처음이신가요? 가입 →
           </button>
+          <button class="ghost compact" id="forgotPwBtn" type="button"
+            style="flex:1;font-size:12px;color:var(--ink-mute);">
+            비밀번호 찾기
+          </button>
         </div>
-        <button class="ghost compact" id="forgotPwBtn" type="button"
-          style="width:100%;font-size:12px;color:var(--ink-mute);margin-top:2px;">
-          비밀번호를 잊으셨나요?
-        </button>
       </div>`,
   });
+  modal.querySelector(".modal")?.classList.add("modal-sm");
 
   modal.querySelector("#loginPw").addEventListener("keydown", e => {
     if (e.key === "Enter") modal.querySelector("#loginSubmit").click();
