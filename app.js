@@ -3460,8 +3460,8 @@ function openSchoolSettingsModal() {
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
-            <h3>초보자 설정 가이드</h3>
-            <p class="helper">Google Spreadsheet와 Apps Script 설정을 화면 순서대로 따라 할 수 있는 문서입니다.</p>
+            <h3>교구이음 처음 설정 가이드</h3>
+            <p class="helper">스프레드시트 사본 만들기부터 교사 초대 링크 발급까지 처음 설정 전 과정을 단계별로 안내합니다.</p>
           </div>
           <a class="ghost compact guide-link" href="./처음설정가이드.html" target="_blank" rel="noopener">가이드 열기</a>
         </div>
