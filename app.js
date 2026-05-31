@@ -7,6 +7,7 @@ const FEEDBACK_KEY = "school_inventory_feedback_v1";
 const RELEASE_CHECK_KEY = "school_inventory_release_check_v1";
 const ADMIN_PIN_KEY = "school_inventory_admin_pin";
 const SELECTED_TEACHER_KEY = "school_inventory_selected_teacher";
+const SESSION_CONNECTED_KEY = "schoolinven_session_connected";
 const DEFAULT_ADMIN_PIN = "1234";
 const GLOBAL_ADMIN_VALUE = "__global_admin__";
 const KOREA_TIME_ZONE = "Asia/Seoul";
@@ -35,6 +36,7 @@ const seedData = {
 let syncConfig = loadSyncConfig();
 let justConnectedViaLink = false;
 applySyncFromUrl();
+maybeResetForRootVisit();
 let state = loadState();
 if (!state.schoolName?.trim() && syncConfig.schoolName?.trim()) {
   state.schoolName = syncConfig.schoolName;
@@ -761,6 +763,7 @@ function applyConnectionFromAccount(conn) {
   syncConfig.autoSync = "pullOnStart"; // 교사용: 페이지 로드 시 최신 데이터 당김
   saveSyncConfig();
   justConnectedViaLink = true;
+  sessionStorage.setItem(SESSION_CONNECTED_KEY, "1");
   return true;
 }
 window.applyConnectionFromAccount = applyConnectionFromAccount;
@@ -843,9 +846,28 @@ function applySyncFromUrl() {
     if (syncConfig.autoSync === "manual") syncConfig.autoSync = "pushAfterSave";
     saveSyncConfig();
     justConnectedViaLink = true;
+    sessionStorage.setItem(SESSION_CONNECTED_KEY, "1");
   } catch (e) {
     // URL 파싱 실패 시 무시
   }
+}
+
+// 루트 URL에 연결 파라미터가 없고 이번 세션에 ?s= 또는 ?d=&k= 로 연결한 적도 없으면
+// syncConfig를 메모리에서만 초기화 → localStorage 데이터는 보존하되 화면은 깨끗하게
+function maybeResetForRootVisit() {
+  const params = new URLSearchParams(location.search);
+  const hasConnectionParams = params.has("s") || params.has("d") || params.has("u") || params.has("k");
+  if (hasConnectionParams) return;
+  if (sessionStorage.getItem(SESSION_CONNECTED_KEY)) return;
+  syncConfig = {
+    ...syncConfig,
+    provider: "local",
+    endpoint: "",
+    apiKey: "",
+    schoolCode: "",
+    schoolName: "",
+    autoSync: "manual",
+  };
 }
 
 function generateTeacherInviteLink() {
