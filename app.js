@@ -3347,7 +3347,32 @@ function openSchoolSettingsModal() {
     `
       : "";
 
-  const adminPinSectionHtml = `
+  const adminPinSectionHtml = isFirebaseConnected ? `
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <div>
+            <h3>학교 계정 비밀번호 변경</h3>
+            <p class="helper">학교 계정 로그인에 사용하는 비밀번호를 바꿉니다. 변경 후에도 로그인은 그대로 유지됩니다.</p>
+          </div>
+        </div>
+        <div class="field-grid pin-grid">
+          <label class="field">
+            <span>현재 비밀번호</span>
+            <input id="curSchoolPw" type="password" autocomplete="current-password" />
+          </label>
+          <label class="field">
+            <span>새 비밀번호</span>
+            <input id="newSchoolPw" type="password" autocomplete="new-password" placeholder="6자 이상" />
+          </label>
+          <label class="field">
+            <span>새 비밀번호 확인</span>
+            <input id="newSchoolPwConfirm" type="password" autocomplete="new-password" />
+          </label>
+        </div>
+        <button class="ghost compact" id="changeSchoolPwBtn" type="button">비밀번호 변경</button>
+        <p class="helper" id="changeSchoolPwStatus" style="margin-top:8px;"></p>
+      </div>
+  ` : `
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
@@ -3661,24 +3686,29 @@ function openSchoolSettingsModal() {
       return false;
     }
 
-    const currentAdminPin = formData.get("currentAdminPin").trim();
-    const nextAdminPin = formData.get("nextAdminPin").trim();
-    const confirmAdminPin = formData.get("confirmAdminPin").trim();
-    const shouldChangePin = currentAdminPin || nextAdminPin || confirmAdminPin;
-    if (shouldChangePin) {
-      if (currentAdminPin !== getAdminPin()) {
-        alert("현재 관리자 PIN이 일치하지 않습니다.");
-        return false;
+    // 관리자 PIN 변경은 로컬 모드에서만 노출된다. 학교 계정(Firebase) 모드에서는
+    // 비밀번호 변경 섹션이 대신 표시되며 별도 버튼으로 처리한다(아래 changeSchoolPwBtn).
+    let shouldChangePin = false;
+    if (formData.has("currentAdminPin")) {
+      const currentAdminPin = (formData.get("currentAdminPin") || "").trim();
+      const nextAdminPin = (formData.get("nextAdminPin") || "").trim();
+      const confirmAdminPin = (formData.get("confirmAdminPin") || "").trim();
+      shouldChangePin = currentAdminPin || nextAdminPin || confirmAdminPin;
+      if (shouldChangePin) {
+        if (currentAdminPin !== getAdminPin()) {
+          alert("현재 관리자 PIN이 일치하지 않습니다.");
+          return false;
+        }
+        if (nextAdminPin.length < 4) {
+          alert("새 PIN은 4자리 이상으로 입력하세요.");
+          return false;
+        }
+        if (nextAdminPin !== confirmAdminPin) {
+          alert("새 PIN 확인이 일치하지 않습니다.");
+          return false;
+        }
+        setAdminPin(nextAdminPin);
       }
-      if (nextAdminPin.length < 4) {
-        alert("새 PIN은 4자리 이상으로 입력하세요.");
-        return false;
-      }
-      if (nextAdminPin !== confirmAdminPin) {
-        alert("새 PIN 확인이 일치하지 않습니다.");
-        return false;
-      }
-      setAdminPin(nextAdminPin);
     }
 
     state.schoolName = schoolName;
@@ -4011,6 +4041,42 @@ function openSchoolSettingsModal() {
     button.closest(".location-row").remove();
     rebuildCategoryLocationOptions();
   });
+
+  // 학교 계정 비밀번호 변경 (Firebase 연결 모드에서만 표시)
+  const changeSchoolPwBtn = modal.querySelector("#changeSchoolPwBtn");
+  if (changeSchoolPwBtn) {
+    const statusEl = modal.querySelector("#changeSchoolPwStatus");
+    const setStatus = (msg, ok) => {
+      statusEl.textContent = msg;
+      statusEl.style.color = ok ? "var(--accent, #5B8A6F)" : "var(--danger, #c0392b)";
+    };
+    const doChange = async () => {
+      const cur = modal.querySelector("#curSchoolPw").value;
+      const next = modal.querySelector("#newSchoolPw").value;
+      const confirmPw = modal.querySelector("#newSchoolPwConfirm").value;
+      if (!cur || !next || !confirmPw) return setStatus("모든 칸을 입력하세요.", false);
+      if (next.length < 6) return setStatus("새 비밀번호는 6자 이상이어야 합니다.", false);
+      if (next !== confirmPw) return setStatus("새 비밀번호 확인이 일치하지 않습니다.", false);
+      if (next === cur) return setStatus("기존 비밀번호와 다른 비밀번호를 입력하세요.", false);
+      changeSchoolPwBtn.disabled = true;
+      changeSchoolPwBtn.textContent = "변경 중…";
+      const result = await window.account?.changeSchoolPassword?.(cur, next);
+      changeSchoolPwBtn.disabled = false;
+      changeSchoolPwBtn.textContent = "비밀번호 변경";
+      if (result?.ok) {
+        modal.querySelector("#curSchoolPw").value = "";
+        modal.querySelector("#newSchoolPw").value = "";
+        modal.querySelector("#newSchoolPwConfirm").value = "";
+        setStatus("비밀번호가 변경되었습니다.", true);
+      } else {
+        setStatus(result?.message || "변경에 실패했습니다.", false);
+      }
+    };
+    changeSchoolPwBtn.addEventListener("click", doChange);
+    modal.querySelector("#newSchoolPwConfirm").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); doChange(); }
+    });
+  }
 
   modal.querySelector("#diagnoseSyncBtn")?.addEventListener("click", () => runSyncAction(modal, "diagnose"));
   modal.querySelector("#pushSyncBtn")?.addEventListener("click", () => runSyncAction(modal, "save"));

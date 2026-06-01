@@ -621,6 +621,27 @@ function setupLogoutBtn(accountBtn) {
   if (logoutBtn) logoutBtn.hidden = true;
 }
 
+// ─── 학교 계정 비밀번호 변경 ─────────────────────────────────────────────────
+// schools/{uid}.password 만 갱신한다. Firebase Auth 세션은 내부 _authToken 으로
+// 유지되므로 비밀번호를 바꿔도 로그아웃되지 않는다.
+async function changeSchoolPassword(currentPw, newPw) {
+  if (!window.fb) return { ok: false, message: "계정 기능이 설정되지 않았습니다." };
+  const user = getAuth().currentUser;
+  if (!user) return { ok: false, message: "로그인 상태가 아닙니다. 다시 로그인해 주세요." };
+  try {
+    const ref = doc(getDb(), "schools", user.uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return { ok: false, message: "학교 계정을 찾을 수 없습니다." };
+    if (snap.data().password !== currentPw) {
+      return { ok: false, message: "현재 비밀번호가 일치하지 않습니다." };
+    }
+    await updateDoc(ref, { password: newPw });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: "변경 실패: " + (e?.message || e) };
+  }
+}
+
 // ─── 연결 관리(로그인 후) ──────────────────────────────────────────────────
 function openConnectionManager(uid, data) {
   const shortLink      = data.shortCode ? `${location.origin}/?s=${data.shortCode}` : null;
@@ -1407,6 +1428,7 @@ window.account = {
   openLogin:          openLoginModal,
   openSuperAdminView,
   schoolAdminLogout:  doSchoolAdminLogout, // app.js 종료 버튼에서 호출
+  changeSchoolPassword,
   heartbeat,
   _searchNeisSchools: searchNeisSchools,
 };
