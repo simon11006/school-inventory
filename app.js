@@ -1675,8 +1675,9 @@ function renderBorrowStartView() {
       <table class="borrow-table">
         <thead>
           <tr>
+            <th>보관 장소</th>
             <th>물품</th>
-            <th>물품실</th>
+            <th>카테고리</th>
             <th>사용 가능</th>
             <th>상태</th>
             <th>예약</th>
@@ -1687,11 +1688,11 @@ function renderBorrowStartView() {
             .map(
               (item) => `
               <tr class="${selectedItemId === item.id ? "is-selected" : ""}" data-borrow-item-id="${item.id}">
-                <td>
-                  <strong>${escapeHtml(item.name)}</strong><br />
-                  <span class="helper">${renderItemMeta(item)}</span>
-                </td>
                 <td>${escapeHtml(item.location)}</td>
+                <td style="text-align:left;">
+                  <strong>${escapeHtml(item.name)}</strong>${renderItemCode(item) ? `<br /><span class="helper">${renderItemCode(item)}</span>` : ""}
+                </td>
+                <td>${escapeHtml(item.category || "-")}</td>
                 <td>${getAvailableCount(item.id)} / ${item.total} ${escapeHtml(item.unit || "개")}</td>
                 <td>${statusBadge(item.status)}</td>
                 <td><button class="row-action" data-reserve-item-id="${item.id}" type="button">예약하기</button></td>
@@ -1751,13 +1752,13 @@ function renderItemsTable() {
         <thead>
           <tr>
             ${adminMode ? `<th><input type="checkbox" id="itemSelectAll" aria-label="전체 선택" /></th>` : ""}
+            <th>보관 장소</th>
             <th>물품명</th>
             <th>카테고리</th>
-            <th>보관 장소</th>
             <th>사용 가능</th>
             <th>예약/분출</th>
             <th>상태</th>
-            <th>최근 기록</th>
+            <th>비고</th>
             <th></th>
           </tr>
         </thead>
@@ -1767,19 +1768,18 @@ function renderItemsTable() {
               (item) => `
               <tr class="${selectedItemId === item.id ? "is-selected" : ""}" data-item-row-id="${item.id}">
                 ${adminMode ? `<td><input type="checkbox" class="item-select-chk" data-item-id="${item.id}" aria-label="${escapeHtml(item.name)} 선택" /></td>` : ""}
+                <td>${escapeHtml(item.location)}</td>
                 <td>
-                  <strong>${escapeHtml(item.name)}</strong><br />
-                  <span class="helper">${renderItemMeta(item)}</span>
+                  <strong>${escapeHtml(item.name)}</strong>${renderItemCode(item) ? `<br /><span class="helper">${renderItemCode(item)}</span>` : ""}
                 </td>
                 <td>${escapeHtml(item.category || "-")}</td>
-                <td>${escapeHtml(item.location)}</td>
                 <td>
                   ${getAvailableCount(item.id)} / ${item.total} ${escapeHtml(item.unit || "개")}
                   ${renderUnavailableReason(item)}
                 </td>
                 <td>${getReservedCount(item.id)} 예약 · ${getCheckedOutCount(item.id)} 분출</td>
                 <td>${statusBadge(item.status)}</td>
-                <td>${escapeHtml(getLastLogText(item.id))}</td>
+                <td>${escapeHtml(item.note || "-")}</td>
                 <td><button class="row-action" data-item-id="${item.id}" type="button">선택</button></td>
               </tr>
             `,
@@ -6051,6 +6051,11 @@ function renderItemMeta(item) {
     item.code ? `관리번호 ${escapeHtml(item.code)}` : "",
     item.category ? escapeHtml(item.category) : "",
   ].filter(Boolean).join(" · ") || "-";
+}
+
+// 목록 표의 물품명 아래 부제 — 카테고리는 별도 열에 있으므로 관리번호만 표시
+function renderItemCode(item) {
+  return item.code ? `관리번호 ${escapeHtml(item.code)}` : "";
 }
 
 function getReservedCount(itemId, date = "") {
