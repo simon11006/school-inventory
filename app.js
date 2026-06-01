@@ -2502,10 +2502,9 @@ function scrollWorkPanelIntoView() {
     requestAnimationFrame(() => { els.workPanel.scrollTop = 0; });
     return;
   }
-  requestAnimationFrame(() => {
-    els.workPanel.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-    els.workPanel.scrollTop = 0;
-  });
+  // 데스크톱: 패널이 sticky로 항상 보이므로 페이지를 스크롤하지 않는다.
+  // 패널 내부만 맨 위로 올려 세부정보가 처음부터 보이게 한다.
+  requestAnimationFrame(() => { els.workPanel.scrollTop = 0; });
 }
 
 function renderItemReservationSummary(item) {

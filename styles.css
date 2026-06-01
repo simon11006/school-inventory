@@ -1765,6 +1765,18 @@ td strong {
   position: relative;
 }
 
+/* 넓은 데스크톱(3열 레이아웃)에서만 오른쪽 작업 패널을 화면에 고정(sticky).
+   아래쪽 물품을 클릭해도 페이지가 위로 튀지 않고 오른쪽 패널에서 바로 세부정보가 보인다.
+   ≤980px 에서는 패널이 전체 너비로 아래에 쌓이므로 적용하지 않는다. */
+@media (min-width: 981px) {
+  .work-panel {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+  }
+}
+
 .work-panel::before {
   content: "";
   position: absolute;
