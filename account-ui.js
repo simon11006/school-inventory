@@ -1426,6 +1426,8 @@ resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작
 
 // ─── 세션 복원: 새로고침 후 로그인 상태 자동 복원 ───────────────────────────
 onAuthStateChanged(getAuth(), async (user) => {
+  // auth 상태 확정 — 미로그인이면 로그인 유도 UI 표시
+  window.setFirebaseAuthReady?.();
   if (!user) return; // 로그아웃 상태 → 정상 앱 화면 유지
 
   try {
@@ -1462,6 +1464,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     if (data.shortCode && conn.webAppUrl && conn.apiKey &&
         window.getSchoolCode?.() !== data.shortCode) {
       window.applyConnectionFromAccount?.({ ...conn, shortCode: data.shortCode, schoolName: data.schoolName });
+      window.enterSchoolAdminMode?.(); // reload 후 세션 복원을 위해 미리 저장
       location.reload();
       return;
     }

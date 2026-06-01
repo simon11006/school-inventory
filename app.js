@@ -54,6 +54,8 @@ let feedbackState = loadFeedbackState();
 let releaseCheckState = loadReleaseCheckState();
 let pendingImport = null;
 let autoSyncTimer = null;
+// Firebase auth 상태 확인 전까지 로그인 유도 UI를 숨겨 새로고침 시 깜빡임 방지
+let firebaseAuthPending = !!window.fb;
 let autoSyncInFlight = false;
 let pollingTimer = null;
 let pollingInFlight = false;
@@ -779,6 +781,12 @@ function applyConnectionFromAccount(conn) {
   return true;
 }
 window.applyConnectionFromAccount = applyConnectionFromAccount;
+// Firebase auth 상태 확인 완료 — 로그인 가드 해제 후 재렌더
+window.setFirebaseAuthReady = function() {
+  if (!firebaseAuthPending) return;
+  firebaseAuthPending = false;
+  render();
+};
 // account-ui.js 가 현재 연결된 schoolCode 를 읽을 수 있게 노출
 window.getSchoolCode = () => syncConfig.schoolCode;
 // 학교가 Firebase에서 삭제됐을 때 로컬 연결 초기화 (account-ui.js 에서 호출)
@@ -1140,6 +1148,11 @@ function renderHero() {
   if (!els.heroTitle) return;
   if (window._superAdminMode) return; // 총괄관리자 대시보드 — hero 유지
   if (!canUseRemoteSync()) {
+    if (firebaseAuthPending) {
+      els.heroTitle.textContent = "";
+      els.heroSub.innerHTML = "";
+      return;
+    }
     // 미연결 상태 — 학교 계정 시스템으로 유도
     els.heroTitle.textContent = "학교 계정으로 시작하세요";
     els.heroSub.classList.remove("hero-sub-notice");
@@ -1586,6 +1599,7 @@ function renderMainView() {
 }
 
 function shouldBlockUnconnectedTeacher() {
+  if (firebaseAuthPending) return false;
   return !adminMode && !canUseRemoteSync();
 }
 
