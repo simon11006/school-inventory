@@ -74,7 +74,16 @@ document.addEventListener("DOMContentLoaded", () => {
   render();
   runStartupSync().then(finalizeSetupAfterLink).catch(e => console.warn("Setup finalize error:", e));
   if (new URL(location.href).searchParams.get("openLogin") === "1") {
-    setTimeout(() => window.account?.openLogin?.(), 300);
+    // 파라미터 제거 — 이후 새로고침/리로드 시 로그인 모달이 다시 뜨지 않도록
+    const cleanUrl = new URL(location.href);
+    cleanUrl.searchParams.delete("openLogin");
+    history.replaceState({}, "", cleanUrl.toString());
+    // 이미 로그인된 상태(세션 복원 예정)면 로그인 모달을 띄우지 않음
+    if (!window.fb || !window.fb.auth?.currentUser) {
+      setTimeout(() => {
+        if (!adminMode && !window.fb?.auth?.currentUser) window.account?.openLogin?.();
+      }, 300);
+    }
   }
   // 자동 마법사 팝업 제거 — 새 계정 시스템 도입으로 "학교 계정" 버튼으로 유도
   startPolling();

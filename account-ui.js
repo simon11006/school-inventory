@@ -799,6 +799,11 @@ function openConnectionManager(uid, data) {
           webAppUrl: parsed.webAppUrl, apiKey: parsed.apiKey, deploymentId: parsed.deploymentId,
         });
       }
+      // 로컬 연결에도 즉시 반영 → 닫기 후 새로고침 시 추가 리로드 방지
+      window.applyConnectionFromAccount?.({
+        webAppUrl: parsed.webAppUrl, apiKey: parsed.apiKey, deploymentId: parsed.deploymentId,
+        shortCode: data.shortCode, schoolName: data.schoolName,
+      });
       alert("연결됐습니다! 교사 초대 주소를 학교 내부 메신저로 공유하세요.");
       modal.remove();
       // 갱신된 연결 정보로 모달 재오픈 → 교사 초대 주소·복사 버튼 즉시 표시
