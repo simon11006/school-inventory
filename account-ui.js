@@ -1390,10 +1390,10 @@ async function resolveShortCodeFromUrl() {
     if (!connDoc.exists()) return;
     const conn = { ...connDoc.data(), shortCode: code };
     if (window.applyConnectionFromAccount?.(conn)) {
-      // ?s= 파라미터 제거 후 리로드 → 다음 방문에서는 위의 getSchoolCode() 분기 탐
-      const newUrl = new URL(location.href);
-      newUrl.searchParams.delete("s");
-      history.replaceState({}, "", newUrl.toString());
+      // 배포 주소(/?s=코드)를 그대로 유지한 채 리로드한다.
+      // ?s 를 떼고 리로드하면 "/" 로 가서 랜딩이 뜨므로 절대 떼지 않는다.
+      // 리로드 후에는 syncConfig.schoolCode 가 채워져 위의 getSchoolCode()===code 분기로
+      // heartbeat 만 수행되어 무한 리로드가 발생하지 않는다.
       location.reload();
     }
   } catch { /* 무시: 연결 실패 시 평소 화면 유지 */ }
