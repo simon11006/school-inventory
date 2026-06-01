@@ -266,8 +266,15 @@
             <p class="tip">"모든 사용자"를 선택해도 스프레드시트가 공개되는 게 아닙니다. 연결 키를 모르는 사람은 데이터에 접근할 수 없습니다.</p>
           </li>
           <li><strong>배포</strong>를 클릭합니다. (권한 승인 화면이 다시 나오면 동일하게 <strong>고급 → 안전하지 않음 → 허용</strong>)</li>
-          <li>완료 화면에 <strong>웹 앱 URL</strong>(<code>https://script.google.com/macros/s/.../exec</code>)이 나타납니다. 이 URL을 <strong>메모장에 복사해 두세요.</strong></li>
-          <li><strong>완료</strong>를 눌러 창을 닫습니다.</li>
+          <li>완료 화면에 <strong>웹 앱 URL</strong>(<code>https://script.google.com/macros/s/.../exec</code>)이 나타납니다.
+            이 URL을 <strong>메모장에 복사해 두세요.</strong>
+            <p class="warn" style="margin-top:8px;">
+              ⚠️ 이 웹 앱 URL을 교구이음 앱에 <strong>직접 붙여넣으면 안 됩니다.</strong>
+              URL에는 연결 키(apiKey)가 없어 인증 오류가 납니다.
+              반드시 아래 <strong>5단계의 시트 메뉴(④ 접속 링크)</strong>를 통해 완성된 접속 링크를 만들어야 합니다.
+            </p>
+          </li>
+          <li><strong>완료</strong>를 눌러 창을 닫고 <strong>사본 스프레드시트 탭으로</strong> 돌아갑니다.</li>
         </ol>
 
         <figure style="margin:18px 0 0;">
@@ -308,17 +315,23 @@
 
       <h2><span class="stage">5단계</span><span class="who new">새 계정</span> '④ 접속 링크'로 교구이음 앱 재연결</h2>
       <div class="card">
-        <ol>
-          <li>사본 시트로 돌아가 <strong>교구이음 → ④ 우리 학교 접속 링크</strong>를 클릭합니다.</li>
-          <li>URL 입력창이 뜨면 4단계에서 복사한 웹 앱 URL(<code>/exec</code>로 끝나는 주소)을 붙여넣고 확인을 누릅니다.</li>
-          <li>팝업의 <strong>[주소 복사]</strong> 버튼을 눌러 접속 링크를 복사합니다.</li>
+        <p class="notice">
+          ⚠️ <strong>웹 앱 URL ≠ 접속 링크.</strong> 4단계의 웹 앱 URL에는 연결 키가 없어 앱에 직접 쓸 수 없습니다.
+          이 단계에서 <strong>시트 메뉴가 웹 앱 URL + 연결 키를 합쳐 완성된 접속 링크를 만들어 줍니다.</strong>
+          그 완성된 링크를 앱에 붙여넣으세요.
+        </p>
+        <ol style="margin-top:14px;">
+          <li>사본 시트 메뉴 <strong>교구이음 → ④ 우리 학교 접속 링크</strong>를 클릭합니다.</li>
+          <li>URL 입력창이 뜨면 <strong>4단계에서 복사해 둔 웹 앱 URL</strong>(<code>/exec</code>로 끝나는 주소)을 붙여넣고 확인을 누릅니다.</li>
+          <li>팝업에 완성된 접속 링크(<code>https://item-school.netlify.app/?d=...&amp;k=연결키</code>)가 나타납니다.
+            <strong>[주소 복사]</strong> 버튼을 눌러 이 링크를 복사합니다.</li>
           <li>교구이음 웹페이지(<code>item-school.netlify.app</code>)로 돌아가 <strong>학교 관리자 로그인</strong>으로 <strong>기존 학교 계정</strong>에 로그인합니다.
             <p class="tip" style="margin-top:8px;">반드시 <strong>같은 학교 계정</strong>으로 로그인해야 교사 접속주소(<code>?s=…</code>)가 그대로 유지됩니다.</p>
           </li>
-          <li><strong>연결 설정 / 연결 정보 수정</strong>의 <strong>'접속 링크 붙여넣기'</strong> 칸에 복사한 주소를 붙여넣고 <strong>[연결하기]</strong>를 누릅니다.</li>
+          <li><strong>연결 설정 / 연결 정보 수정</strong>의 <strong>'접속 링크 붙여넣기'</strong> 칸에 3번에서 복사한 링크를 붙여넣고 <strong>[연결하기]</strong>를 누릅니다.</li>
           <li>"연결됐습니다!" 메시지가 나오면 성공입니다.</li>
         </ol>
-        <p class="tip">이렇게 하면 같은 학교 계정·같은 교사 링크는 그대로 둔 채, <strong>데이터를 읽고 쓰는 저장소만 '사본'으로 바뀝니다.</strong></p>
+        <p class="tip">이렇게 하면 같은 학교 계정·같은 교사 링크(<code>?s=…</code>)는 그대로 둔 채, <strong>데이터를 읽고 쓰는 저장소만 '사본'으로 바뀝니다.</strong></p>
       </div>
 
       <h2><span class="stage">6단계</span>정상 동작 확인 → 이상 없으면 원본 정리</h2>
