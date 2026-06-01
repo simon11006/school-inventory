@@ -1,5 +1,5 @@
 const API_KEY_PROPERTY = "SCHOOL_INVENTORY_API_KEY";
-const SCRIPT_VERSION = "2026-06-02-spec-generic";
+const SCRIPT_VERSION = "2026-06-02-generic-all";
 const APP_BASE_URL = "https://item-school.netlify.app/index.html";
 
 function onOpen() {
@@ -205,9 +205,9 @@ function buildDiagnosticsHtml_(diag) {
   );
 }
 
-// items 의 base 헤더 — 사람이 보기 좋은 고정 순서. 'spec'(규격)을 name 바로 뒤에 둔다.
-// 앱이 보낸 물품에 base에 없는 새 필드가 있으면 tableHeaders_ 가 뒤에 자동으로 덧붙여
-// 앞으로 새 필드를 추가해도 이 스크립트를 다시 고칠 필요가 없다.
+// 각 시트의 base 헤더(사람이 보기 좋은 고정 순서). items 의 'spec'(규격)은 name 바로 뒤에 둔다.
+// 앱이 보낸 행에 base에 없는 새 필드가 있으면 tableHeaders_ 가 모든 테이블에서 뒤에
+// 자동으로 덧붙인다 → 어떤 테이블이든 새 필드를 추가해도 이 스크립트 재수정이 필요 없다.
 const TABLES = {
   items: [
     "id", "name", "spec", "category", "location", "total", "unit", "consumable",
@@ -226,19 +226,18 @@ const TABLES = {
 };
 
 // 실제로 시트에 쓸 헤더 목록을 계산한다.
-// items 는 base 헤더 + (앱이 보낸 물품에 들어 있는 새 필드)를 합쳐 자동 확장한다.
-// '__' 로 시작하는 내부 전용 필드(__damageInTotal__ 등)는 제외한다.
+// 모든 데이터 테이블에서 base 헤더 + (앱이 보낸 행에 들어 있는 새 필드)를 합쳐 자동 확장한다.
+// → 어떤 테이블이든 앱에서 새 필드를 추가해도 이 스크립트를 다시 고칠 필요가 없다.
+// '__' 로 시작하는 내부 전용 필드(__damageInTotal__ 등)는 저장에서 제외한다.
 function tableHeaders_(sheetName, rows) {
-  const base = TABLES[sheetName];
-  if (sheetName !== "items") return base;
-  const headers = base.slice();
+  const base = (TABLES[sheetName] || []).slice();
   (rows || []).forEach(function (row) {
     Object.keys(row || {}).forEach(function (key) {
       if (key.indexOf("__") === 0) return;
-      if (headers.indexOf(key) === -1) headers.push(key);
+      if (base.indexOf(key) === -1) base.push(key);
     });
   });
-  return headers;
+  return base;
 }
 
 function setupInventorySpreadsheet() {

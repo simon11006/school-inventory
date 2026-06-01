@@ -8,11 +8,15 @@
 > 반영(붙여넣기 + 재배포)해야 합니다.
 
 ## 데이터 구조
-- `TABLES` 가 각 시트의 컬럼을 정의합니다.
-- `items` 시트는 `tableHeaders_()` 로 **base 헤더 + 앱이 보낸 새 필드**를 자동 합쳐 저장합니다.
-  → 앱에 새 물품 필드(예: `spec` 규격)를 추가해도 **이 스크립트를 다시 고칠 필요가 없습니다.**
+- `TABLES` 가 각 시트의 base 컬럼(고정 순서)을 정의합니다.
+- **모든 컬럼형 테이블**(items·reservations·logs·teachers·locations)은 `tableHeaders_()` 로
+  **base 헤더 + 앱이 보낸 새 필드**를 자동 합쳐 저장합니다.
+  → 어떤 테이블이든 앱에서 새 필드를 추가해도 **이 스크립트를 다시 고칠 필요가 없습니다.**
   (`__` 로 시작하는 내부 전용 필드는 저장 제외)
 - `load` 는 시트 헤더 이름 기준으로 읽으므로 새 컬럼도 자동으로 앱에 전달됩니다.
+  (단 teachers·locations 는 이름만 쓰는 목록이라 load 시 name 만 사용)
+- `settings` 에 JSON으로 저장되는 값(purchaseRequests·categories·locationManagers)은
+  통째로 직렬화되므로 **원래부터 필드 자유**입니다 — 스크립트 수정과 무관.
 
 ## 기존 학교에 반영하는 법 (코드 변경 시)
 1. 학교 스프레드시트 → **확장 프로그램 → Apps Script**
@@ -23,6 +27,8 @@
    (기존 데이터는 헤더 이름 기준으로 보존됩니다.)
 
 ## 변경 이력
-- `2026-06-02-spec-generic`: `items`에 `spec`(규격) 컬럼 추가 +
-  items 저장을 "앱이 보낸 모든 필드 자동 저장(generic)" 방식으로 변경.
+- `2026-06-02-generic-all`: generic 자동 저장을 **모든 컬럼형 테이블**로 확장
+  (items·reservations·logs·teachers·locations). 앞으로 어느 테이블에 새 필드를
+  추가해도 스크립트 수정 불필요.
+- `2026-06-02-spec-generic`: `items`에 `spec`(규격) 컬럼 추가 + items 자동 저장(generic).
 - `2026-05-07-menu-ui`: 직전 버전(메뉴 UI).
