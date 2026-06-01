@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>교구이음 웹앱 인수인계 가이드</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #fbfaf6;
+        color: #1f1d18;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+        line-height: 1.7;
+      }
+      main {
+        width: min(960px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 36px 0 80px;
+      }
+      header {
+        padding: 30px;
+        border: 1px solid #e8e4d6;
+        border-radius: 16px;
+        background: #fff;
+      }
+      h1, h2, h3, h4, p { margin: 0; }
+      h1 { font-size: 30px; line-height: 1.25; }
+      h2 {
+        margin-top: 38px;
+        padding-top: 30px;
+        border-top: 1px solid #e8e4d6;
+        font-size: 23px;
+      }
+      h3 { margin-top: 22px; font-size: 17px; color: #2a2820; }
+      h4 { margin-top: 16px; font-size: 15px; color: #45413a; }
+      p, li { font-size: 15px; }
+      .lead { margin-top: 12px; color: #45413a; }
+      .notice {
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: #fbe8c9;
+        border: 1px solid #ecd2a4;
+        color: #6d4216;
+      }
+      .tip {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #e7f1ea;
+        border: 1px solid #c7dec8;
+        color: #2c5b3e;
+        font-size: 14px;
+      }
+      .warn {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #fde4e1;
+        border: 1px solid #f1bdb6;
+        color: #863a30;
+        font-size: 14px;
+      }
+      .card {
+        margin-top: 14px;
+        padding: 20px;
+        border: 1px solid #ede9dd;
+        border-radius: 12px;
+        background: #fff;
+      }
+      ol, ul { padding-left: 24px; margin: 8px 0; }
+      li + li { margin-top: 8px; }
+      code {
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: #f3f1ea;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.92em;
+      }
+      .checklist li { list-style: none; margin-left: -24px; }
+      .checklist li::before { content: "\2610  "; color: #5b8a6f; font-weight: 700; }
+      .who {
+        display: inline-block;
+        margin-right: 8px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        color: #fff;
+      }
+      .who.old { background: #a86620; }
+      .who.new { background: #3f6b53; }
+      .stage {
+        display: inline-block;
+        margin-right: 8px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: #5b8a6f;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+      }
+      a { color: #3f6b53; font-weight: 700; }
+      .toc {
+        margin-top: 18px;
+        padding: 16px 20px;
+        background: #f5f2e8;
+        border-radius: 12px;
+      }
+      .toc ol { margin: 4px 0 0; }
+      .golden {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 12px;
+        background: #fff5d6;
+        border: 2px solid #e6c64f;
+        color: #6d4216;
+        font-size: 15px;
+      }
+      .footer {
+        margin-top: 40px;
+        padding: 18px;
+        border-top: 1px solid #e8e4d6;
+        color: #898170;
+        font-size: 13px;
+      }
+      table {
+        width: 100%;
+        margin-top: 10px;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th, td {
+        padding: 8px 10px;
+        border: 1px solid #e8e4d6;
+        text-align: left;
+        vertical-align: top;
+      }
+      th { background: #f5f2e8; }
+      kbd {
+        padding: 2px 6px;
+        border: 1px solid #d8d3c2;
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        background: #fff;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.88em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>교구이음 웹앱 인수인계 가이드</h1>
+        <p class="lead">
+          담당 교사가 바뀔 때, <strong>지금까지 쌓인 데이터(교사·물품·예약·사용기록·구입요청)와 교사 접속주소를
+          그대로 살린 채</strong> 새 담당자(또는 학교 공용 계정)에게 넘기는 방법입니다.
+        </p>
+        <p class="notice">
+          이 방식은 <strong>"이사"</strong> 입니다 — 데이터·접속주소(<code>?s=…</code>)는 그대로 두고,
+          저장소(스프레드시트) 소유자만 새 계정으로 바꿉니다. 교사들은 주소를 다시 받을 필요가 없습니다.
+        </p>
+
+        <h3 style="margin-top:20px;">왜 "소유권 이전" 버튼은 안 되나요?</h3>
+        <p>
+          현재 시트 소유자가 <strong>개인 구글 계정</strong>(지메일이 아닌 네이버 등으로 만든 계정 포함)이고,
+          넘기려는 계정이 <strong>학교·교육청 조직 계정</strong>(<code>@goedu.kr</code> 등)이면,
+          구글은 <strong>개인↔조직 사이의 소유권 직접 이전을 정책적으로 막습니다.</strong>
+          그래서 "동일한 조직에 있는 사용자에게만 이전할 수 있습니다" 오류가 납니다. 우회 설정은 없으며,
+          아래의 <strong>사본 인계</strong> 방식으로 진행하면 됩니다.
+        </p>
+
+        <div class="golden">
+          🟡 <strong>가장 중요한 원칙:</strong> 새 시트가 <strong>정상 동작하는 것을 끝까지 확인하기 전에는
+          기존(원본) 시트를 절대 삭제·정리하지 마세요.</strong> 원본을 그대로 두면,
+          중간에 무슨 일이 생겨도 데이터가 사라지지 않습니다.
+        </div>
+
+        <div class="toc">
+          <strong>전체 순서</strong>
+          <ol>
+            <li><span class="who old">현 담당자</span> 기존 시트를 새 담당자에게 <strong>편집자로 공유</strong></li>
+            <li><span class="who new">새 담당자</span> 시트 <strong>사본 만들기</strong> (데이터·스크립트 통째로 복사)</li>
+            <li><span class="who new">새 담당자</span> 사본에서 <strong>① 처음 설정 / 연결 키 발급</strong> + 권한 승인</li>
+            <li><span class="who new">새 담당자</span> 사본 Apps Script <strong>웹앱 새로 배포</strong></li>
+            <li><span class="who new">새 담당자</span> <strong>④ 접속 링크</strong>로 교구이음 앱 <strong>재연결</strong></li>
+            <li>데이터·교사 링크 <strong>정상 확인</strong> → 이상 없으면 원본 정리</li>
+            <li>교구이음 <strong>학교 계정(로그인) 인계</strong></li>
+          </ol>
+        </div>
+      </header>
+
+      <h2><span class="stage">1단계</span><span class="who old">현 담당자</span> 기존 시트를 새 담당자에게 편집자로 공유</h2>
+      <div class="card">
+        <ol>
+          <li>현재 데이터가 들어있는 학교 스프레드시트(예: <code>테스트3초 교구관리</code>)를 엽니다.</li>
+          <li>우측 상단 <strong>공유</strong>를 클릭합니다.</li>
+          <li>새 담당자 계정(예: <code>pbs1006@goedu.kr</code>)을 입력하고 권한을 <strong>편집자</strong>로 설정한 뒤
+            <strong>보내기</strong>를 누릅니다.</li>
+        </ol>
+        <p class="tip">
+          이 단계는 새 담당자가 "사본 만들기"를 할 수 있도록 열어주는 것뿐입니다. 아직 아무 데이터도 옮겨지지 않습니다.
+        </p>
+      </div>
+
+      <h2><span class="stage">2단계</span><span class="who new">새 담당자</span> 시트 사본 만들기</h2>
+      <div class="card">
+        <ol>
+          <li>새 담당자가 <strong><code>@goedu.kr</code> 계정으로 구글에 로그인</strong>합니다.</li>
+          <li>1단계에서 공유받은 시트를 엽니다. (Gmail 또는 구글 드라이브 "공유 문서함"에서 찾을 수 있습니다.)</li>
+          <li>상단 메뉴 <strong>파일 → 사본 만들기</strong>를 클릭합니다.</li>
+          <li>저장 위치를 <strong>새 담당자(@goedu.kr)의 내 드라이브</strong>로 두고 <strong>사본 만들기</strong>를 누릅니다.</li>
+          <li>이름을 <code>○○초등학교 교구관리</code>처럼 알아보기 쉽게 바꿉니다.</li>
+        </ol>
+        <p class="tip">
+          사본을 만들면 <strong>물품·교사 등 모든 데이터(셀 내용)와 Apps Script가 통째로 복사</strong>되고,
+          이 사본의 <strong>소유자는 새 담당자(@goedu.kr)</strong> 가 됩니다. 이것이 핵심입니다 —
+          이제 원본을 누가 지우든 사본은 영향받지 않는 독립 파일입니다.
+        </p>
+        <p class="warn">
+          단, <strong>웹앱 배포 정보는 사본에 복사되지 않습니다.</strong> 그래서 3~4단계에서 사본에 대해
+          연결 키 발급과 웹앱 배포를 다시 해줘야 합니다.
+        </p>
+      </div>
+
+      <h2><span class="stage">3단계</span><span class="who new">새 담당자</span> 사본에서 ① 처음 설정 / 연결 키 발급</h2>
+      <div class="card">
+        <ol>
+          <li>사본 시트 상단 메뉴에서 <strong>교구이음 → ① 처음 설정 / 연결 키 발급</strong>을 클릭합니다.
+            <p class="tip" style="margin-top:8px;">메뉴가 안 보이면 <strong>새로고침(F5)</strong> 후 1~2초 기다리세요.</p>
+          </li>
+          <li>처음 한 번은 <strong>승인 필요</strong> 팝업이 뜹니다. <strong>확인</strong>을 누릅니다.
+            <ul>
+              <li>"Google에서 확인하지 않은 앱"이 뜨면 → 화면 <strong>왼쪽 하단의 고급</strong> → <strong>(안전하지 않음)으로 이동</strong> 클릭</li>
+              <li>액세스 권한 화면이 뜨면 → <strong>모두 선택</strong> 체크 → <strong>계속</strong> 클릭</li>
+            </ul>
+          </li>
+          <li>완료 팝업이 뜨면 <strong>확인</strong>을 눌러 닫습니다.</li>
+        </ol>
+        <div class="golden" style="margin-top:16px;">
+          🟡 <strong>여기서 즉시 확인하세요:</strong> 사본 시트의 <strong>물품·교사 데이터가 그대로 남아있는지</strong>
+          눈으로 확인합니다. 만약 데이터가 비어 보이면 <strong>당황하지 말고</strong> 이 사본 창을 닫고
+          (원본은 그대로이므로) <strong>2단계부터 다시</strong> 시도하세요. 원본을 건드리지 않았으니 손실은 없습니다.
+        </div>
+      </div>
+
+      <h2><span class="stage">4단계</span><span class="who new">새 담당자</span> 사본 Apps Script를 웹앱으로 새로 배포</h2>
+      <div class="card">
+        <ol>
+          <li>사본 시트 상단 메뉴에서 <strong>확장 프로그램 → Apps Script</strong>를 클릭합니다. (새 탭)</li>
+          <li>오른쪽 위 <strong>배포</strong> → <strong>새 배포</strong>를 클릭합니다.</li>
+          <li>왼쪽 위 톱니바퀴(⚙️) → <strong>웹 앱</strong>을 선택합니다.</li>
+          <li>설명란에 <code>v1</code> 입력.</li>
+          <li><strong>다음 사용자 인증 정보로 실행</strong>: <strong>나(새 담당자 계정)</strong> 선택.</li>
+          <li><strong>액세스 권한이 있는 사용자</strong>: <strong>모든 사용자</strong> 선택.
+            <p class="tip">"모든 사용자"라도 연결 키를 모르면 데이터에 접근할 수 없으니 안전합니다.</p>
+          </li>
+          <li><strong>배포</strong>를 클릭합니다. (권한 승인 화면이 다시 나오면 동일하게 승인)</li>
+          <li>완료 화면의 <strong>웹 앱 URL</strong>(<code>https://script.google.com/macros/s/.../exec</code>)을
+            <strong>메모장에 복사</strong>해 둡니다. 그리고 <strong>완료</strong>로 닫습니다.</li>
+        </ol>
+        <p class="warn">
+          이 URL은 <strong>사본 전용 새 주소</strong>입니다. 원본의 주소와 다릅니다. 다음 단계에서 이 새 주소로 앱을 재연결합니다.
+        </p>
+      </div>
+
+      <h2><span class="stage">5단계</span><span class="who new">새 담당자</span> 교구이음 앱 재연결</h2>
+      <div class="card">
+        <h3>5-1. 사본에서 접속 링크 만들기</h3>
+        <ol>
+          <li>사본 시트 메뉴 <strong>교구이음 → ④ 우리 학교 접속 링크</strong>를 실행합니다.</li>
+          <li>표시되는 <strong>접속 링크</strong>를 복사합니다. (새 웹앱 주소 + 연결 키가 함께 들어있습니다.)</li>
+        </ol>
+
+        <h3>5-2. 교구이음 앱에서 연결 정보 교체</h3>
+        <ol>
+          <li>교구이음 앱(<code>item-school.netlify.app</code>)을 열고 상단 <strong>학교 관리자 로그인</strong>으로
+            <strong>기존 학교 계정</strong>에 로그인합니다.
+            <p class="tip">기존과 <strong>같은 학교 계정</strong>으로 로그인해야 교사 접속주소(<code>?s=…</code>)가 그대로 유지됩니다.</p>
+          </li>
+          <li><strong>학교 계정</strong> 버튼(또는 연결 관리)에서 <strong>연결 설정 / 연결 정보 수정</strong>을 엽니다.</li>
+          <li>5-1에서 복사한 <strong>접속 링크(또는 새 웹앱 URL + 연결 키)</strong>를 붙여넣고 <strong>저장(연결)</strong>합니다.</li>
+        </ol>
+        <p class="tip">
+          이렇게 하면 같은 학교 계정·같은 교사 링크(<code>?s=…</code>)는 그대로 둔 채,
+          <strong>데이터를 읽고 쓰는 저장소만 "사본"으로 바뀝니다.</strong>
+        </p>
+      </div>
+
+      <h2><span class="stage">6단계</span>정상 동작 확인 (이게 끝나기 전엔 원본 삭제 금지)</h2>
+      <div class="card">
+        <ul class="checklist">
+          <li>앱(관리자 모드)에서 <strong>물품·교사 목록이 그대로 보인다.</strong></li>
+          <li>물품을 하나 <strong>수정/추가</strong>한 뒤, <strong>사본 시트</strong>를 열어보면 그 변경이 반영되어 있다.</li>
+          <li>교사용 주소 <code>?s=…</code>로 접속하면 교사·물품이 정상적으로 보인다.</li>
+          <li>(가능하면) 다른 PC에서도 같은 데이터가 보인다.</li>
+        </ul>
+        <div class="golden" style="margin-top:16px;">
+          🟡 위 항목이 <strong>모두 정상</strong>일 때에만, 원본(전임자 소유) 시트를 정리합니다.
+          확인 전에 원본을 지우면 되돌릴 수 없습니다.
+        </div>
+        <h3>원본 정리 방법 (확인 완료 후)</h3>
+        <ul>
+          <li>안전하게: 전임자가 원본의 <strong>공유에서 자신 외 사람을 제거</strong>하고 그대로 보관(백업)하거나,</li>
+          <li>완전히: 더 이상 필요 없다면 전임자가 원본을 <strong>휴지통으로 이동</strong>합니다.
+            <span style="color:#863a30;">(되돌릴 수 없으니 6단계 확인 후에만)</span></li>
+        </ul>
+      </div>
+
+      <h2><span class="stage">7단계</span>교구이음 학교 계정(로그인) 인계</h2>
+      <div class="card">
+        <p>
+          위 1~6단계는 <strong>데이터 저장소(구글 시트)</strong>의 인계입니다. 여기에 더해, 앱에서 학교 관리자로
+          로그인하는 <strong>교구이음 학교 계정</strong>도 새 담당자가 쓸 수 있게 넘겨야 합니다.
+        </p>
+        <h3>방법 A — 같은 계정을 계속 사용 (권장)</h3>
+        <ol>
+          <li>기존 학교 계정으로 로그인한 상태에서 <strong>학교 설정 → "학교 관리자 계정 비밀번호 변경"</strong>으로
+            비밀번호를 새 담당자가 정한 값으로 바꿉니다.</li>
+          <li>로그인 <strong>이메일과 새 비밀번호</strong>를 새 담당자에게 전달합니다.</li>
+        </ol>
+        <p class="tip">
+          학교 계정은 학교 단위로 하나이므로, 계정을 새로 만들 필요 없이 <strong>비밀번호만 바꿔 넘기면</strong> 됩니다.
+          교사 접속주소(<code>?s=…</code>)도 바뀌지 않습니다.
+        </p>
+      </div>
+
+      <h2>새로 가입과 무엇이 다른가요?</h2>
+      <div class="card">
+        <table>
+          <tr><th></th><th>이 가이드 (사본 인계)</th><th>그냥 새로 가입</th></tr>
+          <tr><td>교사·물품·예약·사용기록</td><td><strong>그대로 보존</strong></td><td>모두 사라짐(재입력)</td></tr>
+          <tr><td>예약·사용 이력</td><td>그대로</td><td><strong>복구 불가</strong></td></tr>
+          <tr><td>교사 접속주소 <code>?s=…</code></td><td><strong>그대로 유지</strong></td><td>새 주소 → 전 교사 재배포</td></tr>
+          <tr><td>Apps Script 수고</td><td>사본에 자동 복사 → 배포만</td><td>스크립트 처음부터 설치</td></tr>
+        </table>
+        <p class="tip">
+          요약: <strong>데이터를 살려야 한다면 이 가이드(사본 인계)</strong>가 맞고, 수고도 오히려 더 적습니다.
+          테스트용이라 데이터가 아무래도 좋다면 "새로 가입"이 더 단순합니다.
+        </p>
+      </div>
+
+      <h2>자주 생기는 문제와 해결</h2>
+      <div class="card">
+        <h3>Q. 소유권 이전이 "같은 조직" 오류로 막힙니다.</h3>
+        <p><strong>A.</strong> 개인 계정 → 조직 계정으로는 구글이 막아 둔 정상 동작입니다. 이 가이드의 <strong>사본 인계</strong>로 진행하세요.</p>
+
+        <h3>Q. 사본에서 ① 실행 후 데이터가 비어 보입니다.</h3>
+        <p><strong>A.</strong> 이 사본 창을 닫고(원본은 그대로) <strong>2단계부터 다시</strong> 하세요. 원본을 건드리지 않았으니 손실은 없습니다.</p>
+
+        <h3>Q. 재연결했더니 교사 화면이 0개로 보입니다.</h3>
+        <p><strong>A.</strong> 관리자 계정으로 로그인해 잠시 기다리면, 관리자 PC의 데이터가 사본 저장소로 자동 업로드됩니다.
+          그래도 비어 있으면 <strong>학교 설정</strong>에서 연결 정보가 <strong>새 웹앱 URL</strong>로 바뀌어 있는지 확인하세요.</p>
+
+        <h3>Q. 교사 접속주소(<code>?s=…</code>)가 바뀌나요?</h3>
+        <p><strong>A.</strong> <strong>같은 학교 계정</strong>으로 로그인해 연결 정보만 교체하면 주소는 <strong>그대로 유지</strong>됩니다.
+          교사들에게 새 링크를 다시 배포할 필요가 없습니다.</p>
+
+        <h3>Q. 앞으로 이런 번거로움을 피하려면?</h3>
+        <p><strong>A.</strong> 처음 만들 때부터 <strong>학교 공용(조직) 계정</strong>으로 시트를 만들면, 담당자 변경 시
+          계정 접근 권한만 넘기면 되어 사본 인계가 필요 없습니다.</p>
+      </div>
+
+      <p class="footer">
+        추가 도움이 필요하면 웹앱 수정 요청 문의(<code>endeavor1006@naver.com</code>)로 연락하세요.
+      </p>
+    </main>
+  </body>
+</html>
