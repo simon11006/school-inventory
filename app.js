@@ -3919,6 +3919,33 @@ function openSchoolSettingsModal() {
     });
   }
 
+  function getCurrentLocationsFromForm() {
+    const seen = [];
+    locationList.querySelectorAll('input[name="locationName"]').forEach((inp) => {
+      const v = inp.value.trim();
+      if (v && !seen.includes(v)) seen.push(v);
+    });
+    return seen;
+  }
+
+  // 물품실 입력을 카테고리 '실 선택' 드롭다운에 실시간 반영 (저장 전에도 보이도록)
+  function rebuildCategoryLocationOptions() {
+    if (!categoryLocationSelect) return;
+    const locs = getCurrentLocationsFromForm();
+    const prev = categoryLocationSelect.value;
+    categoryLocationSelect.innerHTML = locs
+      .map((loc) => `<option value="${escapeHtml(loc)}">${escapeHtml(loc)}</option>`)
+      .join("");
+    if (locs.includes(prev)) {
+      categoryLocationSelect.value = prev;
+    } else {
+      // 선택했던 실이 사라짐(이름 변경·삭제) → 첫 실로 전환하고 카테고리 목록 갱신
+      const next = locs[0] || "";
+      categoryLocationSelect.value = next;
+      renderCategoryListForLocation(next);
+    }
+  }
+
   modal.querySelector("#addTeacherBtn").addEventListener("click", () => {
     const row = document.createElement("div");
     row.className = "teacher-row";
@@ -3971,6 +3998,10 @@ function openSchoolSettingsModal() {
     row.querySelector("input").focus();
   });
 
+  locationList.addEventListener("input", (event) => {
+    if (event.target.name === "locationName") rebuildCategoryLocationOptions();
+  });
+
   locationList.addEventListener("click", (event) => {
     if (event.target.closest(".reset-pin-btn")) {
       const row = event.target.closest(".location-row");
@@ -3987,6 +4018,7 @@ function openSchoolSettingsModal() {
       return;
     }
     button.closest(".location-row").remove();
+    rebuildCategoryLocationOptions();
   });
 
   modal.querySelector("#diagnoseSyncBtn")?.addEventListener("click", () => runSyncAction(modal, "diagnose"));
