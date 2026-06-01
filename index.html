@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>교구이음 · 스마트 교구 관리 플랫폼</title>
+  <script>
+    // ?s= 학교 코드 링크로 접속하면 앱으로 바로 이동
+    (function() {
+      var p = new URLSearchParams(location.search);
+      if (p.has("s")) location.replace("app.html?" + p.toString());
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
