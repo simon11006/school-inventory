@@ -1844,7 +1844,9 @@ function renderItemsTable() {
       scrollWorkPanelIntoView();
     });
   });
-  els.mainView.querySelectorAll("[data-item-id]").forEach((button) => {
+  // .row-action 으로 한정 — 체크박스(.item-select-chk)도 data-item-id 를 갖고 있어
+  // 그냥 [data-item-id] 로 잡으면 체크박스 클릭이 표 재렌더를 일으켜 개별 체크가 풀린다.
+  els.mainView.querySelectorAll(".row-action[data-item-id]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       selectedItemId = button.dataset.itemId;
