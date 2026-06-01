@@ -1612,18 +1612,7 @@ td strong {
   font-size: 14px;
 }
 
-.borrow-table th {
-  text-align: center;
-}
-
-.borrow-table th:first-child,
-.borrow-table td:first-child {
-  text-align: left;
-}
-
-.borrow-table td:nth-child(n + 2) {
-  text-align: center;
-}
+/* 예약 표도 물품 관리 표와 같은 왼쪽 정렬을 사용한다 (가운데 정렬 덮어쓰기 제거) */
 
 .purchase-request-table {
   min-width: 0;

@@ -1676,7 +1676,8 @@ function renderBorrowStartView() {
         <thead>
           <tr>
             <th>보관 장소</th>
-            <th>물품</th>
+            <th>물품명</th>
+            <th>규격</th>
             <th>카테고리</th>
             <th>사용 가능</th>
             <th>상태</th>
@@ -1689,9 +1690,10 @@ function renderBorrowStartView() {
               (item) => `
               <tr class="${selectedItemId === item.id ? "is-selected" : ""}" data-borrow-item-id="${item.id}">
                 <td>${escapeHtml(item.location)}</td>
-                <td style="text-align:left;">
+                <td>
                   <strong>${escapeHtml(item.name)}</strong>${renderItemCode(item) ? `<br /><span class="helper">${renderItemCode(item)}</span>` : ""}
                 </td>
+                <td>${escapeHtml(item.spec || "-")}</td>
                 <td>${escapeHtml(item.category || "-")}</td>
                 <td>${getAvailableCount(item.id)} / ${item.total} ${escapeHtml(item.unit || "개")}</td>
                 <td>${statusBadge(item.status)}</td>
@@ -1754,6 +1756,7 @@ function renderItemsTable() {
             ${adminMode ? `<th><input type="checkbox" id="itemSelectAll" aria-label="전체 선택" /></th>` : ""}
             <th>보관 장소</th>
             <th>물품명</th>
+            <th>규격</th>
             <th>카테고리</th>
             <th>사용 가능</th>
             <th>예약/분출</th>
@@ -1772,6 +1775,7 @@ function renderItemsTable() {
                 <td>
                   <strong>${escapeHtml(item.name)}</strong>${renderItemCode(item) ? `<br /><span class="helper">${renderItemCode(item)}</span>` : ""}
                 </td>
+                <td>${escapeHtml(item.spec || "-")}</td>
                 <td>${escapeHtml(item.category || "-")}</td>
                 <td>
                   ${getAvailableCount(item.id)} / ${item.total} ${escapeHtml(item.unit || "개")}
@@ -4554,6 +4558,7 @@ function openItemModal(item = null) {
     body: `
       <div class="field-grid">
         ${field("물품명", "name", item?.name || "", true)}
+        ${field("규격", "spec", item?.spec || "", false, "text", "예) 5호, 250mm, 1.5L")}
         <label class="field">
           <span>카테고리</span>
           <div class="category-field-wrap">
@@ -4607,6 +4612,7 @@ function openItemModal(item = null) {
       const payload = {
         id: item?.id || createId("item"),
         name: formData.get("name").trim(),
+        spec: formData.get("spec").trim(),
         category,
         location: formData.get("location").trim(),
         total: Number(formData.get("total")),
@@ -5513,6 +5519,7 @@ function buildImportPlan(rows, sourceName) {
   cleanRows.slice(1).forEach((row, index) => {
     const record = Object.fromEntries(headers.map((header, headerIndex) => [header, row[headerIndex] || ""]));
     const name = String(record.name || "").trim();
+    const spec = String(record.spec || "").trim();
     const location = String(record.location || "").trim();
     const total = Number(String(record.total || "").replaceAll(",", ""));
     const category = String(record.category || "").trim();
@@ -5545,6 +5552,7 @@ function buildImportPlan(rows, sourceName) {
     result.items.push({
       id: createId("item"),
       name,
+      spec,
       category,
       location,
       total,
@@ -5584,6 +5592,7 @@ function renderImportPreviewTable(items) {
           <tr>
             <th>처리</th>
             <th>물품명</th>
+            <th>규격</th>
             <th>카테고리</th>
             <th>보관 장소</th>
             <th>수량</th>
@@ -5601,6 +5610,7 @@ function renderImportPreviewTable(items) {
             <tr>
               <td>${item.willMerge ? statusBadge("병합") : statusBadge("등록")}</td>
               <td><strong>${escapeHtml(item.name)}</strong></td>
+              <td>${escapeHtml(item.spec || "-")}</td>
               <td>${escapeHtml(item.category || "-")}</td>
               <td>${escapeHtml(item.location)}</td>
               <td>${item.total}</td>
@@ -5662,9 +5672,9 @@ function commitPendingImport() {
 
 function downloadTemplate() {
   const rows = [
-    ["물품명", "카테고리", "보관 장소", "총 수량", "단위", "소모품 여부", "관리 번호", "구입일", "구입 금액", "상태", "비고"],
-    ["축구공", "체육", "체육실", "20", "개", "아니오", "PE-001", "2026-03-02", "18000", "사용 가능", ""],
-    ["비커 500ml", "과학", "과학실", "40", "개", "아니오", "SC-009", "2026-03-02", "4200", "사용 가능", "파손 주의"],
+    ["물품명", "규격", "카테고리", "보관 장소", "총 수량", "단위", "소모품 여부", "관리 번호", "구입일", "구입 금액", "상태", "비고"],
+    ["축구공", "5호", "체육", "체육실", "20", "개", "아니오", "PE-001", "2026-03-02", "18000", "사용 가능", ""],
+    ["비커 500ml", "500ml", "과학", "과학실", "40", "개", "아니오", "SC-009", "2026-03-02", "4200", "사용 가능", "파손 주의"],
   ];
   if (window.XLSX) {
     const worksheet = XLSX.utils.aoa_to_sheet(rows);
@@ -5718,18 +5728,19 @@ function generateNextCode(location) {
 
 function downloadTemplateCsv() {
   const rows = [
-    ["물품명", "카테고리", "보관 장소", "총 수량", "단위", "소모품 여부", "관리 번호", "구입일", "구입 금액", "상태", "비고"],
-    ["축구공", "체육", "체육실", "20", "개", "아니오", "PE-001", "2026-03-02", "18000", "사용 가능", ""],
-    ["비커 500ml", "과학", "과학실", "40", "개", "아니오", "SC-009", "2026-03-02", "4200", "사용 가능", "파손 주의"],
+    ["물품명", "규격", "카테고리", "보관 장소", "총 수량", "단위", "소모품 여부", "관리 번호", "구입일", "구입 금액", "상태", "비고"],
+    ["축구공", "5호", "체육", "체육실", "20", "개", "아니오", "PE-001", "2026-03-02", "18000", "사용 가능", ""],
+    ["비커 500ml", "500ml", "과학", "과학실", "40", "개", "아니오", "SC-009", "2026-03-02", "4200", "사용 가능", "파손 주의"],
   ];
   downloadCsv("물품_일괄등록_양식.csv", rows);
 }
 
 function exportItems() {
   const rows = [
-    ["물품명", "카테고리", "보관 장소", "총 수량", "단위", "소모품 여부", "관리 번호", "구입일", "구입 금액", "상태", "비고"],
+    ["물품명", "규격", "카테고리", "보관 장소", "총 수량", "단위", "소모품 여부", "관리 번호", "구입일", "구입 금액", "상태", "비고"],
     ...state.items.map((item) => [
       item.name,
+      item.spec || "",
       item.category,
       item.location,
       item.total,
@@ -6270,6 +6281,7 @@ function parseCsv(text) {
 function normalizeHeader(header) {
   const map = {
     물품명: "name",
+    규격: "spec",
     카테고리: "category",
     "보관 장소": "location",
     보관장소: "location",
