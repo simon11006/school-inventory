@@ -1253,7 +1253,7 @@ async function toggleAdminMode() {
     adminMode = false;
     adminScope = null;
     clearAdminSession();
-    if (["records", "items", "import", "purchaseRequests"].includes(currentView)) switchView("dashboard");
+    if (["records", "items", "import"].includes(currentView)) switchView("dashboard");
     selectedItemId = null;
     selectedReservationId = null;
     document.body.classList.remove("is-admin");
@@ -1584,7 +1584,7 @@ function handleStatusCardAction(action) {
 }
 
 function renderNavigation() {
-  if (!adminMode && ["records", "import", "items", "purchaseRequests"].includes(currentView)) currentView = "dashboard";
+  if (!adminMode && ["records", "import", "items"].includes(currentView)) currentView = "dashboard";
   if (els.sideMenuLabel) els.sideMenuLabel.textContent = adminMode ? "관리자용 메뉴" : "교사용 메뉴";
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === currentView);
@@ -1927,10 +1927,94 @@ function renderReservationsTable(rows, title = "예약 목록") {
   });
 }
 
+// 교사용 구입 요청 화면 — 내가 보낸 요청 목록 + 새 요청 + 대기중 요청 취소
+function renderTeacherPurchaseRequestsView() {
+  const teacher = els.teacherSelect.value;
+  const headHtml = `
+    <div class="view-head">
+      <h3>구입 요청</h3>
+      <span class="view-meta">목록에 없는 물품을 관리자에게 요청할 수 있어요</span>
+      <button class="primary" id="newPurchaseRequestBtn" type="button" style="margin-left:auto;">+ 새 구입 요청</button>
+    </div>`;
+
+  if (!isValidTeacherSelection()) {
+    els.mainView.innerHTML = headHtml + `
+      <div class="empty-state">
+        <h4>먼저 본인 이름을 선택하세요</h4>
+        <p>오른쪽 위 “사용 교사”에서 이름을 고르면 내 구입 요청을 보고, 새 요청을 보낼 수 있어요.</p>
+      </div>`;
+    document.querySelector("#newPurchaseRequestBtn")?.addEventListener("click", () => openPurchaseRequestModal());
+    return;
+  }
+
+  const myRequests = (state.purchaseRequests || [])
+    .filter((request) => request.requester === teacher)
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  if (!myRequests.length) {
+    els.mainView.innerHTML = headHtml + `
+      <div class="empty-state">
+        <div class="empty-state-illust">🛒</div>
+        <h4>아직 보낸 구입 요청이 없어요</h4>
+        <p>찾는 물품이 목록에 없다면 “+ 새 구입 요청”으로 관리자에게 요청해 보세요.</p>
+      </div>`;
+  } else {
+    els.mainView.innerHTML = headHtml + `
+      <div class="table-wrap purchase-request-wrap">
+        <table class="purchase-request-table">
+          <thead>
+            <tr>
+              <th>요청 물품</th>
+              <th>희망 수량</th>
+              <th>희망 물품실</th>
+              <th>상태</th>
+              <th>요청일</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${myRequests.map((request) => `
+              <tr>
+                <td>
+                  <strong>${escapeHtml(request.itemName || "-")}</strong><br />
+                  <span class="helper">${escapeHtml(request.category || "카테고리 없음")} · ${escapeHtml(request.note || "요청 이유 없음")}</span>
+                </td>
+                <td>${Number(request.quantity || 1)}</td>
+                <td>${escapeHtml(request.location || "-")}</td>
+                <td>${statusBadge(request.status || "요청됨")}</td>
+                <td>${request.createdAt ? formatDateInTimeZone(new Date(request.createdAt)) : "-"}</td>
+                <td>${request.status === "요청됨"
+                  ? `<button class="ghost compact danger" data-cancel-purchase-id="${escapeHtml(request.id)}" type="button">요청 취소</button>`
+                  : ""}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  document.querySelector("#newPurchaseRequestBtn")?.addEventListener("click", () => openPurchaseRequestModal());
+  els.mainView.querySelectorAll("[data-cancel-purchase-id]").forEach((button) => {
+    button.addEventListener("click", () => cancelOwnPurchaseRequest(button.dataset.cancelPurchaseId));
+  });
+}
+
+// 교사가 아직 검토 전(요청됨)인 자신의 요청을 직접 취소
+function cancelOwnPurchaseRequest(requestId) {
+  const teacher = els.teacherSelect.value;
+  const request = (state.purchaseRequests || []).find((row) => row.id === requestId);
+  if (!request || request.requester !== teacher || request.status !== "요청됨") return;
+  if (!confirm(`“${request.itemName}” 구입 요청을 취소할까요?`)) return;
+  state.purchaseRequests = (state.purchaseRequests || []).filter((row) => row.id !== requestId);
+  addLog("구입 요청 취소", `${teacher} 교사가 ${request.itemName} 구입 요청을 취소했습니다.`, teacher);
+  saveState();
+  render();
+  toast("구입 요청을 취소했습니다.", "warn");
+}
+
 function renderPurchaseRequestsView() {
   if (!adminMode) {
-    currentView = "dashboard";
-    render();
+    renderTeacherPurchaseRequestsView();
     return;
   }
 
