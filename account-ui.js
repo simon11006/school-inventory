@@ -864,6 +864,13 @@ function openConnectionManager(uid, data) {
         </div>
         ` : ""}
 
+        ${shortLink ? `
+        <p class="acct-hint" style="margin:4px 2px 0;line-height:1.6;">
+          💡 학교명·교사·물품실과 <strong>연락 이메일·담당자·비밀번호·비밀번호 찾기 질문</strong> 등
+          개인정보·설정 변경은 상단 <strong>학교 설정</strong>에서 합니다. 이 창은 <strong>연결·교사 초대 주소·로그아웃</strong>을 담당합니다.
+        </p>
+        ` : ""}
+
       </div>`,
   });
 
