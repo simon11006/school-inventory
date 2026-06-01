@@ -3340,6 +3340,38 @@ function openSchoolSettingsModal() {
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
+            <h3>학교 관리자 계정 정보</h3>
+            <p class="helper">가입 시 입력한 연락 이메일·담당자·비밀번호 찾기 질문을 수정합니다.</p>
+          </div>
+        </div>
+        <div class="field-grid">
+          <label class="field full">
+            <span>연락 이메일</span>
+            <input id="acctEmail" type="email" placeholder="school@example.go.kr" />
+          </label>
+          <label class="field">
+            <span>담당자 이름</span>
+            <input id="acctContactName" type="text" />
+          </label>
+          <label class="field">
+            <span>담당자 업무</span>
+            <input id="acctContactRole" type="text" />
+          </label>
+          <label class="field full">
+            <span>비밀번호 찾기 질문</span>
+            <input id="acctSecQ" type="text" placeholder="예) 내가 졸업한 초등학교 이름은?" />
+          </label>
+          <label class="field full">
+            <span>질문 답변</span>
+            <input id="acctSecA" type="text" autocomplete="off" placeholder="대소문자·공백 무시하고 비교" />
+          </label>
+        </div>
+        <button class="ghost compact" id="saveAcctInfoBtn" type="button">계정 정보 저장</button>
+        <p class="helper" id="saveAcctInfoStatus" style="margin-top:8px;"></p>
+      </div>
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <div>
             <h3>학교 관리자 계정 비밀번호 변경</h3>
             <p class="helper">학교 계정 로그인에 사용하는 비밀번호를 바꿉니다. 변경 후에도 로그인은 그대로 유지됩니다.</p>
           </div>
@@ -4064,6 +4096,44 @@ function openSchoolSettingsModal() {
     changeSchoolPwBtn.addEventListener("click", doChange);
     modal.querySelector("#newSchoolPwConfirm").addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); doChange(); }
+    });
+  }
+
+  // ── 계정 정보 (이메일·담당자·보안질문) 로드 + 저장 ──
+  const saveAcctBtn = modal.querySelector("#saveAcctInfoBtn");
+  if (saveAcctBtn) {
+    const info = window.account?.getAccountInfo?.();
+    if (info) {
+      modal.querySelector("#acctEmail").value = info.email || "";
+      modal.querySelector("#acctContactName").value = info.contactName || "";
+      modal.querySelector("#acctContactRole").value = info.contactRole || "";
+      modal.querySelector("#acctSecQ").value = info.securityQuestion || "";
+      modal.querySelector("#acctSecA").value = info.securityAnswer || "";
+    }
+    const acctStatus = modal.querySelector("#saveAcctInfoStatus");
+    const setAcctStatus = (msg, ok) => {
+      acctStatus.textContent = msg;
+      acctStatus.style.color = ok ? "var(--accent, #5B8A6F)" : "var(--danger, #c0392b)";
+    };
+    saveAcctBtn.addEventListener("click", async () => {
+      const fields = {
+        email: modal.querySelector("#acctEmail").value,
+        contactName: modal.querySelector("#acctContactName").value,
+        contactRole: modal.querySelector("#acctContactRole").value,
+        securityQuestion: modal.querySelector("#acctSecQ").value,
+        securityAnswer: modal.querySelector("#acctSecA").value,
+      };
+      saveAcctBtn.disabled = true;
+      saveAcctBtn.textContent = "저장 중…";
+      try {
+        await window.account?.saveAccountInfo?.(fields);
+        setAcctStatus("계정 정보를 저장했습니다.", true);
+      } catch (e) {
+        setAcctStatus(e?.message || "저장에 실패했습니다.", false);
+      } finally {
+        saveAcctBtn.disabled = false;
+        saveAcctBtn.textContent = "계정 정보 저장";
+      }
     });
   }
 

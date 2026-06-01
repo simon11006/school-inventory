@@ -490,6 +490,8 @@ function openLoginModal() {
 
 // 비밀번호 재설정 중에는 onAuthStateChanged의 관리자 자동진입/리로드를 막는다.
 let pwResetInProgress = false;
+// 로그인된 학교 문서 캐시 { uid, data } — 학교 설정의 '계정 정보' 수정에 사용
+let currentSchool = null;
 
 // ─── 비밀번호 찾기 (보안 질문 → 자가 재설정, 5회 초과 시 관리자 요청) ──────────
 function openForgotPasswordModal() {
@@ -1553,9 +1555,41 @@ window.account = {
   openSuperAdminView,
   schoolAdminLogout:  doSchoolAdminLogout, // app.js 종료 버튼에서 호출
   changeSchoolPassword,
+  getAccountInfo,
+  saveAccountInfo,
   heartbeat,
   _searchNeisSchools: searchNeisSchools,
 };
+
+// 학교 설정 '계정 정보' 탭에서 호출 — 현재 로그인된 학교의 수정 가능한 정보 반환
+function getAccountInfo() {
+  if (!currentSchool) return null;
+  const d = currentSchool.data || {};
+  return {
+    uid: currentSchool.uid,
+    schoolName: d.schoolName || "",
+    username: d.username || "",
+    email: d.email || "",
+    contactName: d.contactName || "",
+    contactRole: d.contactRole || "",
+    securityQuestion: d.securityQuestion || "",
+    securityAnswer: d.securityAnswer || "",
+  };
+}
+
+// 수정 가능한 계정 정보 저장 (로그인 상태에서만 — Firestore 인증 필요)
+async function saveAccountInfo(fields) {
+  if (!currentSchool) throw new Error("로그인 정보가 없습니다. 다시 로그인해 주세요.");
+  const allowed = ["email", "contactName", "contactRole", "securityQuestion", "securityAnswer"];
+  const updates = {};
+  allowed.forEach((k) => { if (k in fields) updates[k] = String(fields[k] ?? "").trim(); });
+  if (!updates.email) throw new Error("연락 이메일은 비울 수 없습니다.");
+  if ("securityQuestion" in updates && !updates.securityQuestion) throw new Error("보안 질문을 입력하세요.");
+  if ("securityAnswer" in updates && !updates.securityAnswer) throw new Error("보안 질문 답변을 입력하세요.");
+  await updateDoc(doc(getDb(), "schools", currentSchool.uid), updates);
+  currentSchool.data = { ...currentSchool.data, ...updates };
+  return true;
+}
 
 // ─── 부팅: 버튼 연결 + 짧은 주소 해석 ──────────────────────────────────────
 document.querySelector("#accountBtn")?.addEventListener("click", openLoginModal);
@@ -1611,6 +1645,9 @@ onAuthStateChanged(getAuth(), async (user) => {
       await signOut(getAuth());
       return;
     }
+
+    // 로그인된 학교 문서 캐시 — 학교 설정의 '계정 정보' 수정에서 사용
+    currentSchool = { uid: user.uid, data };
 
     // 학교 연결이 현재 세션에 없으면 (루트 URL 직접 로그인 등) 자동 복원 후 리로드
     const conn = data.connection || {};
