@@ -3438,22 +3438,9 @@ function openSchoolSettingsModal() {
         <div class="helper" id="syncStatusText">처음 설정 가이드에서 학교용 시트 사본을 만든 뒤, 사본에 포함된 Apps Script를 웹앱으로 배포하면 됩니다.</div>
   `;
 
-  const syncConnectionBlock = isFirebaseConnected ? `
-      <div class="settings-block">
-        <div class="settings-block-head">
-          <div>
-            <h3>저장소 연결</h3>
-            <p class="helper">학교 계정으로 연결되어 있습니다.</p>
-          </div>
-          <span class="badge green">연결됨</span>
-        </div>
-        <p class="helper" style="margin-bottom:8px;">연결 설정을 변경하려면 <strong>내 계정 ✓</strong> 버튼에서 수정하세요.</p>
-        <button class="ghost compact" id="showAdvSyncBtn" type="button">고급: 연결 정보 직접 수정 ▾</button>
-        <div id="advSyncArea" style="display:none;margin-top:12px;">
-          ${syncInputsHtml}
-        </div>
-      </div>
-  ` : `
+  // Firebase(학교 계정) 연결 모드에서는 저장소 연결 설정을 노출하지 않는다.
+  // 연결은 학교 계정 시스템이 자동 관리하므로 수동 편집 UI가 불필요.
+  const syncConnectionBlock = isFirebaseConnected ? "" : `
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
@@ -3727,24 +3714,28 @@ function openSchoolSettingsModal() {
     });
     state.categoriesByLocation = nextCategoriesByLocation;
 
-    const syncProvider = formData.get("syncProvider") || "local";
-    const syncEndpoint = formData.get("syncEndpoint").trim();
-    const syncApiKey = formData.get("syncApiKey").trim();
+    // 저장소 연결 입력은 로컬 모드에서만 노출된다. Firebase 연결 모드에서는
+    // 폼에 해당 필드가 없으므로 syncConfig를 건드리지 않는다(연결은 계정이 관리).
+    if (formData.has("syncProvider")) {
+      const syncProvider = formData.get("syncProvider") || "local";
+      const syncEndpoint = (formData.get("syncEndpoint") || "").trim();
+      const syncApiKey = (formData.get("syncApiKey") || "").trim();
 
-    if (syncProvider === "appsScript" && syncEndpoint) {
-      if (!syncEndpoint.includes("/macros/s/") || !syncEndpoint.endsWith("/exec")) {
-        alert("Apps Script 웹앱 URL 형식이 올바르지 않습니다.\nhttps://script.google.com/macros/s/.../exec 형태인지 확인하세요.\n(라이브러리 URL이나 편집기 주소는 사용할 수 없습니다)");
-        return false;
+      if (syncProvider === "appsScript" && syncEndpoint) {
+        if (!syncEndpoint.includes("/macros/s/") || !syncEndpoint.endsWith("/exec")) {
+          alert("Apps Script 웹앱 URL 형식이 올바르지 않습니다.\nhttps://script.google.com/macros/s/.../exec 형태인지 확인하세요.\n(라이브러리 URL이나 편집기 주소는 사용할 수 없습니다)");
+          return false;
+        }
       }
-    }
 
-    syncConfig = {
-      ...syncConfig,
-      provider: syncProvider,
-      endpoint: syncEndpoint,
-      apiKey: syncApiKey,
-      autoSync: formData.get("syncAutoMode") || "manual",
-    };
+      syncConfig = {
+        ...syncConfig,
+        provider: syncProvider,
+        endpoint: syncEndpoint,
+        apiKey: syncApiKey,
+        autoSync: formData.get("syncAutoMode") || "manual",
+      };
+    }
 
     restartPolling();
     addLog("학교 설정", `학교 설정을 변경했습니다. 학교명: ${schoolName}`, "관리자");
