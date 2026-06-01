@@ -2227,11 +2227,16 @@ td strong {
 }
 
 .ghost.compact.danger {
-  color: #b53023;
+  /* 앱 팔레트의 장미색 변수 사용 → 다른 ghost 버튼과 조화, 다크모드 자동 대응 */
+  color: var(--rose);
+  background: transparent;
+  border-color: var(--rose-soft);
 }
 
 .ghost.compact.danger:hover {
-  background: #fbe1dc;
+  background: var(--rose-soft);
+  border-color: var(--rose);
+  color: var(--rose);
 }
 
 .ghost.compact.danger.remove-location-btn {
