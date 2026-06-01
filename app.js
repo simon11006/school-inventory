@@ -1262,8 +1262,9 @@ async function toggleAdminMode() {
   if (!scope) return;
   adminMode = true;
   adminScope = scope;
-  // PIN 진입은 세션 저장하지 않음 — 공용 PC에서 새로고침 시 권한이 남지 않도록(안전).
-  // 학교 계정 로그인(enterSchoolAdminMode)만 세션을 유지한다.
+  // 실별 담당자(location) 모드는 세션에 저장해 새로고침 후에도 유지.
+  // 글로벌 PIN 진입은 저장하지 않음(공용 PC 보안).
+  if (scope.type === "location") persistAdminSession();
   switchView("reservations");
   selectedItemId = null;
   selectedReservationId = null;
@@ -1362,11 +1363,7 @@ async function requestAdminScope() {
     .map(([location]) => location)
     .filter((location) => state.locations.includes(location));
   if (locations.length) return { type: "location", teacher: selected, locations };
-  if (canUseRemoteSync()) {
-    toast("PIN을 확인하는 중입니다…");
-  }
-  const remoteScope = await requestGlobalAdminScopeFromRemote(pin);
-  if (remoteScope) return remoteScope;
+  // 실별 담당자(비전체관리자)는 로컬 PIN만으로 즉시 판정 — 느린 원격 조회 없이 바로 오류 안내
   alert("PIN이 일치하지 않거나 이 교사에게 배정된 물품실이 없습니다.\n\nPIN을 잊으셨다면 전체 관리자에게 PIN 초기화를 요청하세요.");
   return null;
 }
@@ -1741,12 +1738,15 @@ function renderItemsTable() {
     <div class="view-head">
       <h3>물품 목록</h3>
       <span class="view-meta">총 ${rows.length}건</span>
+      ${adminMode ? `<button class="ghost compact danger" id="bulkDeleteItemsBtn" type="button" style="margin-left:auto;" disabled>선택 삭제</button>` : ""}
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
+            ${adminMode ? `<th><input type="checkbox" id="itemSelectAll" aria-label="전체 선택" /></th>` : ""}
             <th>물품명</th>
+            <th>카테고리</th>
             <th>보관 장소</th>
             <th>사용 가능</th>
             <th>예약/분출</th>
@@ -1760,10 +1760,12 @@ function renderItemsTable() {
             .map(
               (item) => `
               <tr class="${selectedItemId === item.id ? "is-selected" : ""}" data-item-row-id="${item.id}">
+                ${adminMode ? `<td><input type="checkbox" class="item-select-chk" data-item-id="${item.id}" aria-label="${escapeHtml(item.name)} 선택" /></td>` : ""}
                 <td>
                   <strong>${escapeHtml(item.name)}</strong><br />
                   <span class="helper">${renderItemMeta(item)}</span>
                 </td>
+                <td>${escapeHtml(item.category || "-")}</td>
                 <td>${escapeHtml(item.location)}</td>
                 <td>
                   ${getAvailableCount(item.id)} / ${item.total} ${escapeHtml(item.unit || "개")}
@@ -1781,6 +1783,53 @@ function renderItemsTable() {
       </table>
     </div>
   `;
+
+  // 체크박스 상태에 따라 선택 삭제 버튼 활성화
+  const bulkDeleteBtn = els.mainView.querySelector("#bulkDeleteItemsBtn");
+  function updateBulkDeleteBtn() {
+    if (!bulkDeleteBtn) return;
+    const checked = els.mainView.querySelectorAll(".item-select-chk:checked").length;
+    bulkDeleteBtn.disabled = checked === 0;
+    bulkDeleteBtn.textContent = checked > 0 ? `선택 삭제 (${checked}건)` : "선택 삭제";
+  }
+
+  // 전체 선택 체크박스
+  els.mainView.querySelector("#itemSelectAll")?.addEventListener("change", (e) => {
+    els.mainView.querySelectorAll(".item-select-chk").forEach((chk) => { chk.checked = e.target.checked; });
+    updateBulkDeleteBtn();
+  });
+
+  // 개별 체크박스
+  els.mainView.querySelectorAll(".item-select-chk").forEach((chk) => {
+    chk.addEventListener("change", updateBulkDeleteBtn);
+    // 체크박스 클릭이 행 클릭으로 전파되지 않도록
+    chk.addEventListener("click", (e) => e.stopPropagation());
+  });
+
+  // 선택 삭제 버튼
+  bulkDeleteBtn?.addEventListener("click", () => {
+    const ids = [...els.mainView.querySelectorAll(".item-select-chk:checked")].map((c) => c.dataset.itemId);
+    if (!ids.length) return;
+    const names = ids.map((id) => state.items.find((i) => i.id === id)?.name).filter(Boolean);
+    const hasReservation = ids.some((id) => state.reservations.some((r) => r.itemId === id));
+    const msg = [
+      `선택한 물품 ${ids.length}건을 삭제할까요?`,
+      names.slice(0, 5).map((n) => `  · ${n}`).join("\n"),
+      names.length > 5 ? `  · 외 ${names.length - 5}건` : "",
+      "",
+      hasReservation ? "⚠️ 예약·반납 기록이 있는 물품도 포함되어 있습니다. 함께 삭제됩니다." : "",
+      "삭제한 물품은 되돌릴 수 없습니다.",
+    ].filter((l) => l !== "").join("\n");
+    if (!confirm(msg)) return;
+    const idSet = new Set(ids);
+    state.items = state.items.filter((i) => !idSet.has(i.id));
+    state.reservations = state.reservations.filter((r) => !idSet.has(r.itemId));
+    addLog("물품 삭제", `물품 ${ids.length}건을 일괄 삭제했습니다: ${names.slice(0, 5).join(", ")}${names.length > 5 ? " 외" : ""}`, "관리자");
+    saveState();
+    selectedItemId = null;
+    render();
+    toast(`물품 ${ids.length}건을 삭제했습니다.`, "warn");
+  });
 
   els.mainView.querySelectorAll("[data-item-row-id]").forEach((row) => {
     row.addEventListener("click", () => {
@@ -2014,8 +2063,8 @@ function renderImportView() {
           <p class="helper">또는 엑셀·CSV 파일을 이 영역에 끌어다 놓아도 됩니다.</p>
           <p class="helper">필수 컬럼 — 물품명, 보관 장소, 총 수량. 등록되지 않은 물품실은 자동 생성하지 않고 오류로 표시합니다.</p>
         </div>
-        <div id="importResult"></div>
       </div>
+      <div class="import-preview-zone" id="importResult"></div>
     </div>
   `;
 
@@ -4340,7 +4389,15 @@ async function autoPushState() {
 
 async function runStartupSync() {
   if (!canUseRemoteSync()) return;
-  const isEmptyLocal = !state.schoolName?.trim();
+  // 학교명만으로는 판단하지 않는다. ?s= 링크 연결 직후 syncConfig.schoolName이
+  // state.schoolName으로 복사되므로(line 41-43), 학교명 유무로 빈 상태를 판단하면
+  // 교사용 첫 접속에서 전체 로드를 건너뛰어 교사·물품이 0개로 보인다.
+  // 실제 데이터가 없고 한 번도 동기화한 적 없을 때만 "빈 로컬"로 보고 전체 로드한다.
+  const hasLocalContent = Boolean(
+    state.teachers?.length || state.items?.length
+    || state.reservations?.length || state.purchaseRequests?.length,
+  );
+  const isEmptyLocal = !syncConfig.lastSyncedAt && !hasLocalContent;
   if (syncConfig.autoSync !== "pullOnStart" && syncConfig.autoSync !== "pushAfterSave") return;
 
   try {
@@ -5466,32 +5523,43 @@ function isImportMergeMatch(item, imported) {
 function renderImportPreviewTable(items) {
   if (!items.length) return "";
   return `
-    <div class="table-wrap import-preview-table">
-      <table>
+    <div class="table-wrap import-preview-table" style="overflow-x:auto;">
+      <table style="min-width:900px;">
         <thead>
           <tr>
             <th>처리</th>
             <th>물품명</th>
+            <th>카테고리</th>
             <th>보관 장소</th>
             <th>수량</th>
-            <th>분류</th>
+            <th>단위</th>
+            <th>소모품</th>
+            <th>관리번호</th>
+            <th>구입일</th>
+            <th>구입금액</th>
+            <th>상태</th>
             <th>비고</th>
           </tr>
         </thead>
         <tbody>
-          ${items.slice(0, 20).map((item) => `
+          ${items.map((item) => `
             <tr>
               <td>${item.willMerge ? statusBadge("병합") : statusBadge("등록")}</td>
-              <td><strong>${escapeHtml(item.name)}</strong><br /><span class="helper">${renderItemMeta(item)}</span></td>
-              <td>${escapeHtml(item.location)}</td>
-              <td>${item.total} ${escapeHtml(item.unit)}</td>
+              <td><strong>${escapeHtml(item.name)}</strong></td>
               <td>${escapeHtml(item.category || "-")}</td>
+              <td>${escapeHtml(item.location)}</td>
+              <td>${item.total}</td>
+              <td>${escapeHtml(item.unit)}</td>
+              <td>${item.consumable ? "예" : "아니요"}</td>
+              <td>${escapeHtml(item.code || "-")}</td>
+              <td>${escapeHtml(item.purchasedAt || "-")}</td>
+              <td>${item.price ? item.price.toLocaleString() + "원" : "-"}</td>
+              <td>${escapeHtml(item.status || "-")}</td>
               <td>${escapeHtml(item.note || "")}</td>
             </tr>
           `).join("")}
         </tbody>
       </table>
-      ${items.length > 20 ? `<p class="helper">처음 20건만 미리 보여줍니다. 전체 ${items.length}건이 등록 대상입니다.</p>` : ""}
     </div>
   `;
 }
