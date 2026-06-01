@@ -589,6 +589,9 @@ function migrateState(data) {
     location: request.location || "",
     requester: request.requester || "",
     note: request.note || "",
+    referenceUrl: request.referenceUrl || "",
+    type: request.type || "신규 구입",
+    relatedItemId: request.relatedItemId || "",
     status: request.status || "요청됨",
     createdAt: request.createdAt || new Date().toISOString(),
     updatedAt: request.updatedAt || "",
@@ -1927,6 +1930,20 @@ function renderReservationsTable(rows, title = "예약 목록") {
   });
 }
 
+// 신규/추가 구입 구분 배지
+function purchaseTypeBadge(type) {
+  const isAdd = type === "추가 구입";
+  const label = isAdd ? "추가" : "신규";
+  return `<span class="purchase-type-badge ${isAdd ? "is-add" : "is-new"}">${label}</span> `;
+}
+
+// 참고 사이트 링크 (있을 때만)
+function purchaseRefLink(url) {
+  if (!url) return "";
+  const safe = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  return `<br /><a class="purchase-ref-link" href="${escapeHtml(safe)}" target="_blank" rel="noopener">🔗 참고 사이트</a>`;
+}
+
 // 교사용 구입 요청 화면 — 내가 보낸 요청 목록 + 새 요청 + 대기중 요청 취소
 function renderTeacherPurchaseRequestsView() {
   const teacher = els.teacherSelect.value;
@@ -1960,8 +1977,8 @@ function renderTeacherPurchaseRequestsView() {
       </div>`;
   } else {
     els.mainView.innerHTML = headHtml + `
-      <div class="table-wrap purchase-request-wrap">
-        <table class="purchase-request-table">
+      <div class="table-wrap">
+        <table>
           <thead>
             <tr>
               <th>요청 물품</th>
@@ -1976,8 +1993,9 @@ function renderTeacherPurchaseRequestsView() {
             ${myRequests.map((request) => `
               <tr>
                 <td>
-                  <strong>${escapeHtml(request.itemName || "-")}</strong><br />
+                  ${purchaseTypeBadge(request.type)}<strong>${escapeHtml(request.itemName || "-")}</strong><br />
                   <span class="helper">${escapeHtml(request.category || "카테고리 없음")} · ${escapeHtml(request.note || "요청 이유 없음")}</span>
+                  ${purchaseRefLink(request.referenceUrl)}
                 </td>
                 <td>${Number(request.quantity || 1)}</td>
                 <td>${escapeHtml(request.location || "-")}</td>
@@ -2076,8 +2094,9 @@ function renderPurchaseRequestsView() {
                 <input type="checkbox" data-purchase-select-id="${escapeHtml(request.id)}" aria-label="${escapeHtml(request.itemName || "요청 물품")} 선택" />
               </td>
               <td>
-                <strong>${escapeHtml(request.itemName || "-")}</strong><br />
+                ${purchaseTypeBadge(request.type)}<strong>${escapeHtml(request.itemName || "-")}</strong><br />
                 <span class="helper">${escapeHtml(request.category || "카테고리 없음")} · ${escapeHtml(request.note || "요청 이유 없음")}</span>
+                ${purchaseRefLink(request.referenceUrl)}
               </td>
               <td>${escapeHtml(request.requester || "-")}</td>
               <td>${Number(request.quantity || 1)}</td>
@@ -4955,16 +4974,24 @@ function openPurchaseRequestModal(prefill = {}) {
   const getCategoryOptionsFor = (loc) => loc ? [...new Set((state.categoriesByLocation?.[loc] || []))].filter(Boolean) : [];
   const initialCategoryOptions = getCategoryOptionsFor(selectedLocation);
 
+  // 추가 구입 대상으로 선택된 기존 물품 id (null이면 신규 구입)
+  let relatedItemId = prefill.relatedItemId || null;
+
   const modal = openModal({
     title: "구입 요청",
     submitText: "요청 보내기",
     body: `
       <div class="field-grid">
-        ${field("요청 물품명", "itemName", prefill.itemName || "", true, "text", "예) 배드민턴 네트")}
+        <label class="field full">
+          <span>요청 물품명</span>
+          <input type="text" name="itemName" required autocomplete="off"
+                 placeholder="예) 배드민턴 네트" value="${escapeHtml(prefill.itemName || "")}" />
+        </label>
+        <div class="full" id="purchaseSearchZone" aria-live="polite"></div>
         <label class="field">
-          <span>희망 물품실</span>
-          <select name="location" id="purchaseLocationSelect">
-            <option value="">정하지 않음</option>
+          <span>희망 물품실 <em class="req-mark">*</em></span>
+          <select name="location" id="purchaseLocationSelect" required>
+            <option value="">선택</option>
             ${locationOptions.map((location) => `<option value="${escapeHtml(location)}" ${location === selectedLocation ? "selected" : ""}>${escapeHtml(location)}</option>`).join("")}
           </select>
         </label>
@@ -4975,30 +5002,43 @@ function openPurchaseRequestModal(prefill = {}) {
             ${initialCategoryOptions.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}
           </select>
         </label>
-        ${field("희망 수량", "quantity", 1, true, "number")}
+        ${field("희망 수량", "quantity", prefill.quantity || 1, true, "number")}
         <label class="field full">
           <span>구입 요청 이유</span>
           <textarea name="note" required placeholder="예) 과학 3학년 1학기 2단원 수업 준비물"></textarea>
         </label>
+        <label class="field full">
+          <span>참고 사이트 (선택)</span>
+          <input type="url" name="referenceUrl" placeholder="예) https://... 구매 가능한 상품 링크" />
+        </label>
       </div>
     `,
     onSubmit: (formData) => {
-      const itemName = formData.get("itemName").trim();
+      const itemName = (formData.get("itemName") || "").trim();
       const quantity = Number(formData.get("quantity") || 1);
-      const note = formData.get("note").trim();
+      const note = (formData.get("note") || "").trim();
+      const location = (formData.get("location") || "").trim();
+      const referenceUrl = (formData.get("referenceUrl") || "").trim();
       if (!itemName || quantity <= 0 || !note) {
         alert("요청 물품명, 희망 수량, 구입 요청 이유를 확인하세요.");
+        return false;
+      }
+      if (!location) {
+        alert("희망 물품실을 반드시 선택하세요.\n그래야 해당 물품실 담당자에게 요청이 전달됩니다.");
         return false;
       }
 
       const request = {
         id: createId("purchase"),
         itemName,
-        category: formData.get("category").trim(),
+        category: (formData.get("category") || "").trim(),
         quantity,
-        location: formData.get("location").trim(),
+        location,
         requester: els.teacherSelect.value,
         note,
+        referenceUrl,
+        type: relatedItemId ? "추가 구입" : "신규 구입",
+        relatedItemId: relatedItemId || "",
         status: "요청됨",
         createdAt: new Date().toISOString(),
         updatedAt: "",
@@ -5013,7 +5053,8 @@ function openPurchaseRequestModal(prefill = {}) {
           state.categoriesByLocation[request.location].push(request.category);
         }
       }
-      addLog("구입 요청", `${request.requester} 교사가 ${request.itemName} 구입을 요청했습니다.`, request.requester);
+      const typeLabel = request.type;
+      addLog("구입 요청", `${request.requester} 교사가 ${request.itemName} ${typeLabel}을(를) 요청했습니다.`, request.requester);
       saveState();
       render();
       toast("구입 요청을 보냈습니다.", "success");
@@ -5021,17 +5062,82 @@ function openPurchaseRequestModal(prefill = {}) {
     },
   });
 
+  const itemNameInput = modal.querySelector('input[name="itemName"]');
   const locationSelect = modal.querySelector("#purchaseLocationSelect");
   const categorySelect = modal.querySelector("#purchaseCategorySelect");
-  locationSelect.addEventListener("change", () => {
-    const loc = locationSelect.value;
+  const searchZone = modal.querySelector("#purchaseSearchZone");
+
+  function refreshCategoryOptions(loc, keepValue = "") {
     const opts = getCategoryOptionsFor(loc);
     categorySelect.innerHTML = [
       `<option value="">${loc ? "선택 안 함" : "희망 물품실을 먼저 고르세요"}</option>`,
-      ...opts.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`),
+      ...opts.map((c) => `<option value="${escapeHtml(c)}" ${c === keepValue ? "selected" : ""}>${escapeHtml(c)}</option>`),
     ].join("");
     categorySelect.disabled = !loc;
+  }
+
+  function selectExistingItem(item) {
+    relatedItemId = item.id;
+    itemNameInput.value = item.name;
+    if (item.location && locationOptions.includes(item.location)) {
+      locationSelect.value = item.location;
+      refreshCategoryOptions(item.location, item.category || "");
+    }
+    renderSearch();
+  }
+
+  function renderSearch() {
+    // 추가 구입 대상이 선택된 상태 → 안내 배너
+    if (relatedItemId) {
+      const it = state.items.find((i) => i.id === relatedItemId);
+      searchZone.innerHTML = it ? `
+        <div class="purchase-search-note is-selected">
+          <span>➕ <strong>추가 구입</strong> 요청 · ${escapeHtml(it.name)} · ${escapeHtml(it.location)} · 현재 보유 ${it.total}${escapeHtml(it.unit || "개")}</span>
+          <button type="button" class="ghost compact" id="purchaseClearRelated">신규로 변경</button>
+        </div>` : "";
+      modal.querySelector("#purchaseClearRelated")?.addEventListener("click", () => {
+        relatedItemId = null;
+        renderSearch();
+      });
+      return;
+    }
+
+    const q = itemNameInput.value.trim().toLowerCase();
+    if (!q) { searchZone.innerHTML = ""; return; }
+
+    const matches = (state.items || [])
+      .filter((i) => (i.name || "").toLowerCase().includes(q))
+      .slice(0, 5);
+
+    if (!matches.length) {
+      searchZone.innerHTML = `<div class="purchase-search-note is-empty">비슷한 물품이 없어요 — <strong>신규 구입</strong>으로 요청합니다.</div>`;
+      return;
+    }
+
+    searchZone.innerHTML = `
+      <div class="purchase-search-list">
+        <p class="helper">이미 등록된 물품이 있어요. 수량이 부족하다면 ‘추가 구입’으로 요청하세요.</p>
+        ${matches.map((i) => `
+          <div class="purchase-search-row">
+            <span><strong>${escapeHtml(i.name)}</strong> · ${escapeHtml(i.location)} · 보유 ${i.total}${escapeHtml(i.unit || "개")}</span>
+            <button type="button" class="ghost compact" data-add-existing="${escapeHtml(i.id)}">추가 구입으로 요청</button>
+          </div>`).join("")}
+      </div>`;
+    searchZone.querySelectorAll("[data-add-existing]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const it = (state.items || []).find((i) => i.id === b.dataset.addExisting);
+        if (it) selectExistingItem(it);
+      });
+    });
+  }
+
+  itemNameInput.addEventListener("input", () => {
+    if (relatedItemId) relatedItemId = null; // 이름을 직접 고치면 추가구입 해제
+    renderSearch();
   });
+  locationSelect.addEventListener("change", () => refreshCategoryOptions(locationSelect.value));
+
+  renderSearch();
 }
 
 function openPurchaseRequestReviewModal(requestId) {
@@ -5046,10 +5152,12 @@ function openPurchaseRequestReviewModal(requestId) {
         <h3>${escapeHtml(request.itemName || "-")}</h3>
         <p class="helper">${escapeHtml(request.requester || "-")} · ${request.createdAt ? formatDateTime(request.createdAt) : "-"}</p>
         <ul>
+          <li>구분: ${escapeHtml(request.type || "신규 구입")}</li>
           <li>카테고리: ${escapeHtml(request.category || "-")}</li>
           <li>희망 수량: ${Number(request.quantity || 1)}</li>
           <li>희망 물품실: ${escapeHtml(request.location || "-")}</li>
           <li>메모: ${escapeHtml(request.note || "-")}</li>
+          ${request.referenceUrl ? `<li>참고 사이트: ${purchaseRefLink(request.referenceUrl).replace(/^<br \/>/, "")}</li>` : ""}
         </ul>
       </div>
       <div class="field-grid">

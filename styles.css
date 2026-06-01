@@ -1663,6 +1663,69 @@ td strong {
 .purchase-col-date { width: 10%; }
 .purchase-col-action { width: 78px; }
 
+/* ── 구입 요청 모달: 기존 물품 검색/추가구입 안내 ── */
+.req-mark { color: var(--rose); font-style: normal; }
+
+.purchase-search-note {
+  margin-top: -4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  border: 1px solid var(--paper-edge);
+}
+.purchase-search-note.is-empty { color: var(--ink-mute); }
+.purchase-search-note.is-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--sage-soft);
+  border-color: color-mix(in srgb, var(--sage) 35%, transparent);
+  color: var(--ink);
+}
+
+.purchase-search-list {
+  margin-top: -4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+}
+.purchase-search-list .helper { margin: 0 0 8px; }
+.purchase-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+  border-top: 1px solid var(--paper-edge);
+}
+.purchase-search-row:first-of-type { border-top: 0; }
+
+/* ── 신규/추가 구분 배지 · 참고 링크 ── */
+.purchase-type-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  margin-right: 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.purchase-type-badge.is-new { background: var(--sage-soft); color: var(--sage-deep); }
+.purchase-type-badge.is-add { background: var(--amber-soft); color: var(--amber-deep); }
+.purchase-ref-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--sage-deep);
+  text-decoration: none;
+}
+.purchase-ref-link:hover { text-decoration: underline; }
+
 .purchase-request-table th:nth-child(1),
 .purchase-request-table td:nth-child(1),
 .purchase-request-table th:nth-child(8),
