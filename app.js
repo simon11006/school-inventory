@@ -4981,23 +4981,27 @@ function openPurchaseRequestModal(prefill = {}) {
     title: "구입 요청",
     submitText: "요청 보내기",
     body: `
-      <div class="field-grid">
-        <label class="field">
-          <span>요청 물품명</span>
-          <input type="text" name="itemName" required autocomplete="off"
-                 placeholder="예) 배드민턴 네트" value="${escapeHtml(prefill.itemName || "")}" />
-        </label>
-        <label class="field">
-          <span>희망 물품실 <em class="req-mark">*</em></span>
-          <select name="location" id="purchaseLocationSelect" required>
-            <option value="">선택</option>
-            ${locationOptions.map((location) => `<option value="${escapeHtml(location)}" ${location === selectedLocation ? "selected" : ""}>${escapeHtml(location)}</option>`).join("")}
-          </select>
-        </label>
-        <div class="full purchase-search-zone" id="purchaseSearchZone" aria-live="polite">
+      <div class="purchase-modal-layout">
+        <div class="purchase-modal-left field-grid">
+          <label class="field full">
+            <span>요청 물품명</span>
+            <input type="text" name="itemName" required autocomplete="off"
+                   placeholder="예) 배드민턴 네트" value="${escapeHtml(prefill.itemName || "")}" />
+          </label>
+          <label class="field full">
+            <span>희망 물품실 <em class="req-mark">*</em></span>
+            <select name="location" id="purchaseLocationSelect" required>
+              <option value="">선택</option>
+              ${locationOptions.map((location) => `<option value="${escapeHtml(location)}" ${location === selectedLocation ? "selected" : ""}>${escapeHtml(location)}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        <div class="purchase-search-zone" id="purchaseSearchZone" aria-live="polite">
           <p class="purchase-search-zone-title">검색 결과</p>
           <div class="purchase-search-zone-body"></div>
         </div>
+      </div>
+      <div class="field-grid">
         <label class="field">
           <span>카테고리</span>
           <select name="category" id="purchaseCategorySelect" ${selectedLocation ? "" : "disabled"}>
@@ -5065,7 +5069,7 @@ function openPurchaseRequestModal(prefill = {}) {
     },
   });
 
-  const itemNameInput = modal.querySelector(‘input[name="itemName"]’);
+  const itemNameInput = modal.querySelector('input[name="itemName"]');
   const locationSelect = modal.querySelector("#purchaseLocationSelect");
   const categorySelect = modal.querySelector("#purchaseCategorySelect");
   const searchBody = modal.querySelector("#purchaseSearchZone .purchase-search-zone-body");

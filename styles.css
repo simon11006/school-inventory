@@ -1666,12 +1666,27 @@ td strong {
 /* ── 구입 요청 모달: 기존 물품 검색/추가구입 안내 ── */
 .req-mark { color: var(--rose); font-style: normal; }
 
+/* ── 구입요청 모달: 왼쪽 입력 / 오른쪽 검색결과 2단 ── */
+.purchase-modal-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+.purchase-modal-left { margin: 0; gap: 14px; }
+@media (max-width: 600px) {
+  .purchase-modal-layout { grid-template-columns: 1fr; }
+}
+
 /* ── 검색 결과 패널 ── */
 .purchase-search-zone {
   border: 1px solid var(--paper-edge);
   border-radius: 10px;
   background: var(--paper-deep);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .purchase-search-zone-title {
   padding: 8px 12px 7px;
@@ -1686,6 +1701,8 @@ td strong {
 .purchase-search-zone-body {
   padding: 10px 12px;
   min-height: 44px;
+  flex: 1;
+  overflow-y: auto;
 }
 .purchase-search-empty {
   margin: 0;
