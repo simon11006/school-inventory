@@ -165,8 +165,7 @@ function bindEvents() {
   document.querySelector("#newReservationBtn").addEventListener("click", openReservationModal);
   document.querySelector("#newItemBtn").addEventListener("click", () => openItemModal());
   document.querySelector("#schoolSettingsBtn")?.addEventListener("click", openSchoolSettingsModal);
-  document.querySelector("#handoverBtn")?.addEventListener("click", renderHandoverPanel);
-  // setupGuideLink 는 <a href="./처음설정가이드.html">로 최신 가이드를 새 탭에서 엶 (기본 동작 사용)
+  // setupGuideLink / handoverGuideLink 는 <a href="...html">로 가이드를 새 탭에서 엶 (기본 동작 사용)
   document.querySelector("#adminModeBtn").addEventListener("click", toggleAdminMode);
   document.querySelector("#roomAdminBtn")?.addEventListener("click", toggleAdminMode);
   els.themeToggleBtn.addEventListener("click", toggleTheme);
@@ -370,7 +369,7 @@ function openHelpModal() {
             <h3>화면 구성 한눈에 보기</h3>
             <section>
               <h4>① 상단 바 (헤더)</h4>
-              <p>왼쪽에 학교명과 로고, 오른쪽에 다크모드 아이콘, <strong>사용법</strong>, <strong>사용 교사</strong> 선택이 있습니다. 교사 이름을 선택하면 <strong>실별 관리자 로그인</strong> 버튼이 나타납니다. <strong>학교 관리자 로그인</strong>은 학교 계정으로 로그인하는 버튼이며, 로그인 후에는 <strong>학교 계정 ✓</strong>으로 바뀌고 <strong>학교 관리자 모드 켜짐 | 종료</strong> 버튼과 함께 <strong>학교 설정</strong>·<strong>인계 점검</strong>이 추가로 나타납니다.</p>
+              <p>왼쪽에 학교명과 로고, 오른쪽에 다크모드 아이콘, <strong>사용법</strong>, <strong>사용 교사</strong> 선택이 있습니다. 교사 이름을 선택하면 <strong>실별 관리자 로그인</strong> 버튼이 나타납니다. <strong>학교 관리자 로그인</strong>은 학교 계정으로 로그인하는 버튼이며, 로그인 후에는 <strong>학교 계정 ✓</strong>으로 바뀌고 <strong>학교 관리자 모드 켜짐 | 종료</strong> 버튼과 함께 <strong>학교 설정</strong>, 그리고 전체 관리자에게는 <strong>처음 설정 가이드·인수인계 가이드</strong>가 추가로 나타납니다.</p>
             </section>
             <section>
               <h4>② 왼쪽 사이드바</h4>
@@ -511,9 +510,9 @@ function openHelpModal() {
               <p>학교 설정의 <strong>저장소 연결 → 고급</strong>에서 <strong>자동 동기화</strong>를 <strong>저장 후 원격에 자동 올리기</strong>로 두면 변경이 일어날 때마다 즉시 스프레드시트에 저장되고, 20초마다 다른 PC의 변경을 자동으로 가져옵니다. 운영 중에는 이 모드를 권장합니다.</p>
             </section>
             <section>
-              <h4>7. 인계 점검</h4>
-              <p>상단 <strong>인계 점검</strong>을 누르면 다음 담당자에게 넘기기 전 직접 확인할 체크리스트가 표시됩니다 — 스프레드시트·Apps Script 소유자 확인, 학교 공용 계정으로 소유권 이전, 새 담당자 PC에서 연결 진단, 관리자 PIN 변경, 백업 생성 등입니다.</p>
-              <p>자동 검사는 아니므로 한 줄씩 눈으로 확인하며 진행하세요. 패널 아래 <strong>현재 데이터 내보내기</strong>로 인계 직전 백업 CSV를 받을 수 있습니다.</p>
+              <h4>7. 담당자 인수인계</h4>
+              <p>담당 교사가 바뀔 때는 상단 <strong>관리자 도구 → 인수인계 가이드</strong>를 열어 단계별로 따라 하세요. 데이터·교사 접속주소를 그대로 살린 채 새 담당자(또는 학교 공용 계정)에게 넘기는 방법을 안내합니다.</p>
+              <p>인계 직전 백업이 필요하면 <strong>일괄 등록</strong> 탭의 <strong>현재 물품 내보내기</strong>로 CSV 백업을 받을 수 있습니다.</p>
             </section>
           </div>
         </div>
@@ -2721,177 +2720,6 @@ function renderItemHoldRow(reservation, item) {
       </div>
     </div>
   `;
-}
-
-function renderHandoverPanel() {
-  if (!isGlobalAdmin()) return;
-
-  selectedItemId = null;
-  selectedReservationId = null;
-  const modal = openModal({
-    title: "담당자 인계 점검",
-    submitText: "닫기",
-    onSubmit: () => true,
-    body: `
-    <p class="helper" style="margin-bottom:16px;">새 담당자에게 넘기기 전 아래 절차를 순서대로 따라 하세요. 마지막에 새 담당자가 앱에 정상 접속되는지 직접 확인합니다.</p>
-
-    <div class="panel-section">
-      <p class="panel-title">① 먼저 확인 — 어떤 계정으로 시트를 만들었나요?</p>
-      <div class="settings-block first">
-        <div class="settings-block-head">
-          <div>
-            <h3>학교 공용 계정으로 만든 경우</h3>
-            <p class="helper">예: 학교 대표 Gmail, 행정실 공용 계정 등</p>
-          </div>
-          <span class="badge green">간단</span>
-        </div>
-        <ul class="quiet-list">
-          <li>새 담당자에게 공용 계정 이메일·비밀번호 + 학교 계정 아이디/비밀번호 전달</li>
-          <li>관리자 PIN 변경 (이 화면 상단 <strong>학교 설정 → 관리자 PIN 변경</strong>)</li>
-          <li>교사 초대 주소(<code>?s=…</code>)를 학교 메신저 채팅방에 고정으로 올려두기</li>
-          <li>새 담당자가 앱에 접속해 물품 목록이 보이면 인계 완료</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <div class="settings-block-head">
-          <div>
-            <h3>개인 계정으로 만든 경우</h3>
-            <p class="helper">본인 개인 Gmail로 시트를 만든 경우 — 퇴직·전근 후 계정이 삭제되면 앱도 멈춥니다.</p>
-          </div>
-          <span class="badge orange">절차 필요</span>
-        </div>
-        <p class="helper" style="color:var(--warn,#b45309);">아래 ②번 절차를 끝까지 따라 해주세요.</p>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <p class="panel-title">② 인계 절차 (개인 계정 사용 중인 경우)</p>
-      <p class="helper">각 단계 앞에 <strong>[이전]</strong> / <strong>[새]</strong> 표시는 누가 진행하는지를 나타냅니다.</p>
-
-      <div class="settings-block first">
-        <h3>[이전 담당자] 1단계 · 백업 먼저 받기</h3>
-        <ul class="quiet-list">
-          <li>아래 버튼을 눌러 CSV 파일로 백업합니다.</li>
-        </ul>
-        <button class="primary compact" id="exportHandoverBtn" type="button" style="margin:8px 0;width:fit-content;">⬇ 현재 데이터 내보내기 (백업)</button>
-        <ul class="quiet-list">
-          <li>스프레드시트도 직접 열어서 <code>파일 → 다운로드 → Microsoft Excel(.xlsx)</code>로 추가 백업합니다.</li>
-          <li>두 파일 모두 USB나 학교 공용 드라이브에 보관합니다.</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[이전 담당자] 2단계 · 스프레드시트 소유권 이전하기</h3>
-        <p class="helper">새 담당자의 Gmail 주소를 미리 받아두세요.</p>
-        <ul class="quiet-list">
-          <li>스프레드시트를 열고 오른쪽 위 파란색 <strong>공유</strong> 버튼을 클릭합니다.</li>
-          <li>사람 추가 입력창에 새 담당자의 Gmail 주소를 입력합니다.</li>
-          <li>권한을 <strong>편집자</strong>로 설정하고 <strong>보내기</strong>를 클릭합니다.</li>
-          <li>공유 창 아래쪽 목록에서 새 담당자 이메일 오른쪽 드롭다운(▼)을 클릭합니다.</li>
-          <li><strong>"소유자로 이전"</strong>을 선택하고 확인 팝업에서 <strong>승인</strong>을 누릅니다.</li>
-          <li>완료 후 새 담당자에게 "소유권 이전했습니다"라고 알립니다.</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[새 담당자] 3단계 · 스프레드시트 열기</h3>
-        <p class="helper">이전 담당자가 소유권을 이전하면 Gmail 받은편지함에 초대 메일이 옵니다.</p>
-        <ul class="quiet-list">
-          <li>Gmail에서 "교구이음 스프레드시트가 공유되었습니다" 메일을 찾아 링크를 클릭합니다.</li>
-          <li>또는 <a href="https://drive.google.com" target="_blank" rel="noopener" style="color:var(--accent);">drive.google.com</a>에 접속 후 검색창에 <strong>교구이음</strong>을 입력합니다.</li>
-          <li>스프레드시트를 열면 상단에 <strong>교구이음</strong> 메뉴가 나타납니다. (메뉴가 안 보이면 페이지를 새로고침합니다.)</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[새 담당자] 4단계 · Apps Script 권한 승인하기</h3>
-        <p class="helper">새 계정으로 처음 사용하므로 권한을 한 번 승인해야 합니다. 데이터가 지워지지 않는 안전한 방법으로 진행하세요.</p>
-        <ul class="quiet-list">
-          <li>스프레드시트 상단 메뉴 <code>확장 프로그램 → Apps Script</code>를 클릭합니다.</li>
-          <li>Apps Script 화면이 열리면 왼쪽 함수 목록(편집기 상단 드롭다운)에서 <strong>onOpen</strong>을 선택합니다.</li>
-          <li>▶ <strong>실행</strong> 버튼을 클릭합니다.</li>
-          <li>"승인이 필요합니다" 팝업이 뜨면 <strong>권한 검토</strong>를 클릭합니다.</li>
-          <li>Google 계정 선택 화면에서 <strong>본인 계정</strong>을 클릭합니다.</li>
-          <li><strong>"Google에서 확인하지 않은 앱"</strong> 경고가 나오면 — 왼쪽 아래 <strong>고급</strong>을 클릭합니다.</li>
-          <li><strong>"(앱 이름)(으)로 이동(안전하지 않음)"</strong> 링크를 클릭합니다.</li>
-          <li><strong>허용</strong>을 클릭합니다.</li>
-          <li>Apps Script 탭을 닫고 스프레드시트로 돌아옵니다. 상단에 <strong>교구이음</strong> 메뉴가 보이면 성공입니다.</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[새 담당자] 5단계 · 새 웹앱 배포하기</h3>
-        <p class="helper">스프레드시트 메뉴에서 진행합니다.</p>
-        <ul class="quiet-list">
-          <li>상단 메뉴 <code>확장 프로그램 → Apps Script</code>를 클릭합니다. (새 탭이 열립니다.)</li>
-          <li>Apps Script 화면 오른쪽 위 파란색 <strong>배포</strong> 버튼 옆 <strong>▼</strong>를 클릭합니다.</li>
-          <li><strong>새 배포</strong>를 클릭합니다.</li>
-          <li>"새 배포" 창 왼쪽 위 톱니바퀴 아이콘(⚙️)을 클릭하고 <strong>웹 앱</strong>을 선택합니다.</li>
-          <li>설명란에 <code>v2</code>를 입력합니다.</li>
-          <li><strong>다음 사용자 인증 정보로 실행</strong> 항목을 <strong>나(본인 계정)</strong>로 설정합니다.</li>
-          <li><strong>액세스 권한이 있는 사용자</strong> 항목을 <strong>모든 사용자</strong>로 설정합니다.</li>
-          <li><strong>배포</strong>를 클릭합니다.</li>
-          <li>권한 승인 팝업이 다시 나오면 4단계와 같이 <strong>고급 → 안전하지 않음 → 허용</strong>을 클릭합니다.</li>
-          <li>배포 완료 화면에 <strong>웹 앱 URL</strong>이 표시됩니다. <code>/exec</code>로 끝나는 이 주소를 <strong>복사해서 메모장에 저장</strong>합니다.</li>
-          <li>Apps Script 탭을 닫고 스프레드시트 탭으로 돌아옵니다.</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[새 담당자] 6단계 · 학교 계정에 새 연결 정보 등록</h3>
-        <ul class="quiet-list">
-          <li>스프레드시트 메뉴 <code>교구이음 → ④ 우리 학교 접속 링크</code>를 클릭하고, URL 입력창에 5단계에서 복사한 <code>/exec</code> 주소를 붙여넣어 <strong>접속 링크</strong>를 만든 뒤 링크 전체를 복사합니다.</li>
-          <li>교구이음 앱에서 <strong>학교 계정</strong>으로 로그인합니다. (인계받은 같은 학교 아이디/비밀번호)</li>
-          <li><strong>연결 정보 수정</strong>을 열어 <strong>접속 링크 붙여넣기</strong> 칸에 복사한 링크를 넣고 <strong>연결하기</strong>를 누릅니다.</li>
-          <li>"연결됐습니다!" 메시지가 나오면 성공입니다.</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[새 담당자] 7단계 · 교사 링크는 그대로 (재공유 불필요)</h3>
-        <p class="helper" style="color:var(--accent,#5B8A6F);">✅ 학교 계정의 <strong>교사 초대 주소</strong>(<code>?s=…</code>)는 연결 정보를 새로 등록해도 그대로 유지됩니다.</p>
-        <ul class="quiet-list">
-          <li>교사들은 기존 링크·즐겨찾기를 그대로 사용하면 됩니다. 새 링크를 다시 공유할 필요가 없습니다.</li>
-          <li>혹시 주소를 다시 확인하려면 <strong>학교 계정</strong>(연결 후 <strong>내 계정</strong>)을 열어 <strong>주소 복사</strong>를 누르세요.</li>
-        </ul>
-      </div>
-
-      <div class="settings-block">
-        <h3>[새 담당자] 8단계 · 마무리 정리</h3>
-        <ul class="quiet-list">
-          <li><strong>관리자 PIN 변경</strong>: 학교 설정 → 맨 아래 <strong>관리자 PIN 변경</strong>에서 새 PIN으로 바꿉니다. (기본값 1234는 반드시 변경하세요.)</li>
-          <li><strong>이전 담당자 권한 제거</strong>: 스프레드시트 오른쪽 위 공유 버튼 → 이전 담당자 계정 옆 드롭다운 → <strong>액세스 권한 제거</strong>를 클릭합니다.</li>
-          <li>본인 PC에서 앱에 접속해 물품 목록 조회·예약이 정상 동작하는지 확인합니다.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <p class="panel-title">③ 스프레드시트 주소를 잃어버렸다면?</p>
-      <ul class="quiet-list">
-        <li>시트를 만들 때 쓴 Google 계정으로 로그인합니다.</li>
-        <li><a href="https://drive.google.com" target="_blank" rel="noopener" style="color:var(--accent);">drive.google.com</a> 접속 후 검색창에 <strong>교구이음</strong>을 입력합니다.</li>
-        <li>또는 <a href="https://sheets.google.com" target="_blank" rel="noopener" style="color:var(--accent);">sheets.google.com</a>에서 최근 파일 목록을 확인합니다.</li>
-        <li>개인 계정과 공용 계정을 혼동하지 않도록 로그인 계정을 먼저 확인하세요.</li>
-      </ul>
-    </div>
-
-    <div class="panel-section">
-      <p class="panel-title">④ 인계 완료 최종 체크</p>
-      <ul class="quiet-list">
-        <li>새 담당자 학교 계정에서 "연결됨"(교사 초대 주소 표시) 확인</li>
-        <li>물품 목록이 정상적으로 보임</li>
-        <li>새 담당자가 직접 예약·물품 추가를 해보고 이상 없음 확인</li>
-        <li>교사 1명 이상 기존 교사 초대 주소로 접속 확인</li>
-        <li>관리자 PIN 변경 완료</li>
-        <li>백업 CSV 파일 보관 완료</li>
-      </ul>
-    </div>
-
-    `,
-  });
-  modal.querySelector("#exportHandoverBtn").addEventListener("click", exportItems);
 }
 
 function openSetupWizardModal() {
