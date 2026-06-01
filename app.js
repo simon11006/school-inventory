@@ -4392,12 +4392,13 @@ async function runStartupSync() {
   // 학교명만으로는 판단하지 않는다. ?s= 링크 연결 직후 syncConfig.schoolName이
   // state.schoolName으로 복사되므로(line 41-43), 학교명 유무로 빈 상태를 판단하면
   // 교사용 첫 접속에서 전체 로드를 건너뛰어 교사·물품이 0개로 보인다.
-  // 실제 데이터가 없고 한 번도 동기화한 적 없을 때만 "빈 로컬"로 보고 전체 로드한다.
+  // 로컬에 실제 데이터(교사·물품·예약·구입요청)가 하나도 없으면 무조건 전체 로드한다.
+  // (과거 diagnose로 lastSyncedAt만 찍히고 데이터는 비어 있는 경우도 포함)
   const hasLocalContent = Boolean(
     state.teachers?.length || state.items?.length
     || state.reservations?.length || state.purchaseRequests?.length,
   );
-  const isEmptyLocal = !syncConfig.lastSyncedAt && !hasLocalContent;
+  const isEmptyLocal = !hasLocalContent;
   if (syncConfig.autoSync !== "pullOnStart" && syncConfig.autoSync !== "pushAfterSave") return;
 
   try {
