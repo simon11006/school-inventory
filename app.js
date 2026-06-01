@@ -3351,7 +3351,7 @@ function openSchoolSettingsModal() {
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
-            <h3>학교 계정 비밀번호 변경</h3>
+            <h3>학교 관리자 계정 비밀번호 변경</h3>
             <p class="helper">학교 계정 로그인에 사용하는 비밀번호를 바꿉니다. 변경 후에도 로그인은 그대로 유지됩니다.</p>
           </div>
         </div>
