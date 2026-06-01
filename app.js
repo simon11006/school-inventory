@@ -4982,12 +4982,11 @@ function openPurchaseRequestModal(prefill = {}) {
     submitText: "요청 보내기",
     body: `
       <div class="field-grid">
-        <label class="field full">
+        <label class="field">
           <span>요청 물품명</span>
           <input type="text" name="itemName" required autocomplete="off"
                  placeholder="예) 배드민턴 네트" value="${escapeHtml(prefill.itemName || "")}" />
         </label>
-        <div class="full" id="purchaseSearchZone" aria-live="polite"></div>
         <label class="field">
           <span>희망 물품실 <em class="req-mark">*</em></span>
           <select name="location" id="purchaseLocationSelect" required>
@@ -4995,6 +4994,10 @@ function openPurchaseRequestModal(prefill = {}) {
             ${locationOptions.map((location) => `<option value="${escapeHtml(location)}" ${location === selectedLocation ? "selected" : ""}>${escapeHtml(location)}</option>`).join("")}
           </select>
         </label>
+        <div class="full purchase-search-zone" id="purchaseSearchZone" aria-live="polite">
+          <p class="purchase-search-zone-title">검색 결과</p>
+          <div class="purchase-search-zone-body"></div>
+        </div>
         <label class="field">
           <span>카테고리</span>
           <select name="category" id="purchaseCategorySelect" ${selectedLocation ? "" : "disabled"}>
@@ -5062,10 +5065,10 @@ function openPurchaseRequestModal(prefill = {}) {
     },
   });
 
-  const itemNameInput = modal.querySelector('input[name="itemName"]');
+  const itemNameInput = modal.querySelector(‘input[name="itemName"]’);
   const locationSelect = modal.querySelector("#purchaseLocationSelect");
   const categorySelect = modal.querySelector("#purchaseCategorySelect");
-  const searchZone = modal.querySelector("#purchaseSearchZone");
+  const searchBody = modal.querySelector("#purchaseSearchZone .purchase-search-zone-body");
 
   function refreshCategoryOptions(loc, keepValue = "") {
     const opts = getCategoryOptionsFor(loc);
@@ -5090,9 +5093,9 @@ function openPurchaseRequestModal(prefill = {}) {
     // 추가 구입 대상이 선택된 상태 → 안내 배너
     if (relatedItemId) {
       const it = state.items.find((i) => i.id === relatedItemId);
-      searchZone.innerHTML = it ? `
+      searchBody.innerHTML = it ? `
         <div class="purchase-search-note is-selected">
-          <span>➕ <strong>추가 구입</strong> 요청 · ${escapeHtml(it.name)} · ${escapeHtml(it.location)} · 현재 보유 ${it.total}${escapeHtml(it.unit || "개")}</span>
+          <span>➕ <strong>추가 구입</strong> · ${escapeHtml(it.name)} · ${escapeHtml(it.location)} · 현재 보유 ${it.total}${escapeHtml(it.unit || "개")}</span>
           <button type="button" class="ghost compact" id="purchaseClearRelated">신규로 변경</button>
         </div>` : "";
       modal.querySelector("#purchaseClearRelated")?.addEventListener("click", () => {
@@ -5103,27 +5106,28 @@ function openPurchaseRequestModal(prefill = {}) {
     }
 
     const q = itemNameInput.value.trim().toLowerCase();
-    if (!q) { searchZone.innerHTML = ""; return; }
+    if (!q) {
+      searchBody.innerHTML = `<p class="purchase-search-empty">물품명을 입력하면 등록된 물품을 자동으로 찾아드려요.</p>`;
+      return;
+    }
 
     const matches = (state.items || [])
       .filter((i) => (i.name || "").toLowerCase().includes(q))
       .slice(0, 5);
 
     if (!matches.length) {
-      searchZone.innerHTML = `<div class="purchase-search-note is-empty">비슷한 물품이 없어요 — <strong>신규 구입</strong>으로 요청합니다.</div>`;
+      searchBody.innerHTML = `<p class="purchase-search-empty">일치하는 물품이 없어요 — <strong>신규 구입</strong>으로 요청됩니다.</p>`;
       return;
     }
 
-    searchZone.innerHTML = `
-      <div class="purchase-search-list">
-        <p class="helper">이미 등록된 물품이 있어요. 수량이 부족하다면 ‘추가 구입’으로 요청하세요.</p>
-        ${matches.map((i) => `
-          <div class="purchase-search-row">
-            <span><strong>${escapeHtml(i.name)}</strong> · ${escapeHtml(i.location)} · 보유 ${i.total}${escapeHtml(i.unit || "개")}</span>
-            <button type="button" class="ghost compact" data-add-existing="${escapeHtml(i.id)}">추가 구입으로 요청</button>
-          </div>`).join("")}
-      </div>`;
-    searchZone.querySelectorAll("[data-add-existing]").forEach((b) => {
+    searchBody.innerHTML = `
+      <p class="helper" style="margin-bottom:6px;">수량이 부족하면 ‘추가 구입’으로 요청하세요.</p>
+      ${matches.map((i) => `
+        <div class="purchase-search-row">
+          <span><strong>${escapeHtml(i.name)}</strong> · ${escapeHtml(i.location)} · 보유 ${i.total}${escapeHtml(i.unit || "개")}</span>
+          <button type="button" class="ghost compact" data-add-existing="${escapeHtml(i.id)}">추가 구입</button>
+        </div>`).join("")}`;
+    searchBody.querySelectorAll("[data-add-existing]").forEach((b) => {
       b.addEventListener("click", () => {
         const it = (state.items || []).find((i) => i.id === b.dataset.addExisting);
         if (it) selectExistingItem(it);

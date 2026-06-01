@@ -1666,16 +1666,41 @@ td strong {
 /* ── 구입 요청 모달: 기존 물품 검색/추가구입 안내 ── */
 .req-mark { color: var(--rose); font-style: normal; }
 
-.purchase-search-note {
-  margin-top: -4px;
-  padding: 10px 12px;
+/* ── 검색 결과 패널 ── */
+.purchase-search-zone {
+  border: 1px solid var(--paper-edge);
   border-radius: 10px;
-  font-size: 13px;
   background: var(--paper-deep);
+  overflow: hidden;
+}
+.purchase-search-zone-title {
+  padding: 8px 12px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--paper-edge);
+  margin: 0;
+}
+.purchase-search-zone-body {
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.purchase-search-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-mute);
+}
+
+.purchase-search-note {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--paper);
   color: var(--ink-soft);
   border: 1px solid var(--paper-edge);
 }
-.purchase-search-note.is-empty { color: var(--ink-mute); }
 .purchase-search-note.is-selected {
   display: flex;
   align-items: center;
@@ -1686,14 +1711,6 @@ td strong {
   color: var(--ink);
 }
 
-.purchase-search-list {
-  margin-top: -4px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--paper-deep);
-  border: 1px solid var(--paper-edge);
-}
-.purchase-search-list .helper { margin: 0 0 8px; }
 .purchase-search-row {
   display: flex;
   align-items: center;
