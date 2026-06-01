@@ -166,6 +166,25 @@ function openRegisterModal() {
               <span class="acct-hint">총괄관리자 승인 알림 및 공지에 사용됩니다</span>
               <input id="regEmail" type="email" placeholder="school@example.go.kr" />
             </div>
+            <div class="acct-field">
+              <span class="acct-label">비밀번호 찾기 질문 <span style="color:var(--danger,#c0392b);">*</span></span>
+              <span class="acct-hint">비밀번호를 잊었을 때 본인 확인에 사용됩니다</span>
+              <select id="regSecQ">
+                <option value="">질문 선택</option>
+                <option>내가 졸업한 초등학교 이름은?</option>
+                <option>어릴 때 키운 첫 반려동물 이름은?</option>
+                <option>내가 가장 좋아하는 색깔은?</option>
+                <option>부모님이 태어나신 도시는?</option>
+                <option>나의 보물 1호는?</option>
+                <option value="__custom__">직접 입력</option>
+              </select>
+              <input id="regSecQCustom" type="text" placeholder="질문 직접 입력" hidden style="margin-top:6px;" />
+            </div>
+            <div class="acct-field">
+              <span class="acct-label">답변 <span style="color:var(--danger,#c0392b);">*</span></span>
+              <span class="acct-hint">대소문자·공백은 무시하고 비교합니다</span>
+              <input id="regSecA" type="text" autocomplete="off" placeholder="기억하기 쉬운 답변" />
+            </div>
           </div>
 
           <!-- 섹션: 담당자 정보 -->
@@ -284,6 +303,13 @@ function openRegisterModal() {
     modal.querySelector("#regSearchInput").value = "";
   });
 
+  // 보안 질문 "직접 입력" 토글
+  modal.querySelector("#regSecQ").addEventListener("change", (e) => {
+    const custom = modal.querySelector("#regSecQCustom");
+    custom.hidden = e.target.value !== "__custom__";
+    if (!custom.hidden) custom.focus();
+  });
+
   // 가입 신청
   modal.querySelector("#regSubmit").addEventListener("click", () => handleRegister(modal, selectedSchool));
 }
@@ -296,6 +322,9 @@ async function handleRegister(modal, school) {
   const email     = modal.querySelector("#regEmail").value.trim();
   const name      = modal.querySelector("#regName").value.trim();
   const role      = modal.querySelector("#regRole").value.trim();
+  const secQSel   = modal.querySelector("#regSecQ").value;
+  const secQ      = secQSel === "__custom__" ? modal.querySelector("#regSecQCustom").value.trim() : secQSel;
+  const secA      = modal.querySelector("#regSecA").value.trim();
   const consent   = modal.querySelector("#regConsent").checked;
   const Core      = window.AccountCore;
 
@@ -303,6 +332,8 @@ async function handleRegister(modal, school) {
   if (pw.length < 6)               return alert("비밀번호는 6자 이상이어야 합니다.");
   if (pw !== pwConfirm)            return alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
   if (!email)                      return alert("연락 이메일은 필수입니다.");
+  if (!secQ)                       return alert("비밀번호 찾기 질문을 선택하거나 직접 입력하세요.");
+  if (!secA)                       return alert("비밀번호 찾기 답변을 입력하세요.");
   if (!consent)                    return alert("개인정보 수집·이용에 동의해야 가입할 수 있습니다.");
 
   const submitBtn = modal.querySelector("#regSubmit");
@@ -350,6 +381,8 @@ async function handleRegister(modal, school) {
       email,
       contactName: name || "",
       contactRole: role || "",
+      securityQuestion: secQ,
+      securityAnswer:   secA,
       password:    pw,
       _authToken:  authToken,
       status:      "pending",
@@ -455,64 +488,154 @@ function openLoginModal() {
   });
 }
 
-// ─── 비밀번호 찾기 (학교 사용자용) ──────────────────────────────────────────
+// 비밀번호 재설정 중에는 onAuthStateChanged의 관리자 자동진입/리로드를 막는다.
+let pwResetInProgress = false;
+
+// ─── 비밀번호 찾기 (보안 질문 → 자가 재설정, 5회 초과 시 관리자 요청) ──────────
 function openForgotPasswordModal() {
   if (!fbReady()) return;
+  const MAX_FAILS = 5;
+  const norm = (s) => String(s || "").replace(/\s+/g, "").toLowerCase();
+  let school = null; // { uid, data }
+
   const modal = window.openModal({
     title: "비밀번호 찾기",
     submitText: "닫기",
     onSubmit: () => true,
     body: `
       <div class="acct-form">
-        <p class="acct-hint" style="margin:0;">가입 시 사용한 아이디를 입력하면 등록 연락처를 확인해 드립니다.</p>
+        <p class="acct-hint" style="margin:0;">가입 시 사용한 아이디를 입력하면, 보안 질문으로 본인 확인 후 비밀번호를 새로 설정할 수 있습니다.</p>
         <div style="display:flex;gap:8px;align-items:flex-end;">
           <div class="acct-field" style="flex:1;">
             <span class="acct-label">아이디</span>
             <input id="forgotUser" type="text" autocomplete="username" />
           </div>
-          <button class="primary" id="forgotSubmit" type="button"
-            style="white-space:nowrap;margin-bottom:0;">확인</button>
+          <button class="primary" id="forgotSubmit" type="button" style="white-space:nowrap;margin-bottom:0;">확인</button>
         </div>
         <div id="forgotResult"></div>
       </div>`,
   });
+  const result = () => modal.querySelector("#forgotResult");
 
-  modal.querySelector("#forgotUser").addEventListener("keydown", e => {
-    if (e.key === "Enter") { e.preventDefault(); modal.querySelector("#forgotSubmit").click(); }
-  });
+  const adminBox = (schoolName, extraLine) => `
+    <div class="acct-school-card" style="border-color:var(--danger,#c0392b);">
+      <p style="margin:0 0 6px;font-weight:600;">${esc(schoolName || "")}</p>
+      ${extraLine ? `<p style="margin:0 0 8px;color:var(--danger,#c0392b);">${extraLine}</p>` : ""}
+      <p style="margin:0 0 8px;">웹앱 관리자에게 비밀번호 초기화를 요청하세요.</p>
+      <p class="acct-hint" style="margin:0;">문의처: <strong>endeavor1006@naver.com</strong></p>
+    </div>`;
 
-  modal.querySelector("#forgotSubmit").addEventListener("click", async () => {
+  // 1) 아이디 조회
+  async function lookup() {
     const username = modal.querySelector("#forgotUser").value.trim().toLowerCase();
     if (!username) return;
     const btn = modal.querySelector("#forgotSubmit");
     btn.textContent = "조회 중…"; btn.disabled = true;
     try {
-      const db = getDb();
-      const qs = await getDocs(
-        query(collection(db, "schools"), where("username", "==", username), limit(1))
-      );
-      const result = modal.querySelector("#forgotResult");
+      const qs = await getDocs(query(collection(getDb(), "schools"), where("username", "==", username), limit(1)));
       if (qs.empty) {
-        result.innerHTML = `
-          <div class="acct-school-card" style="border-color:var(--danger,#c0392b);">
-            <p style="margin:0;color:var(--danger,#c0392b);">해당 아이디로 가입된 계정을 찾을 수 없습니다.</p>
-          </div>`;
-      } else {
-        const data  = qs.docs[0].data();
-        const email = data.email || "";
-        result.innerHTML = `
-          <div class="acct-school-card">
-            <p style="margin:0 0 6px;font-weight:600;">${esc(data.schoolName)}</p>
-            <p style="margin:0 0 8px;">총괄관리자에게 비밀번호 초기화를 요청하세요.</p>
-            <p class="acct-hint" style="margin:0;">문의처: <strong>endeavor1006@naver.com</strong></p>
-          </div>`;
+        result().innerHTML = `<div class="acct-school-card" style="border-color:var(--danger,#c0392b);">
+          <p style="margin:0;color:var(--danger,#c0392b);">해당 아이디로 가입된 계정을 찾을 수 없습니다.</p></div>`;
+        return;
       }
+      school = { uid: qs.docs[0].id, data: qs.docs[0].data() };
+      renderQuestionStep();
     } catch (e) {
       alert("조회 실패: " + (e?.message || e));
     } finally {
       btn.textContent = "확인"; btn.disabled = false;
     }
+  }
+
+  // 2) 보안 질문 단계
+  function renderQuestionStep() {
+    const { uid, data } = school;
+    if (!data.securityQuestion || !data.securityAnswer) {
+      // 보안 질문이 없는 기존 계정 → 관리자 요청 안내
+      result().innerHTML = adminBox(data.schoolName, "이 계정은 보안 질문이 등록되어 있지 않습니다.");
+      return;
+    }
+    const failKey = "pwReset_fails_" + uid;
+    const fails = parseInt(localStorage.getItem(failKey) || "0", 10);
+    if (fails >= MAX_FAILS) {
+      result().innerHTML = adminBox(data.schoolName, "답변을 5회 이상 틀려 잠금되었습니다.");
+      return;
+    }
+    result().innerHTML = `
+      <div class="acct-school-card">
+        <p style="margin:0 0 8px;font-weight:600;">${esc(data.schoolName)} · 본인 확인</p>
+        <div class="acct-field">
+          <span class="acct-label">${esc(data.securityQuestion)}</span>
+          <input id="forgotAnswer" type="text" autocomplete="off" placeholder="답변 입력" />
+        </div>
+        <p class="acct-hint" style="margin:6px 0 0;">남은 시도: ${MAX_FAILS - fails}회</p>
+        <button class="primary compact" id="forgotAnswerBtn" type="button" style="margin-top:10px;">답변 확인</button>
+      </div>`;
+    const ansInput = modal.querySelector("#forgotAnswer");
+    ansInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); modal.querySelector("#forgotAnswerBtn").click(); } });
+    modal.querySelector("#forgotAnswerBtn").addEventListener("click", () => {
+      if (!ansInput.value.trim()) return;
+      if (norm(ansInput.value) === norm(data.securityAnswer)) {
+        localStorage.removeItem(failKey);
+        renderResetStep();
+      } else {
+        localStorage.setItem(failKey, String(fails + 1));
+        renderQuestionStep();
+      }
+    });
+  }
+
+  // 3) 새 비밀번호 설정 단계
+  function renderResetStep() {
+    const { uid, data } = school;
+    result().innerHTML = `
+      <div class="acct-school-card" style="border-color:var(--accent,#5B8A6F);">
+        <p style="margin:0 0 8px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 본인 확인 완료 — 새 비밀번호를 설정하세요</p>
+        <div style="display:flex;gap:10px;">
+          <div class="acct-field" style="flex:1;">
+            <span class="acct-label">새 비밀번호</span>
+            <input id="resetPw" type="password" autocomplete="new-password" />
+          </div>
+          <div class="acct-field" style="flex:1;">
+            <span class="acct-label">새 비밀번호 확인</span>
+            <input id="resetPwConfirm" type="password" autocomplete="new-password" />
+          </div>
+        </div>
+        <button class="primary" id="resetPwBtn" type="button" style="width:100%;margin-top:10px;">비밀번호 변경</button>
+      </div>`;
+    modal.querySelector("#resetPwBtn").addEventListener("click", async () => {
+      const pw = modal.querySelector("#resetPw").value;
+      const pwc = modal.querySelector("#resetPwConfirm").value;
+      if (pw.length < 6) return alert("비밀번호는 6자 이상이어야 합니다.");
+      if (pw !== pwc) return alert("새 비밀번호와 확인이 일치하지 않습니다.");
+      const btn = modal.querySelector("#resetPwBtn");
+      btn.textContent = "변경 중…"; btn.disabled = true;
+      pwResetInProgress = true;
+      try {
+        const auth = getAuth();
+        const Core = window.AccountCore;
+        // 내부 토큰으로 잠깐 인증한 뒤 비밀번호 필드만 업데이트하고 즉시 로그아웃
+        await signInWithEmailAndPassword(auth, Core.usernameToAuthEmail(data.username), data._authToken);
+        await updateDoc(doc(getDb(), "schools", uid), { password: pw });
+        await signOut(auth);
+        result().innerHTML = `
+          <div class="acct-school-card" style="border-color:var(--accent,#5B8A6F);">
+            <p style="margin:0;font-weight:600;color:var(--accent,#5B8A6F);">✅ 비밀번호가 변경되었습니다.</p>
+            <p class="acct-hint" style="margin:6px 0 0;">새 비밀번호로 로그인하세요.</p>
+          </div>`;
+      } catch (e) {
+        btn.textContent = "비밀번호 변경"; btn.disabled = false;
+        alert("변경 실패: " + (e?.message || e));
+      } finally {
+        pwResetInProgress = false;
+      }
+    });
+  }
+
+  modal.querySelector("#forgotUser").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); modal.querySelector("#forgotSubmit").click(); }
   });
+  modal.querySelector("#forgotSubmit").addEventListener("click", lookup);
 }
 
 async function handleLogin(modal) {
@@ -1454,6 +1577,8 @@ resolveShortCodeFromUrl().catch(() => {}); // 실패해도 앱 정상 동작
 
 // ─── 세션 복원: 새로고침 후 로그인 상태 자동 복원 ───────────────────────────
 onAuthStateChanged(getAuth(), async (user) => {
+  // 비밀번호 재설정 중 임시 로그인은 관리자 자동진입/리로드를 일으키면 안 됨
+  if (pwResetInProgress) return;
   // auth 상태 확정 — 미로그인이면 로그인 유도 UI 표시
   window.setFirebaseAuthReady?.();
   if (!user) return; // 로그아웃 상태 → 정상 앱 화면 유지
