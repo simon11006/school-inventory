@@ -740,6 +740,19 @@ textarea:focus {
   box-shadow: 0 0 0 4px var(--sage-soft);
 }
 
+/* 체크박스·라디오는 작아서 위의 4px 초록 글로우가 "박스가 하나 더" 생긴 것처럼 보인다.
+   글로우를 빼고, 키보드 포커스 때만 가벼운 외곽선으로 접근성을 유지한다. */
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+  box-shadow: none;
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 1px;
+}
+
 textarea {
   min-height: 88px;
   resize: vertical;
