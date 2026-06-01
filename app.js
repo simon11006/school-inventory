@@ -771,7 +771,7 @@ function markSyncChecked(remoteSavedAt = "") {
 }
 
 // account-ui.js(모듈)가 ?s=코드 해석 후 호출하는 연결 적용 진입점
-function applyConnectionFromAccount(conn) {
+function applyConnectionFromAccount(conn, options = {}) {
   if (!conn || !conn.apiKey) return false;
   let endpoint = conn.webAppUrl || "";
   if (!endpoint && conn.deploymentId) {
@@ -783,7 +783,11 @@ function applyConnectionFromAccount(conn) {
   syncConfig.apiKey   = conn.apiKey;
   if (conn.shortCode) syncConfig.schoolCode = conn.shortCode;
   if (conn.schoolName) syncConfig.schoolName = conn.schoolName;
-  syncConfig.autoSync = "pullOnStart"; // 교사용: 페이지 로드 시 최신 데이터 당김
+  // 학교 관리자(소유자)는 쓰기 모드 — 저장 시 스프레드시트로 올림(pushAfterSave).
+  // 교사용(?s= 접속)은 읽기 모드 — 로드 시 최신 데이터를 당김(pullOnStart).
+  // ⚠️ 관리자에게 pullOnStart를 주면 관리자가 만든 데이터가 원격에 영영 안 올라가
+  //    교사용 화면이 0개로 보인다(이전 버그). 반드시 구분해서 설정한다.
+  syncConfig.autoSync = options.asAdmin ? "pushAfterSave" : "pullOnStart";
   saveSyncConfig();
   justConnectedViaLink = true;
   sessionStorage.setItem(SESSION_CONNECTED_KEY, "1");
@@ -4442,28 +4446,7 @@ async function finalizeSetupAfterLink() {
   if (!canUseRemoteSync()) return;
   justConnectedViaLink = false;
 
-  const hasLocalData = Boolean(state.schoolName && state.schoolName.trim());
-  const neverSynced = !syncConfig.lastSyncedAt;
-
-  // 관리자 첫 연결: 로컬에 기본정보가 있고 아직 한 번도 올린 적 없으면 자동 업로드
-  if (hasLocalData && neverSynced) {
-    try {
-      const dummyStatusEl = { textContent: "" };
-      await ensureCanPush(dummyStatusEl);
-      const result = await requestSpreadsheet("save", {
-        data: state,
-        clientUpdatedAt: state.meta?.updatedAt || "",
-        expectedRemoteSavedAt: syncConfig.lastRemoteSavedAt || "",
-      });
-      syncConfig.lastSyncedAt = new Date().toISOString();
-      syncConfig.lastCheckedAt = syncConfig.lastSyncedAt;
-      syncConfig.lastRemoteSavedAt = result.savedAt || syncConfig.lastRemoteSavedAt || "";
-      saveSyncConfig();
-      toast("학교 정보를 스프레드시트에 올렸습니다.", "success");
-    } catch (error) {
-      // 원격에 이미 데이터가 있으면 ensureCanPush가 막는다 → 조용히 통과(원격 우선)
-    }
-  }
+  await pushLocalToRemoteIfEmpty();
 
   // 관리자가 마법사에서 링크 단계까지 진행한 상태라면 완료 화면을 띄운다
   if (setupState.awaitingLinkConnect && adminMode) {
@@ -4472,6 +4455,48 @@ async function finalizeSetupAfterLink() {
     openSetupCompleteModal();
   }
 }
+
+// 로컬에 학교 데이터가 있는데 원격 스프레드시트가 비어 있으면(한 번도 안 올림) 즉시 업로드한다.
+// 관리자가 만든 교사·물품이 원격에 올라가야 교사용 ?s= 화면에서 보인다.
+// 원격에 이미 저장된 데이터가 있으면(savedAt 존재) 충돌 보호를 위해 덮어쓰지 않는다.
+async function pushLocalToRemoteIfEmpty() {
+  if (!canUseRemoteSync()) return;
+  const hasLocalData = Boolean(
+    state.schoolName?.trim() || state.teachers?.length || state.items?.length,
+  );
+  if (!hasLocalData) return;
+  try {
+    const remote = await requestSpreadsheet("diagnose", {});
+    const remoteSavedAt = remote.savedAt || "";
+    markSyncChecked(remoteSavedAt);
+    if (remoteSavedAt) return; // 원격에 이미 데이터 있음 → 보호
+    const result = await requestSpreadsheet("save", {
+      data: state,
+      clientUpdatedAt: state.meta?.updatedAt || "",
+      expectedRemoteSavedAt: "",
+    });
+    syncConfig.lastSyncedAt = new Date().toISOString();
+    syncConfig.lastCheckedAt = syncConfig.lastSyncedAt;
+    syncConfig.lastRemoteSavedAt = result.savedAt || "";
+    saveSyncConfig();
+    toast("학교 데이터를 스프레드시트에 올렸습니다. 이제 교사용 주소에서도 보입니다.", "success");
+  } catch (error) {
+    // 진단/저장 실패 시 조용히 통과 (다음 기회에 재시도)
+  }
+}
+
+// 학교 관리자(인증된 소유자) 로그인이 확인되면 호출.
+// 관리자는 항상 쓰기 모드(pushAfterSave)여야 하며, 이전에 pullOnStart로 잘못 설정돼
+// 데이터가 원격에 안 올라간 상태도 여기서 자동 복구한다.
+window.ensureOwnerWriteMode = async function () {
+  if (!canUseRemoteSync()) return;
+  if (syncConfig.autoSync !== "pushAfterSave") {
+    syncConfig.autoSync = "pushAfterSave";
+    saveSyncConfig();
+    startPolling();
+  }
+  await pushLocalToRemoteIfEmpty();
+};
 
 function isPollingEnabled() {
   return canUseRemoteSync() && (syncConfig.autoSync === "pushAfterSave" || syncConfig.autoSync === "pullOnStart");

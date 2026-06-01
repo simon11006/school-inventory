@@ -821,10 +821,11 @@ function openConnectionManager(uid, data) {
         });
       }
       // 로컬 연결에도 즉시 반영 → 닫기 후 새로고침 시 추가 리로드 방지
+      // 연결 설정을 직접 하는 주체는 학교 관리자이므로 쓰기 모드(asAdmin)로 적용
       window.applyConnectionFromAccount?.({
         webAppUrl: parsed.webAppUrl, apiKey: parsed.apiKey, deploymentId: parsed.deploymentId,
         shortCode: data.shortCode, schoolName: data.schoolName,
-      });
+      }, { asAdmin: true });
       alert("연결됐습니다! 교사 초대 주소를 학교 내부 메신저로 공유하세요.");
       modal.remove();
       // 갱신된 연결 정보로 모달 재오픈 → 교사 초대 주소·복사 버튼 즉시 표시
@@ -1490,7 +1491,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     const conn = data.connection || {};
     if (data.shortCode && conn.webAppUrl && conn.apiKey &&
         window.getSchoolCode?.() !== data.shortCode) {
-      window.applyConnectionFromAccount?.({ ...conn, shortCode: data.shortCode, schoolName: data.schoolName });
+      window.applyConnectionFromAccount?.({ ...conn, shortCode: data.shortCode, schoolName: data.schoolName }, { asAdmin: true });
       window.enterSchoolAdminMode?.(); // reload 후 세션 복원을 위해 미리 저장
       location.reload();
       return;
@@ -1499,6 +1500,9 @@ onAuthStateChanged(getAuth(), async (user) => {
     // 승인된 학교 계정 → 관리자 모드 자동 진입 + 버튼 전환
     window.enterSchoolAdminMode?.();
     window.setFirebaseSchoolName?.(data.schoolName);
+    // 관리자는 항상 쓰기 모드여야 한다. 과거 pullOnStart로 잘못 설정돼 데이터가
+    // 원격에 안 올라간 경우도 자동 복구(쓰기 모드 전환 + 빈 원격이면 즉시 업로드).
+    window.ensureOwnerWriteMode?.();
     // schools 문서: 마지막 활동 기록 (대시보드 활동 시각 표시용)
     updateDoc(doc(getDb(), "schools", user.uid), {
       lastActiveAt: serverTimestamp(),
