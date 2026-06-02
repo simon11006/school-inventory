@@ -128,7 +128,7 @@ function openRegisterModal() {
         </div>
 
         <button class="ghost compact" id="regManualToggle" type="button"
-          style="font-size:12px;color:var(--ink-mute);">나이스에 없는 학교라면?</button>
+          style="font-size:12px;color:var(--sage,#5b8a6f);border:1px solid var(--sage,#5b8a6f);border-radius:6px;padding:4px 10px;">나이스에 없는 학교라면?</button>
 
         <div id="regSelectedSchool" class="acct-school-card" style="display:none;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -221,6 +221,12 @@ function openRegisterModal() {
         </div>
       </div>`,
   });
+  const regModalEl = modal.querySelector(".modal");
+  regModalEl?.classList.add("modal-sm");
+
+  // 학교 선택 완료 시 모달 확장 헬퍼
+  function expandRegModal() { regModalEl?.classList.remove("modal-sm"); }
+  function shrinkRegModal()  { regModalEl?.classList.add("modal-sm"); }
 
   // 검색
   modal.querySelector("#regSearchBtn").addEventListener("click", async () => {
@@ -250,6 +256,7 @@ function openRegisterModal() {
             modal.querySelector("#regSelectedSchool").style.display  = "block";
             modal.querySelector("#regSearchResults").style.display   = "none";
             modal.querySelector("#regAccountSection").style.display  = "block";
+            expandRegModal();
           });
           ul.appendChild(li);
         });
@@ -293,6 +300,7 @@ function openRegisterModal() {
     modal.querySelector("#regManualSection").style.display   = "none";
     modal.querySelector("#regManualToggle").style.display    = "none";
     modal.querySelector("#regAccountSection").style.display  = "block";
+    expandRegModal();
   });
 
   // 다시 검색
@@ -301,6 +309,7 @@ function openRegisterModal() {
     modal.querySelector("#regSelectedSchool").style.display  = "none";
     modal.querySelector("#regAccountSection").style.display  = "none";
     modal.querySelector("#regSearchInput").value = "";
+    shrinkRegModal();
   });
 
   // 보안 질문 "직접 입력" 토글
@@ -517,6 +526,7 @@ function openForgotPasswordModal() {
         <div id="forgotResult"></div>
       </div>`,
   });
+  modal.querySelector(".modal")?.classList.add("modal-sm");
   const result = () => modal.querySelector("#forgotResult");
 
   const adminBox = (schoolName, extraLine) => `
