@@ -3852,6 +3852,226 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   border-radius: 5px;
 }
 
+/* ══════════════════════════════════════════════
+   v2 직관적 친화형 — 예시안 전면 적용
+   ══════════════════════════════════════════════ */
+
+/* ── 컬러 아이콘 칩 (아이콘+색으로 "어디에 뭐가 있는지" 인지) ── */
+.c-sky   { background: var(--sky-soft);   color: var(--sky); }
+.c-sage  { background: var(--sage-soft);  color: var(--sage); }
+.c-amber { background: var(--amber-soft); color: var(--amber); }
+.c-plum  { background: var(--plum-soft);  color: var(--plum); }
+.c-rose  { background: var(--rose-soft);  color: var(--rose); }
+.c-slate { background: var(--paper-edge); color: var(--ink-soft); }
+
+/* ── 사이드바 nav-ico (inline SVG 칩, 예시안 그대로) ── */
+.nav-ico {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: .14s;
+}
+.nav-ico svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* nav-item 예시안 스타일 */
+.nav-item {
+  gap: 12px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  min-height: unset;
+}
+.nav-item:hover {
+  background: var(--card);
+  border-color: transparent;
+}
+.nav-item.active {
+  background: var(--card);
+  border-color: var(--line);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+.nav-item.active .nav-ico {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+/* 기존 nav-glyph 숨김 (nav-ico로 교체됨) */
+.nav-glyph { display: none; }
+
+/* ── 사이드바 배경 ── */
+.sidebar {
+  background: var(--card-soft) !important;
+}
+
+/* ── 히어로: 큰 아이콘 + 제목 + CTA ── */
+.hero {
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+  padding: 24px 26px !important;
+  background: linear-gradient(180deg, var(--sage-soft), var(--card) 160%) !important;
+  border: 1.5px solid color-mix(in srgb, var(--sage) 18%, transparent) !important;
+  border-radius: var(--r-xl) !important;
+  flex-wrap: wrap;
+}
+.hero-big-icon {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 20px;
+  background: var(--sage);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
+}
+.hero-big-icon svg {
+  width: 32px;
+  height: 32px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero h2 {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.025em !important;
+  margin: 0 !important;
+  color: var(--ink) !important;
+}
+.hero-sub {
+  margin: 6px 0 0 !important;
+  font-size: 14px !important;
+  color: var(--ink-soft) !important;
+}
+.hero-cta {
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* 기존 히어로 일러스트 숨김 */
+.hero-illust { display: none !important; }
+/* 로딩 상태에서도 히어로 텍스트가 보이도록 */
+.hero.is-loading .hero-text { position: relative; z-index: 1; }
+/* 히어로 점선 패턴 제거 */
+.hero::before { display: none !important; }
+
+/* ── 상태 카드: 컬러 아이콘 + 수평 레이아웃 ── */
+.status-grid {
+  gap: 14px !important;
+}
+.status-cell {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 16px !important;
+  text-align: left !important;
+  background: var(--card) !important;
+  border: 1.5px solid var(--line) !important;
+  border-radius: var(--r-md) !important;
+}
+/* 좌측 악센트 바 제거 */
+.status-cell::before { display: none !important; }
+/* 기존 중앙정렬 span 오버라이드 */
+.status-cell span.stat-ico {
+  justify-content: center !important;
+}
+
+/* 아이콘 칩 */
+.stat-ico {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.stat-ico svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 숫자·라벨 바디 */
+.stat-body { min-width: 0; }
+.stat-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  display: block;
+  margin: 0;
+}
+.stat-num {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat-sub {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 1px;
+}
+/* 기존 status-cell strong/small 숨김 */
+.status-cell > strong, .status-cell > small,
+.status-cell > span:not(.stat-ico) { display: none !important; }
+
+/* ── 툴바: 예시안처럼 카드 없이 심플하게 ── */
+.toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: 12px !important;
+}
+.search-wrap > label { display: none; }
+.search-input input {
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  padding: 13px 13px 13px 40px;
+  font-size: 15px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+.search-input input:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 20%, transparent);
+}
+.search-icon { font-size: 16px; left: 13px; opacity: 0.55; }
+
+/* ── 다크모드 ── */
+body.dark-mode .nav-item:hover { background: var(--card-soft); }
+body.dark-mode .nav-item.active { background: var(--card); border-color: var(--line); }
+body.dark-mode .hero {
+  background: linear-gradient(180deg, var(--sage-soft), var(--card) 140%) !important;
+}
+body.dark-mode .status-cell { background: var(--card) !important; border-color: var(--line) !important; }
+
 /* ── 우측 패널 드로어 (work-panel 데스크톱 대체) ── */
 .panel-drawer-backdrop {
   position: fixed;

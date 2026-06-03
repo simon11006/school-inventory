@@ -1255,6 +1255,24 @@ function renderHero() {
   els.heroSub.classList.remove("hero-sub-notice");
   const zone = els.locationFilter && els.locationFilter.value;
   els.heroSub.textContent = zone ? `${zone} · ${data.sub}` : data.sub;
+
+  // 뷰별 히어로 아이콘 업데이트
+  const heroIconEl = document.querySelector("#heroBigIcon");
+  if (heroIconEl) {
+    const HERO_ICONS = {
+      dashboard:        `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4M8 14l3 3 5-5"/></svg>`,
+      items:            `<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/></svg>`,
+      reservations:     `<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>`,
+      purchaseRequests: `<svg viewBox="0 0 24 24"><path d="M3 4h2l2.5 12h11L21 8H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>`,
+      import:           `<svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,
+      records:          `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+    };
+    heroIconEl.innerHTML = HERO_ICONS[currentView] || HERO_ICONS.dashboard;
+  }
+
+  // 히어로 CTA 버튼 표시/숨김
+  const heroCta = document.querySelector(".hero-cta");
+  if (heroCta) heroCta.hidden = currentView !== "dashboard";
 }
 
 function setHeroLoading(active) {
@@ -1548,13 +1566,29 @@ function renderStatusGrid() {
     ];
   }
 
+  const STAT_ICONS = {
+    available:   `<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/></svg>`,
+    reservation: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>`,
+    checkout:    `<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`,
+    return:      `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+    damage:      `<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>`,
+    purchase:    `<svg viewBox="0 0 24 24"><path d="M3 4h2l2.5 12h11L21 8H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>`,
+  };
+  const STAT_ICO_CLASS = {
+    available: "c-sage", reservation: "c-sky", checkout: "c-amber",
+    return: "c-rose", damage: "c-rose", purchase: "c-amber",
+  };
+
   els.statusGrid.innerHTML = cells
     .map(
       ([label, value, tone, sub, action]) => `
         <button class="status-cell ${getStatusCardAction(action) ? "is-clickable" : ""}" data-tone="${tone}" data-status-action="${action}" type="button">
-          <span>${label}</span>
-          <strong>${value}</strong>
-          <small>${sub}</small>
+          <span class="stat-ico ${STAT_ICO_CLASS[tone] || "c-slate"}">${STAT_ICONS[tone] || ""}</span>
+          <div class="stat-body">
+            <b class="stat-label">${escapeHtml(label)}</b>
+            <div class="stat-num">${value}</div>
+            <div class="stat-sub">${escapeHtml(sub)}</div>
+          </div>
         </button>
       `,
     )

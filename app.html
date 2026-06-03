@@ -66,27 +66,27 @@
 
       <p class="side-label" id="sideMenuLabel">교사용 메뉴</p>
       <button class="nav-item active" data-view="dashboard" type="button">
-        <span class="nav-glyph" data-glyph="today" aria-hidden="true"></span>
+        <span class="nav-ico c-sky" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
         물품 사용 예약
       </button>
       <button class="nav-item" data-view="reservations" type="button">
-        <span class="nav-glyph" data-glyph="reserve" aria-hidden="true"></span>
+        <span class="nav-ico c-sage" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg></span>
         <span id="reservationNavLabel">내 예약·반납</span>
       </button>
       <button class="nav-item admin-only" data-view="items" type="button">
-        <span class="nav-glyph" data-glyph="items" aria-hidden="true"></span>
+        <span class="nav-ico c-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/></svg></span>
         물품 관리
       </button>
       <button class="nav-item" data-view="purchaseRequests" type="button">
-        <span class="nav-glyph" data-glyph="items" aria-hidden="true"></span>
+        <span class="nav-ico c-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.5 12h11L21 8H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg></span>
         구입 요청
       </button>
       <button class="nav-item admin-only" data-view="import" type="button">
-        <span class="nav-glyph" data-glyph="import" aria-hidden="true"></span>
+        <span class="nav-ico c-plum" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
         일괄 등록
       </button>
       <button class="nav-item admin-only" data-view="records" type="button">
-        <span class="nav-glyph" data-glyph="records" aria-hidden="true"></span>
+        <span class="nav-ico c-slate" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
         사용 기록
       </button>
 
@@ -123,23 +123,14 @@
         </label>
       </div>
       <section class="hero">
+        <div class="hero-big-icon" id="heroBigIcon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4M8 14l3 3 5-5"/></svg>
+        </div>
         <div class="hero-text">
-          <h2 id="heroTitle">예약 한 건씩 차근차근 확인해요</h2>
-          <p class="hero-sub" id="heroSub">왼쪽 메뉴에서 화면을 바꿀 수 있어요.</p>
+          <h2 id="heroTitle">사용할 물품을 바로 찾아 예약하세요</h2>
+          <p class="hero-sub" id="heroSub">물품실을 고르고 검색한 뒤, 오른쪽 예약하기 버튼만 누르면 됩니다.</p>
         </div>
-        <div class="hero-illust" aria-hidden="true">
-          <svg viewBox="0 0 220 110" width="220" height="110">
-            <rect x="6" y="14" width="180" height="86" rx="10" fill="#fff" stroke="#E4D9BF" stroke-width="1.4" />
-            <rect x="20" y="30" width="100" height="8" rx="4" fill="#E9DEC3" />
-            <rect x="20" y="46" width="150" height="6" rx="3" fill="#F1E8D2" />
-            <rect x="20" y="58" width="120" height="6" rx="3" fill="#F1E8D2" />
-            <rect x="20" y="70" width="80" height="6" rx="3" fill="#F1E8D2" />
-            <circle cx="184" cy="22" r="14" fill="#D08B3C" opacity="0.9" />
-            <path d="M178 22 l4 4 l8 -8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"
-              stroke-linejoin="round" />
-            <path d="M150 92 q20 -16 50 -4" stroke="#5B8A6F" stroke-width="2" fill="none" stroke-linecap="round" />
-          </svg>
-        </div>
+        <button class="primary hero-cta" id="newReservationBtn" type="button">+ 새 예약</button>
       </section>
 
       <section class="status-grid" id="statusGrid"></section>
@@ -153,8 +144,7 @@
           </div>
         </div>
         <div class="toolbar-actions">
-          <button class="primary" id="newReservationBtn" type="button">+ 새 예약</button>
-          <button class="ghost admin-only" id="newItemBtn" type="button">물품 추가</button>
+          <button class="ghost admin-only" id="newItemBtn" type="button">+ 물품 추가</button>
         </div>
       </section>
 
