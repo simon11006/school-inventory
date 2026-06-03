@@ -1640,9 +1640,10 @@ tbody tr[data-borrow-item-id] {
 }
 
 .borrow-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px 96px 64px 86px 70px auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: var(--card);
   border: 1.5px solid var(--line);
   border-radius: var(--r-md);
@@ -1650,6 +1651,17 @@ tbody tr[data-borrow-item-id] {
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+/* 컬럼 셀 — 칩이 없어도 자리를 유지해 규격·카테고리·물품실이 세로로 정렬된다 */
+.bc-name { min-width: 0; }
+.bc-spec,
+.bc-cat,
+.bc-loc,
+.bc-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .card-grow {
@@ -1804,7 +1816,7 @@ tbody tr[data-borrow-item-id] {
   margin: 0;
 }
 .borrow-list-meta {
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--ink-mute);
 }
 
@@ -1832,16 +1844,19 @@ tbody tr[data-borrow-item-id] {
   white-space: nowrap;
 }
 
-/* 모바일·태블릿: 칩 줄바꿈 플로우 */
-@media (max-width: 900px) {
+/* 폭이 좁으면(칼럼 정렬이 빠듯) 그리드 해제 → 칩 줄바꿈 플로우 */
+@media (max-width: 1300px) {
   .borrow-card {
+    display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
-  .card-grow {
+  .bc-name {
     width: 100%;
     flex-basis: 100%;
   }
+  .bc-spec:empty,
+  .bc-cat:empty { display: none; }
   .card-avail { min-width: 0; }
 }
 
