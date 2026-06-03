@@ -1778,6 +1778,47 @@ tbody tr[data-borrow-item-id] {
   max-width: 900px;
 }
 
+/* 카드 목록 뷰: main-view 컨테이너 스타일 해제 */
+.main-view.is-card-list {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+/* 카드 목록 타이틀 (view-head 대체) */
+.borrow-list-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.borrow-list-head h3 {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+}
+.borrow-list-meta {
+  font-size: 13px;
+  color: var(--ink-mute);
+}
+
+/* 카드 이름행 — 이름 + 칩들을 한 줄에 */
+.card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.card-name-row .card-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
 /* 모바일: 칩 열 줄바꿈 */
 @media (max-width: 680px) {
   .borrow-card {

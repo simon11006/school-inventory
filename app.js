@@ -1770,12 +1770,11 @@ function renderBorrowStartView() {
     return;
   }
 
+  els.mainView.classList.add("is-card-list");
   els.mainView.innerHTML = `
-    <div class="view-head">
-      <div>
-        <h3>사용 예약할 물품 선택</h3>
-        <span class="view-meta">같은 물품도 <b>규격</b>을 보고 고르세요 · 사용 가능한 수량 확인</span>
-      </div>
+    <div class="borrow-list-head">
+      <h3>사용 예약할 물품 선택</h3>
+      <span class="borrow-list-meta">같은 물품도 <b>규격</b>을 보고 고르세요 · 사용 가능한 수량 확인</span>
     </div>
     <div class="borrow-cards">
       ${rows
@@ -1786,12 +1785,14 @@ function renderBorrowStartView() {
           return `
             <div class="borrow-card${selectedItemId === item.id ? " is-selected" : ""}${unavail ? " is-unavail" : ""}" data-borrow-item-id="${item.id}">
               <div class="card-grow">
-                <div class="card-name">${escapeHtml(item.name)}</div>
+                <div class="card-name-row">
+                  <span class="card-name">${escapeHtml(item.name)}</span>
+                  ${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}
+                  ${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}
+                  <span class="card-loc">${escapeHtml(item.location)}</span>
+                </div>
                 ${codeMeta ? `<div class="card-meta">${codeMeta}</div>` : ""}
               </div>
-              ${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}
-              ${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}
-              <span class="card-loc">${escapeHtml(item.location)}</span>
               <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
               ${statusBadge(item.status)}
               <button class="row-action" data-reserve-item-id="${item.id}" type="button"${unavail ? " disabled" : ""}>예약하기</button>
