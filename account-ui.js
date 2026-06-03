@@ -817,18 +817,25 @@ function openConnectionManager(uid, data) {
 
         ` : `
         <!-- 상태 3: 완전 연결 완료 -->
-        <div style="padding:14px 16px;background:#f0f8f4;border:1px solid var(--accent,#5B8A6F);border-radius:10px;">
-          <p style="margin:0 0 10px;font-weight:600;color:var(--accent,#5B8A6F);">✅ 설정 완료</p>
-          <button class="primary" id="openSchoolBtn" type="button" style="width:100%;margin-bottom:12px;">
+        <div class="conn-done">
+          <p class="conn-done-title">✅ 설정 완료</p>
+          <button class="primary" id="openSchoolBtn" type="button" style="width:100%;">
             지금 바로 우리 학교 열기 →
           </button>
-          <p class="acct-hint" style="margin:0 0 4px;">교사 초대 주소</p>
-          <code id="shortLinkText" style="font-size:13px;word-break:break-all;display:block;margin-bottom:10px;">${esc(shortLink)}</code>
-          <div style="display:flex;gap:8px;">
-            <button class="primary compact" id="copyShort" type="button">주소 복사</button>
-            <button class="ghost compact" id="showConnEdit" type="button">연결 정보 수정</button>
+
+          <div class="conn-invite">
+            <span class="conn-invite-label">교사 초대 주소</span>
+            <div class="conn-invite-row">
+              <input id="shortLinkText" type="text" readonly value="${esc(shortLink)}" onclick="this.select()" />
+              <button class="primary compact" id="copyShort" type="button">주소 복사</button>
+            </div>
+            <p class="conn-invite-warn">⚠️ 학교 내부 메신저로만 공유하세요. 외부 공개 금지.</p>
           </div>
-          <p class="acct-hint" style="margin:8px 0 0;color:#c0392b;">⚠️ 학교 내부 메신저로만 공유. 외부 공개 금지.</p>
+
+          <div class="conn-done-foot">
+            <button class="ghost compact" id="showConnEdit" type="button">연결 정보 수정</button>
+            <span class="acct-hint">스프레드시트를 새로 배포(인계 등)했을 때만 사용</span>
+          </div>
         </div>
         `}
 

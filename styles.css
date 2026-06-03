@@ -2827,6 +2827,66 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
 .sadmin-panel-head h3 { margin: 0 0 4px; font-size: 16px; }
 .sadmin-panel-head .helper { margin: 0; }
 
+/* ─── 학교 계정 모달: 설정 완료(연결) 블록 ─── */
+.conn-done {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: #f0f8f4;
+  border: 1px solid var(--accent, #5B8A6F);
+  border-radius: 14px;
+}
+.conn-done-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent, #3f6b53);
+}
+.conn-invite {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #cfe2d6;
+  border-radius: 12px;
+}
+.conn-invite-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a463c;
+}
+.conn-invite-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.conn-invite-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9f7f2;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12.5px;
+  color: #2a2820;
+}
+.conn-invite-row .primary { white-space: nowrap; }
+.conn-invite-warn {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #c0392b;
+}
+.conn-done-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid #d6e6dc;
+}
+.conn-done-foot .acct-hint { font-size: 11.5px; margin: 0; }
+
 /* ─── Account form (login / register modals) ─── */
 .acct-form {
   display: flex;
