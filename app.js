@@ -161,10 +161,9 @@ function bindEvents() {
       const item = getItem(selectedItemId);
       if (item && els.locationFilter.value && item.location !== els.locationFilter.value) selectedItemId = null;
     }
-    renderHero();
-    renderStatusGrid();
-    renderMainView();
-    renderWorkPanel();
+    // 물품실 변경 시 화면 전체를 다시 그려 탭·라벨·권한 표시까지 갱신
+    // (실별 관리자가 비담당 물품실을 고르면 교사 화면으로 전환)
+    render();
   });
   document.querySelector("#newReservationBtn").addEventListener("click", openReservationModal);
   document.querySelector("#newItemBtn").addEventListener("click", () => openItemModal());
@@ -1124,15 +1123,17 @@ function saveState({ touch = true } = {}) {
 }
 
 function render() {
-  // 관리자 전용 뷰에 있다가 로그아웃하면 대시보드로 먼저 보정 (히어로가 갱신되도록 renderHero 전에)
-  if (!adminMode && ["records", "import", "items"].includes(currentView)) currentView = "dashboard";
   const hasSchoolName = Boolean((state.schoolName || "").trim());
   els.schoolName.textContent = hasSchoolName ? state.schoolName : "학교명을 설정해주세요";
   els.schoolName.classList.toggle("needs-setup", !hasSchoolName);
-  renderTodayLabel();
-  renderHero();
+  // 물품실 선택값을 먼저 확정해야 displayAsAdmin()이 정확히 계산된다.
   renderTeacherSelect();
   renderLocationFilter();
+  // 교사 화면으로 표시되는 상황(로그아웃 또는 실별 관리자가 비담당 물품실 선택)에서
+  // 관리자 전용 뷰에 있으면 대시보드로 보정 (히어로 갱신 전에)
+  if (!displayAsAdmin() && ["records", "import", "items"].includes(currentView)) currentView = "dashboard";
+  renderTodayLabel();
+  renderHero();
   renderStatusGrid();
   renderThemeButton();
   renderAdminVisibility();
@@ -1143,11 +1144,12 @@ function render() {
 }
 
 function renderModeLabels() {
+  const asAdmin = displayAsAdmin();
   if (els.reservationNavLabel) {
-    els.reservationNavLabel.textContent = adminMode ? "예약·반납 목록" : "내 예약·반납";
+    els.reservationNavLabel.textContent = asAdmin ? "예약·반납 목록" : "내 예약·반납";
   }
   const mobLabel = document.querySelector("#mobReservationTabLabel");
-  if (mobLabel) mobLabel.textContent = adminMode ? "예약 목록" : "내 예약";
+  if (mobLabel) mobLabel.textContent = asAdmin ? "예약 목록" : "내 예약";
 }
 
 function applyTheme() {
@@ -1242,8 +1244,8 @@ function renderHero() {
       sub: "목록에 없는 물품을 모아 보고 구입 여부를 정리합니다.",
     },
     reservations: {
-      title: adminMode ? "전체 예약과 반납 흐름을 확인하세요" : "내 예약을 확인하고 반납을 기록하세요",
-      sub: adminMode ? "모든 교사의 예약됨 → 분출됨 → 회수 완료 흐름을 확인합니다." : "내 예약의 예약됨 → 분출됨 → 회수 완료 흐름을 확인합니다.",
+      title: displayAsAdmin() ? "전체 예약과 반납 흐름을 확인하세요" : "내 예약을 확인하고 반납을 기록하세요",
+      sub: displayAsAdmin() ? "모든 교사의 예약됨 → 분출됨 → 회수 완료 흐름을 확인합니다." : "내 예약의 예약됨 → 분출됨 → 회수 완료 흐름을 확인합니다.",
     },
     import: {
       title: "기존 엑셀 자료를 한 번에 가져오기",
@@ -1373,7 +1375,7 @@ function renderAdminVisibility() {
   }
 
   document.querySelectorAll(".admin-only").forEach((element) => {
-    element.hidden = !adminMode;
+    element.hidden = !displayAsAdmin();
   });
   document.querySelectorAll(".global-admin-only").forEach((element) => {
     element.hidden = !isGlobalAdmin();
@@ -1536,8 +1538,9 @@ function renderStatusGrid() {
   if (window._superAdminMode) return;
   const location = els.locationFilter.value;
   // 대시보드(물품 사용 예약)는 빌리는 화면이므로 관리자도 교사용 카드/범위로 본다.
+  // 실별 관리자가 비담당 물품실을 보는 경우에도 교사용으로 표시한다.
   const inBorrowView = currentView === "dashboard";
-  const showAdminCards = adminMode && !inBorrowView;
+  const showAdminCards = displayAsAdmin() && !inBorrowView;
   const itemsInLocation = new Set(
     state.items.filter((item) => (inBorrowView || isItemInAdminScope(item)) && (!location || item.location === location)).map((item) => item.id)
   );
@@ -1669,8 +1672,9 @@ function handleStatusCardAction(action) {
 }
 
 function renderNavigation() {
-  if (!adminMode && ["records", "import", "items"].includes(currentView)) currentView = "dashboard";
-  if (els.sideMenuLabel) els.sideMenuLabel.textContent = adminMode ? "관리자용 메뉴" : "교사용 메뉴";
+  const asAdmin = displayAsAdmin();
+  if (!asAdmin && ["records", "import", "items"].includes(currentView)) currentView = "dashboard";
+  if (els.sideMenuLabel) els.sideMenuLabel.textContent = asAdmin ? "관리자용 메뉴" : "교사용 메뉴";
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === currentView);
   });
@@ -1684,7 +1688,7 @@ function renderNavigation() {
     const placeholders = {
       dashboard:        "예약할 물품명을 검색하세요",
       items:            "물품명 · 카테고리 · 관리번호 검색",
-      reservations:     adminMode ? "예약자 · 물품명 검색" : "물품명 검색",
+      reservations:     displayAsAdmin() ? "예약자 · 물품명 검색" : "물품명 검색",
       purchaseRequests: "요청 물품명 검색",
       records:          "기록 검색",
       import:           "물품명 검색",
@@ -1758,7 +1762,8 @@ function renderConnectionRequiredView() {
 }
 
 function getReservationRowsForCurrentMode() {
-  if (adminMode) return state.reservations.filter((reservation) => isReservationInAdminScope(reservation));
+  // 관리자처럼 표시될 때만 전체 예약을, 그 외(교사·비담당 물품실)에는 내 예약만 보여준다.
+  if (displayAsAdmin()) return state.reservations.filter((reservation) => isReservationInAdminScope(reservation));
   const teacher = els.teacherSelect.value;
   return state.reservations.filter((reservation) => reservation.teacher === teacher);
 }
@@ -2377,7 +2382,7 @@ function renderWorkPanel() {
       `;
       return;
     }
-    if (!adminMode) {
+    if (!displayAsAdmin()) {
       if (selectedReservationId) {
         const reservation = state.reservations.find((res) => res.id === selectedReservationId);
         if (reservation) return renderReservationPanel(reservation);
@@ -2467,7 +2472,7 @@ function renderAdminGuidePanel() {
 
 function renderBorrowingStatusPanel() {
   const item = getItem(selectedItemId);
-  if (!item || !isItemInAdminScope(item)) {
+  if (!item) {
     els.workPanel.innerHTML = `
       <div class="panel-card item-status-panel">
         <div>
@@ -5336,8 +5341,9 @@ function openReservationModal(defaultItemId = "") {
     alert("관리자가 공유한 학교 전용 접속 링크로 먼저 접속해주세요.");
     return;
   }
+  // 관리자처럼 표시될 때만 관리 범위로 제한. 교사·실별관리자 타실 예약 시에는 모든 활성 물품을 빌릴 수 있다.
   const itemOptions = state.items
-    .filter((item) => item.status !== "비활성" && isItemInAdminScope(item))
+    .filter((item) => item.status !== "비활성" && (!displayAsAdmin() || isItemInAdminScope(item)))
     .map((item) => `<option value="${item.id}" ${defaultItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)} (${getAvailableCount(item.id)}${escapeHtml(item.unit || "개")})</option>`)
     .join("");
 
@@ -6078,6 +6084,20 @@ function canManageLocation(location) {
 
 function isItemInAdminScope(item) {
   return !adminMode || canManageLocation(item.location);
+}
+
+// 현재 선택된 물품실을 이 사용자가 관리자로서 다룰 수 있는가
+function isManagingCurrentLocation() {
+  if (!adminMode) return false;
+  if (isGlobalAdmin()) return true;
+  const loc = els.locationFilter?.value || "";
+  return Boolean(loc) && canManageLocation(loc);
+}
+
+// 화면을 관리자용으로 보여줄지 여부.
+// 실별 관리자가 자신이 담당하지 않는 물품실을 선택하면 교사처럼 화면이 바뀐다.
+function displayAsAdmin() {
+  return isManagingCurrentLocation();
 }
 
 function isReservationInAdminScope(reservation) {
