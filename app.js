@@ -5013,6 +5013,18 @@ function openPurchaseRequestModal(prefill = {}) {
       locationSelect.value = item.location;
       refreshCategoryOptions(item.location, item.category || "");
     }
+    // 카테고리 자동 입력: 목록에 없으면 옵션 추가 후 선택
+    if (item.category) {
+      const cat = item.category;
+      if (![...categorySelect.options].some((o) => o.value === cat)) {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        categorySelect.appendChild(opt);
+      }
+      categorySelect.value = cat;
+      categorySelect.disabled = false;
+    }
     renderSearch();
   }
 
