@@ -3857,3 +3857,96 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   padding: 1px 5px;
   border-radius: 5px;
 }
+
+/* ══════════════════════════════════════════════
+   v2 디자인 정제 — 사이드바 · 상태카드 · 히어로 · 모달
+   ══════════════════════════════════════════════ */
+
+/* ── 사이드바: 네비 글리프 26→30px ── */
+.nav-glyph {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+.nav-glyph::before {
+  width: 16px;
+  height: 16px;
+}
+
+/* 네비 아이템 기본 굵기 */
+.nav-item {
+  font-weight: 600;
+}
+
+/* 메뉴별 글리프 컬러 (비활성 상태) */
+.nav-item[data-view="dashboard"]        .nav-glyph { color: var(--sky); }
+.nav-item[data-view="reservations"]     .nav-glyph { color: var(--sage-deep); }
+.nav-item[data-view="items"]            .nav-glyph { color: var(--amber); }
+.nav-item[data-view="purchaseRequests"] .nav-glyph { color: var(--amber); }
+.nav-item[data-view="import"]           .nav-glyph { color: var(--plum); }
+.nav-item[data-view="records"]          .nav-glyph { color: var(--ink-mute); }
+
+/* 활성 메뉴: 세이지 틴트 배경 + 메뉴별 글리프 채색 */
+.nav-item.active {
+  background: color-mix(in srgb, var(--sage-soft) 55%, #fff);
+  border-color: color-mix(in srgb, var(--sage) 25%, transparent);
+  color: var(--sage-deep);
+}
+.nav-item.active[data-view="dashboard"]        .nav-glyph { background: var(--sky-soft);   color: var(--sky); }
+.nav-item.active[data-view="reservations"]     .nav-glyph { background: var(--sage-soft);  color: var(--sage-deep); }
+.nav-item.active[data-view="items"]            .nav-glyph { background: var(--amber-soft); color: var(--amber-deep); }
+.nav-item.active[data-view="purchaseRequests"] .nav-glyph { background: var(--amber-soft); color: var(--amber-deep); }
+.nav-item.active[data-view="import"]           .nav-glyph { background: var(--plum-soft);  color: var(--plum); }
+.nav-item.active[data-view="records"]          .nav-glyph { background: var(--paper-edge); color: var(--ink-soft); }
+
+/* 사이드 푸터: 점선 → 실선으로 정제 */
+.side-foot {
+  border-style: solid;
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ── 상태 카드: 톤별 옅은 배경 틴트 ── */
+.status-cell[data-tone="reservation"] { background: color-mix(in srgb, var(--sky-soft)   30%, var(--card)); }
+.status-cell[data-tone="checkout"]    { background: color-mix(in srgb, var(--amber-soft) 30%, var(--card)); }
+.status-cell[data-tone="return"]      { background: color-mix(in srgb, var(--sage-soft)  35%, var(--card)); }
+.status-cell[data-tone="damage"]      { background: color-mix(in srgb, var(--rose-soft)  30%, var(--card)); }
+.status-cell[data-tone="available"]   { background: color-mix(in srgb, var(--sage-soft)  45%, var(--card)); }
+.status-cell[data-tone="purchase"]    { background: color-mix(in srgb, var(--amber-soft) 30%, var(--card)); }
+
+/* 상태 카드 숫자 24→28px */
+.status-cell strong { font-size: 28px; }
+
+/* ── 히어로 헤딩 19→21px ── */
+.hero h2 { font-size: 21px; }
+
+/* ── 모달 바디: 다크모드 흰색 하드코딩 수정 ── */
+.modal-body { background: var(--card); }
+
+/* ── 다크모드 오버라이드 ── */
+
+/* 다크모드 nav 글리프 컬러 */
+body.dark-mode .nav-item[data-view="dashboard"]        .nav-glyph { color: var(--sky); }
+body.dark-mode .nav-item[data-view="reservations"]     .nav-glyph { color: var(--sage); }
+body.dark-mode .nav-item[data-view="items"]            .nav-glyph { color: var(--amber); }
+body.dark-mode .nav-item[data-view="purchaseRequests"] .nav-glyph { color: var(--amber); }
+body.dark-mode .nav-item[data-view="import"]           .nav-glyph { color: var(--plum); }
+body.dark-mode .nav-item[data-view="records"]          .nav-glyph { color: var(--ink-mute); }
+
+body.dark-mode .nav-item.active[data-view="dashboard"]        .nav-glyph { background: var(--sky-soft);   color: var(--sky); }
+body.dark-mode .nav-item.active[data-view="reservations"]     .nav-glyph { background: var(--sage-soft);  color: var(--sage); }
+body.dark-mode .nav-item.active[data-view="items"]            .nav-glyph { background: var(--amber-soft); color: var(--amber); }
+body.dark-mode .nav-item.active[data-view="purchaseRequests"] .nav-glyph { background: var(--amber-soft); color: var(--amber); }
+body.dark-mode .nav-item.active[data-view="import"]           .nav-glyph { background: var(--plum-soft);  color: var(--plum); }
+body.dark-mode .nav-item.active[data-view="records"]          .nav-glyph { background: var(--card-soft);  color: var(--ink-mute); }
+
+/* 다크모드 상태 카드 배경 틴트 */
+body.dark-mode .status-cell[data-tone="reservation"] { background: color-mix(in srgb, var(--sky-soft)   55%, var(--card)); }
+body.dark-mode .status-cell[data-tone="checkout"]    { background: color-mix(in srgb, var(--amber-soft) 55%, var(--card)); }
+body.dark-mode .status-cell[data-tone="return"]      { background: color-mix(in srgb, var(--sage-soft)  60%, var(--card)); }
+body.dark-mode .status-cell[data-tone="damage"]      { background: color-mix(in srgb, var(--rose-soft)  55%, var(--card)); }
+body.dark-mode .status-cell[data-tone="available"]   { background: color-mix(in srgb, var(--sage-soft)  65%, var(--card)); }
+body.dark-mode .status-cell[data-tone="purchase"]    { background: color-mix(in srgb, var(--amber-soft) 55%, var(--card)); }
+
+/* 다크모드 모달 바디 */
+body.dark-mode .modal-body { background: var(--card); }
