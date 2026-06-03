@@ -96,6 +96,7 @@ function bindElements() {
   els.teacherSelect = document.querySelector("#teacherSelect");
   els.statusGrid = document.querySelector("#statusGrid");
   els.searchInput = document.querySelector("#searchInput");
+  els.categoryFilter = document.querySelector("#categoryFilter");
   els.locationFilter = document.querySelector("#locationFilter");
   els.mainView = document.querySelector("#mainView");
   els.workPanel = document.querySelector("#workPanel");
@@ -154,6 +155,7 @@ function bindEvents() {
     renderWorkPanel();
   });
   els.searchInput.addEventListener("input", renderMainView);
+  els.categoryFilter?.addEventListener("change", renderMainView);
   els.locationFilter.addEventListener("change", () => {
     if (selectedItemId) {
       const item = getItem(selectedItemId);
@@ -1664,6 +1666,41 @@ function renderNavigation() {
   const newItemBtn = document.querySelector("#newItemBtn");
   if (newReservationBtn) newReservationBtn.hidden = currentView !== "dashboard";
   if (newItemBtn) newItemBtn.hidden = currentView !== "items";
+
+  // 검색 placeholder 뷰별 변경
+  if (els.searchInput) {
+    const placeholders = {
+      dashboard:        "예약할 물품명을 검색하세요",
+      items:            "물품명 · 카테고리 · 관리번호 검색",
+      reservations:     adminMode ? "예약자 · 물품명 검색" : "물품명 검색",
+      purchaseRequests: "요청 물품명 검색",
+      records:          "기록 검색",
+      import:           "물품명 검색",
+    };
+    els.searchInput.placeholder = placeholders[currentView] || "검색";
+  }
+
+  // 카테고리 필터: 물품 관리 탭에서만 표시
+  if (els.categoryFilter) {
+    const showCatFilter = currentView === "items";
+    els.categoryFilter.hidden = !showCatFilter;
+    if (showCatFilter) {
+      const location = els.locationFilter?.value || "";
+      const cats = [...new Set(
+        state.items
+          .filter((i) => !location || i.location === location)
+          .map((i) => i.category)
+          .filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b, "ko"));
+      const prev = els.categoryFilter.value;
+      els.categoryFilter.innerHTML = `<option value="">카테고리 전체</option>` +
+        cats.map((c) => `<option value="${escapeHtml(c)}" ${c === prev ? "selected" : ""}>${escapeHtml(c)}</option>`).join("");
+      if (cats.includes(prev)) els.categoryFilter.value = prev;
+    } else {
+      els.categoryFilter.value = "";
+    }
+  }
+
   syncMobileTabActive();
 }
 
@@ -6008,10 +6045,14 @@ function isLogInAdminScope(log) {
 function getFilteredItems() {
   const keyword = els.searchInput.value.trim().toLowerCase();
   const location = els.locationFilter.value;
+  const category = els.categoryFilter?.value || "";
   return state.items
     .filter((item) => {
       const haystack = `${item.name} ${item.category} ${item.code}`.toLowerCase();
-      return isItemInAdminScope(item) && (!keyword || haystack.includes(keyword)) && (!location || item.location === location);
+      return isItemInAdminScope(item)
+        && (!keyword || haystack.includes(keyword))
+        && (!location || item.location === location)
+        && (!category || item.category === category);
     })
     .sort((a, b) => {
       // 1순위: 보관 장소
