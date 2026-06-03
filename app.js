@@ -1814,9 +1814,11 @@ function renderBorrowStartView() {
               <div class="bc-spec">${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}</div>
               <div class="bc-cat">${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}</div>
               <div class="bc-loc"><span class="card-loc">${escapeHtml(item.location)}</span></div>
-              <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
-              <div class="bc-status">${statusBadge(item.status)}</div>
-              <button class="row-action" data-reserve-item-id="${item.id}" type="button"${unavail ? " disabled" : ""}>예약하기</button>
+              <div class="bc-actions">
+                <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
+                ${statusBadge(item.status)}
+                <button class="row-action" data-reserve-item-id="${item.id}" type="button"${unavail ? " disabled" : ""}>예약하기</button>
+              </div>
             </div>
           `;
         })
