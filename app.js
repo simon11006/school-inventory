@@ -1807,17 +1807,15 @@ function renderBorrowStartView() {
           const codeMeta = renderItemCode(item);
           return `
             <div class="borrow-card${selectedItemId === item.id ? " is-selected" : ""}${unavail ? " is-unavail" : ""}" data-borrow-item-id="${item.id}">
-              <div class="card-grow">
-                <div class="card-name-row">
-                  <span class="card-name">${escapeHtml(item.name)}</span>
-                  ${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}
-                  ${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}
-                  <span class="card-loc">${escapeHtml(item.location)}</span>
-                </div>
+              <div class="bc-name">
+                <span class="card-name">${escapeHtml(item.name)}</span>
                 ${codeMeta ? `<div class="card-meta">${codeMeta}</div>` : ""}
               </div>
+              <div class="bc-spec">${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}</div>
+              <div class="bc-cat">${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}</div>
+              <div class="bc-loc"><span class="card-loc">${escapeHtml(item.location)}</span></div>
               <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
-              ${statusBadge(item.status)}
+              <div class="bc-status">${statusBadge(item.status)}</div>
               <button class="row-action" data-reserve-item-id="${item.id}" type="button"${unavail ? " disabled" : ""}>예약하기</button>
             </div>
           `;
@@ -2784,10 +2782,10 @@ function renderItemPanel(item) {
              <button class="panel-action panel-action-delete" id="deleteItemBtn" type="button">물품 삭제</button>
            </div>
          </div>
-         ${renderItemAcquisitionSummary(item)}`
-      : `<!-- 예약 탭: 예약 현황만 + 예약 버튼 -->
+         ${renderItemAcquisitionSummary(item)}
+         ${renderItemLogs(item)}`
+      : `<!-- 예약 탭: 예약 현황만 + 예약 버튼 (등록 기록 없음) -->
          ${adminMode ? renderItemReservationSummary(item) : ""}
-         ${renderItemLogs(item)}
          <div class="panel-section">
            <button class="primary" id="reserveItemBtn" type="button" style="width:100%;">이 물품 예약</button>
          </div>`
