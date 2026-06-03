@@ -874,14 +874,90 @@ function openConnectionManager(uid, data) {
         </div>
         ` : ""}
 
+        <!-- 계정 정보 (이 모달이 '계정' 담당) -->
+        <div class="acct-school-card">
+          <p style="margin:0 0 8px;font-weight:700;">계정 정보</p>
+          <div class="acct-field"><span class="acct-label">연락 이메일</span><input id="accEmail" type="email" value="${esc(data.email || "")}" /></div>
+          <div style="display:flex;gap:10px;">
+            <div class="acct-field" style="flex:1;"><span class="acct-label">담당자 이름</span><input id="accName" type="text" value="${esc(data.contactName || "")}" /></div>
+            <div class="acct-field" style="flex:1;"><span class="acct-label">담당자 업무</span><input id="accRole" type="text" value="${esc(data.contactRole || "")}" /></div>
+          </div>
+          <div class="acct-field"><span class="acct-label">비밀번호 찾기 질문</span><input id="accSecQ" type="text" value="${esc(data.securityQuestion || "")}" placeholder="예) 내가 졸업한 초등학교 이름은?" /></div>
+          <div class="acct-field"><span class="acct-label">질문 답변</span><input id="accSecA" type="text" autocomplete="off" value="${esc(data.securityAnswer || "")}" /></div>
+          <button class="ghost compact" id="accSaveBtn" type="button" style="margin-top:4px;">계정 정보 저장</button>
+          <p class="acct-hint" id="accSaveStatus" style="margin:6px 0 0;"></p>
+        </div>
+
+        <div class="acct-school-card">
+          <p style="margin:0 0 8px;font-weight:700;">비밀번호 변경</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="acct-field" style="flex:1;min-width:110px;"><span class="acct-label">현재 비밀번호</span><input id="accCurPw" type="password" autocomplete="current-password" /></div>
+            <div class="acct-field" style="flex:1;min-width:110px;"><span class="acct-label">새 비밀번호</span><input id="accNewPw" type="password" autocomplete="new-password" placeholder="6자 이상" /></div>
+            <div class="acct-field" style="flex:1;min-width:110px;"><span class="acct-label">새 비밀번호 확인</span><input id="accNewPw2" type="password" autocomplete="new-password" /></div>
+          </div>
+          <button class="ghost compact" id="accPwBtn" type="button" style="margin-top:4px;">비밀번호 변경</button>
+          <p class="acct-hint" id="accPwStatus" style="margin:6px 0 0;"></p>
+        </div>
+
         ${shortLink ? `
         <p class="acct-hint" style="margin:4px 2px 0;line-height:1.6;">
-          💡 학교명·교사·물품실과 <strong>연락 이메일·담당자·비밀번호·비밀번호 찾기 질문</strong> 등
-          개인정보·설정 변경은 상단 <strong>학교 설정</strong>에서 합니다. 이 창은 <strong>연결·교사 초대 주소·로그아웃</strong>을 담당합니다.
+          💡 학교명·교사·물품실 등 <strong>학교 운영 설정</strong>은 상단 <strong>학교 설정</strong>에서 변경합니다.
         </p>
         ` : ""}
 
       </div>`,
+  });
+
+  // ── 계정 정보 저장 ──
+  modal.querySelector("#accSaveBtn")?.addEventListener("click", async () => {
+    const st = modal.querySelector("#accSaveStatus");
+    const setSt = (m, ok) => { st.textContent = m; st.style.color = ok ? "var(--accent,#5B8A6F)" : "var(--danger,#c0392b)"; };
+    const fields = {
+      email: modal.querySelector("#accEmail").value.trim(),
+      contactName: modal.querySelector("#accName").value.trim(),
+      contactRole: modal.querySelector("#accRole").value.trim(),
+      securityQuestion: modal.querySelector("#accSecQ").value.trim(),
+      securityAnswer: modal.querySelector("#accSecA").value.trim(),
+    };
+    if (!fields.email) return setSt("연락 이메일은 비울 수 없습니다.", false);
+    if (!fields.securityQuestion || !fields.securityAnswer) return setSt("비밀번호 찾기 질문과 답변을 입력하세요.", false);
+    const btn = modal.querySelector("#accSaveBtn");
+    btn.disabled = true; btn.textContent = "저장 중…";
+    try {
+      await updateDoc(doc(getDb(), "schools", uid), fields);
+      Object.assign(data, fields);
+      if (currentSchool && currentSchool.uid === uid) currentSchool.data = { ...currentSchool.data, ...fields };
+      setSt("계정 정보를 저장했습니다.", true);
+    } catch (e) {
+      setSt("저장 실패: " + (e?.message || e), false);
+    } finally {
+      btn.disabled = false; btn.textContent = "계정 정보 저장";
+    }
+  });
+
+  // ── 비밀번호 변경 ──
+  modal.querySelector("#accPwBtn")?.addEventListener("click", async () => {
+    const st = modal.querySelector("#accPwStatus");
+    const setSt = (m, ok) => { st.textContent = m; st.style.color = ok ? "var(--accent,#5B8A6F)" : "var(--danger,#c0392b)"; };
+    const cur = modal.querySelector("#accCurPw").value;
+    const next = modal.querySelector("#accNewPw").value;
+    const c2 = modal.querySelector("#accNewPw2").value;
+    if (!cur || !next || !c2) return setSt("모든 칸을 입력하세요.", false);
+    if (next.length < 6) return setSt("새 비밀번호는 6자 이상이어야 합니다.", false);
+    if (next !== c2) return setSt("새 비밀번호 확인이 일치하지 않습니다.", false);
+    if (next === cur) return setSt("기존과 다른 비밀번호를 입력하세요.", false);
+    const btn = modal.querySelector("#accPwBtn");
+    btn.disabled = true; btn.textContent = "변경 중…";
+    const r = await changeSchoolPassword(cur, next);
+    btn.disabled = false; btn.textContent = "비밀번호 변경";
+    if (r?.ok) {
+      modal.querySelector("#accCurPw").value = "";
+      modal.querySelector("#accNewPw").value = "";
+      modal.querySelector("#accNewPw2").value = "";
+      setSt("비밀번호가 변경되었습니다.", true);
+    } else {
+      setSt(r?.message || "변경에 실패했습니다.", false);
+    }
   });
 
   // 지금 바로 우리 학교 열기 — 검증된 ?s= 접속 경로 재사용(연결 적용 후 리로드)
@@ -1699,7 +1775,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     }
     const accountBtn = document.querySelector("#accountBtn");
     if (accountBtn) {
-      accountBtn.textContent = "학교 계정 ✓";
+      accountBtn.textContent = "⚙ 학교 계정";
       accountBtn.style.color = "var(--accent, #5B8A6F)";
       // 부팅 시 등록된 openLoginModal 리스너 제거 후 새 핸들러로 교체
       accountBtn.removeEventListener("click", openLoginModal);

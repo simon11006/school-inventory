@@ -3336,64 +3336,9 @@ function openSchoolSettingsModal() {
     `
       : "";
 
-  const adminPinSectionHtml = isFirebaseConnected ? `
-      <div class="settings-block">
-        <div class="settings-block-head">
-          <div>
-            <h3>학교 관리자 계정 정보</h3>
-            <p class="helper">가입 시 입력한 연락 이메일·담당자·비밀번호 찾기 질문을 수정합니다.</p>
-          </div>
-        </div>
-        <div class="field-grid">
-          <label class="field full">
-            <span>연락 이메일</span>
-            <input id="acctEmail" type="email" placeholder="school@example.go.kr" />
-          </label>
-          <label class="field">
-            <span>담당자 이름</span>
-            <input id="acctContactName" type="text" />
-          </label>
-          <label class="field">
-            <span>담당자 업무</span>
-            <input id="acctContactRole" type="text" />
-          </label>
-          <label class="field full">
-            <span>비밀번호 찾기 질문</span>
-            <input id="acctSecQ" type="text" placeholder="예) 내가 졸업한 초등학교 이름은?" />
-          </label>
-          <label class="field full">
-            <span>질문 답변</span>
-            <input id="acctSecA" type="text" autocomplete="off" placeholder="대소문자·공백 무시하고 비교" />
-          </label>
-        </div>
-        <button class="ghost compact" id="saveAcctInfoBtn" type="button">계정 정보 저장</button>
-        <p class="helper" id="saveAcctInfoStatus" style="margin-top:8px;"></p>
-      </div>
-      <div class="settings-block">
-        <div class="settings-block-head">
-          <div>
-            <h3>학교 관리자 계정 비밀번호 변경</h3>
-            <p class="helper">학교 계정 로그인에 사용하는 비밀번호를 바꿉니다. 변경 후에도 로그인은 그대로 유지됩니다.</p>
-          </div>
-        </div>
-        <div class="field-grid pin-grid">
-          <label class="field">
-            <span>현재 비밀번호</span>
-            <input id="curSchoolPw" type="password" autocomplete="current-password" />
-          </label>
-          <label class="field">
-            <span>새 비밀번호</span>
-            <input id="newSchoolPw" type="password" autocomplete="new-password" placeholder="6자 이상" />
-          </label>
-          <label class="field">
-            <span>새 비밀번호 확인</span>
-            <input id="newSchoolPwConfirm" type="password" autocomplete="new-password" />
-          </label>
-        </div>
-        <button class="ghost compact" id="changeSchoolPwBtn" type="button">비밀번호 변경</button>
-        <p class="helper" id="changeSchoolPwStatus" style="margin-top:8px;"></p>
-      </div>
-  ` : `
+  // Firebase(학교 계정) 모드: 계정 정보·비밀번호 등 '계정' 관련 설정은 '학교 계정' 모달로 이동.
+  // 학교 설정은 학교 운영(학교명·교사·물품실·카테고리)만 담당한다.
+  const adminPinSectionHtml = isFirebaseConnected ? "" : `
       <div class="settings-block">
         <div class="settings-block-head">
           <div>
