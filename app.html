@@ -236,6 +236,16 @@
     </div>
   </template>
 
+  <!-- 데스크톱 우측 패널 드로어 -->
+  <div id="panelDrawerBackdrop" class="panel-drawer-backdrop" hidden>
+    <div class="panel-drawer-box" id="panelDrawerBox">
+      <div class="panel-drawer-header">
+        <button class="icon-button" id="panelDrawerClose" type="button" aria-label="닫기">×</button>
+      </div>
+      <div id="panelDrawerContent"></div>
+    </div>
+  </div>
+
   <div id="toastRoot" class="toast-root" aria-live="polite"></div>
 
   <script src="./account-core.js"></script>

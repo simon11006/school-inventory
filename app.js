@@ -99,6 +99,8 @@ function bindElements() {
   els.locationFilter = document.querySelector("#locationFilter");
   els.mainView = document.querySelector("#mainView");
   els.workPanel = document.querySelector("#workPanel");
+  els.panelDrawerBackdrop = document.querySelector("#panelDrawerBackdrop");
+  els.panelDrawerContent = document.querySelector("#panelDrawerContent");
   els.heroTitle = document.querySelector("#heroTitle");
   els.heroSub = document.querySelector("#heroSub");
   els.todayLabel = document.querySelector("#todayLabel");
@@ -245,12 +247,41 @@ function bindMobileEvents() {
     closeMoreSheet();
   });
 
+  // 패널 드로어 닫기
+  document.querySelector("#panelDrawerClose")?.addEventListener("click", closePanelDrawer);
+  els.panelDrawerBackdrop?.addEventListener("click", (e) => {
+    if (e.target === els.panelDrawerBackdrop) closePanelDrawer();
+  });
+
   els.mobileLocationFilter?.addEventListener("change", () => {
     if (els.locationFilter && els.locationFilter.value !== els.mobileLocationFilter.value) {
       els.locationFilter.value = els.mobileLocationFilter.value;
       els.locationFilter.dispatchEvent(new Event("change"));
     }
   });
+}
+
+/* ── 데스크톱 우측 패널 드로어 ── */
+function openDesktopPanelDrawer() {
+  const backdrop = els.panelDrawerBackdrop;
+  const content = els.panelDrawerContent;
+  if (!backdrop || !content) return;
+  // workPanel에 렌더된 노드를 이벤트 리스너 그대로 드로어로 이동
+  content.innerHTML = "";
+  while (els.workPanel.firstChild) content.appendChild(els.workPanel.firstChild);
+  backdrop.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closePanelDrawer() {
+  const backdrop = els.panelDrawerBackdrop;
+  const content = els.panelDrawerContent;
+  if (backdrop) backdrop.hidden = true;
+  if (content) content.innerHTML = "";
+  document.body.style.overflow = "";
+  selectedItemId = null;
+  selectedReservationId = null;
+  renderWorkPanel();
 }
 
 function openMobileSheet() {
@@ -2248,35 +2279,42 @@ function renderRecordsView(filterDate = recordsViewState.date, filterType = reco
 }
 
 function renderWorkPanel() {
-  if (shouldBlockUnconnectedTeacher()) {
-    els.workPanel.innerHTML = `
-      <div class="panel-card">
-        <p class="panel-title">연결 대기 중</p>
-        <p class="helper">관리자가 보내준 학교 전용 링크로 다시 접속해주세요.</p>
-      </div>
-    `;
-    return;
-  }
-  if (!adminMode) {
+  try {
+    if (shouldBlockUnconnectedTeacher()) {
+      els.workPanel.innerHTML = `
+        <div class="panel-card">
+          <p class="panel-title">연결 대기 중</p>
+          <p class="helper">관리자가 보내준 학교 전용 링크로 다시 접속해주세요.</p>
+        </div>
+      `;
+      return;
+    }
+    if (!adminMode) {
+      if (selectedReservationId) {
+        const reservation = state.reservations.find((res) => res.id === selectedReservationId);
+        if (reservation) return renderReservationPanel(reservation);
+      }
+      if (currentView === "reservations") return renderMyReservationPanel();
+      return renderBorrowingStatusPanel();
+    }
+
     if (selectedReservationId) {
       const reservation = state.reservations.find((res) => res.id === selectedReservationId);
       if (reservation) return renderReservationPanel(reservation);
     }
-    if (currentView === "reservations") return renderMyReservationPanel();
-    return renderBorrowingStatusPanel();
-  }
 
-  if (selectedReservationId) {
-    const reservation = state.reservations.find((res) => res.id === selectedReservationId);
-    if (reservation) return renderReservationPanel(reservation);
-  }
+    if (selectedItemId) {
+      const item = getItem(selectedItemId);
+      if (item) return renderItemPanel(item);
+    }
 
-  if (selectedItemId) {
-    const item = getItem(selectedItemId);
-    if (item) return renderItemPanel(item);
+    renderAdminGuidePanel();
+  } finally {
+    // 드로어가 열려있으면 갱신된 내용 동기화
+    if (!isMobileViewport() && els.panelDrawerBackdrop && !els.panelDrawerBackdrop.hidden) {
+      openDesktopPanelDrawer();
+    }
   }
-
-  renderAdminGuidePanel();
 }
 
 function renderAdminGuidePanel() {
@@ -2596,9 +2634,8 @@ function scrollWorkPanelIntoView() {
     requestAnimationFrame(() => { els.workPanel.scrollTop = 0; });
     return;
   }
-  // 데스크톱: 패널이 sticky로 항상 보이므로 페이지를 스크롤하지 않는다.
-  // 패널 내부만 맨 위로 올려 세부정보가 처음부터 보이게 한다.
-  requestAnimationFrame(() => { els.workPanel.scrollTop = 0; });
+  // 데스크톱: 드로어 모달로 표시
+  openDesktopPanelDrawer();
 }
 
 function renderItemReservationSummary(item) {
