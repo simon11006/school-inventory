@@ -2775,19 +2775,23 @@ function renderItemPanel(item) {
       </dl>
     </div>
 
-    ${isManageView ? renderItemAcquisitionSummary(item) : (adminMode ? renderItemReservationSummary(item) : "")}
-    ${isManageView ? "" : renderItemLogs(item)}
-
-    <div class="panel-section">
-      ${isManageView
-        ? `<div class="item-action-row">
+    ${isManageView
+      ? `<!-- 관리 버튼 (등록 물품 정보 위) -->
+         <div class="panel-section">
+           <div class="item-action-row">
              <button class="panel-action panel-action-edit" id="editItemBtn" type="button">물품 수정</button>
              <button class="panel-action panel-action-damage" id="manualDamageBtn" type="button">손망·분실 등록</button>
              <button class="panel-action panel-action-delete" id="deleteItemBtn" type="button">물품 삭제</button>
-           </div>`
-        : `<button class="primary" id="reserveItemBtn" type="button" style="width:100%;">이 물품 예약</button>`
-      }
-    </div>
+           </div>
+         </div>
+         ${renderItemAcquisitionSummary(item)}`
+      : `<!-- 예약 탭: 예약 현황만 + 예약 버튼 -->
+         ${adminMode ? renderItemReservationSummary(item) : ""}
+         ${renderItemLogs(item)}
+         <div class="panel-section">
+           <button class="primary" id="reserveItemBtn" type="button" style="width:100%;">이 물품 예약</button>
+         </div>`
+    }
   `;
 
   document.querySelector("#reserveItemBtn")?.addEventListener("click", () => openReservationModal(item.id));
