@@ -3253,12 +3253,18 @@ function openSchoolSettingsModal() {
     .join("");
 
   const globalSectionsHtml = `
-      <div class="field-grid">
-        <label class="field full">
-          <span>학교명</span>
-          <input name="schoolName" type="text" value="${escapeHtml(state.schoolName || "")}" required />
-        </label>
-        <p class="helper field full">상단 제목에 표시되는 학교명입니다. 예: 늘봄초등학교, 새빛중학교</p>
+      <div class="settings-block first">
+        <div class="settings-block-head">
+          <div>
+            <h3>학교명</h3>
+            <p class="helper">상단 제목에 표시되는 학교명입니다. 예: 늘봄초등학교, 새빛중학교</p>
+          </div>
+        </div>
+        <div class="field-grid">
+          <label class="field full">
+            <input name="schoolName" type="text" value="${escapeHtml(state.schoolName || "")}" required />
+          </label>
+        </div>
       </div>
 
       <div class="settings-block">
