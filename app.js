@@ -4654,15 +4654,17 @@ function openItemModal(item = null) {
           <input name="categoryCustom" id="categoryCustom" type="text" value="${escapeHtml(usesCustomCategory ? currentCategory : "")}" placeholder="새 카테고리 입력" ${usesCustomCategory ? "" : "hidden"} />
         </label>
         ${field("보관 장소", "location", defaultLocation, true)}
-        ${field("총 수량", "total", item?.total || 1, true, "number")}
-        ${field("단위", "unit", item?.unit || "개")}
-        <label class="field">
-          <span>관리 번호</span>
-          <div class="code-field-wrap">
-            <input name="code" type="text" value="${escapeHtml(item?.code || "")}" placeholder="예) PE-001" />
-            <button class="ghost compact" id="autoCodeBtn" type="button">자동 생성</button>
-          </div>
-        </label>
+        <div class="field-3col">
+          ${field("총 수량", "total", item?.total || 1, true, "number")}
+          ${field("단위", "unit", item?.unit || "개")}
+          <label class="field">
+            <span>관리 번호</span>
+            <div class="code-field-wrap">
+              <input name="code" type="text" value="${escapeHtml(item?.code || "")}" placeholder="예) PE-001" />
+              <button class="ghost compact" id="autoCodeBtn" type="button">자동 생성</button>
+            </div>
+          </label>
+        </div>
         ${field("구입일", "purchasedAt", item?.purchasedAt || new Intl.DateTimeFormat("sv-SE", { timeZone: KOREA_TIME_ZONE }).format(new Date()), false, "date")}
         ${field("구입 금액", "price", item?.price ?? "", false, "number")}
         <label class="field">

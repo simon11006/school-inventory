@@ -2432,6 +2432,14 @@ td strong {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* 총수량·단위·관리번호 3열 래퍼 */
+.field-3col {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 14px;
+}
+
 /* 학교 설정 등 설정 모달의 각 섹션을 또렷한 카드로 구분 (모달 본문은 항상 흰색) */
 .settings-block {
   display: grid;
