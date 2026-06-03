@@ -4094,6 +4094,84 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
 }
 .search-icon { font-size: 16px; left: 13px; opacity: 0.55; }
 
+/* ══════════════════════════════════════════════
+   모달 폼 가독성 개선
+   ══════════════════════════════════════════════ */
+
+/* 모달 헤더 타이틀 */
+.modal-header h2 {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.02em;
+}
+
+/* 모달 바디 여백 */
+.modal-body {
+  padding: 26px !important;
+  display: grid;
+  gap: 20px;
+}
+
+/* 필드 라벨 — 12px mono → 13.5px 일반체, 잘 보이는 색 */
+.field > span {
+  font-family: var(--font-sans) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  color: var(--ink-soft) !important;
+}
+
+/* 필드 내부 간격 */
+.field {
+  gap: 7px !important;
+  font-size: 14px !important;
+}
+
+/* 필드 그리드 간격 */
+.field-grid {
+  gap: 18px !important;
+}
+
+/* 입력 필드 — 더 크고 또렷하게 */
+.modal-body input,
+.modal-body select,
+.modal-body textarea {
+  min-height: 46px !important;
+  padding: 11px 14px !important;
+  font-size: 15px !important;
+  border-radius: 10px !important;
+  border-color: var(--line-strong) !important;
+}
+
+.modal-body textarea {
+  min-height: 96px !important;
+}
+
+.modal-body select {
+  padding-right: 36px !important;
+}
+
+/* 입력 호버·포커스 */
+.modal-body input:hover,
+.modal-body select:hover,
+.modal-body textarea:hover {
+  border-color: var(--ink-mute) !important;
+}
+.modal-body input:focus,
+.modal-body select:focus,
+.modal-body textarea:focus {
+  border-color: var(--sage) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 22%, transparent) !important;
+}
+
+/* 모달 푸터 버튼 */
+.modal-footer .primary,
+.modal-footer .ghost {
+  min-height: 44px !important;
+  padding: 0 22px !important;
+  font-size: 15px !important;
+}
+
 /* ── 다크모드 ── */
 body.dark-mode .nav-item:hover { background: var(--card-soft); }
 body.dark-mode .nav-item.active { background: var(--card); border-color: var(--line); }
