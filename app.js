@@ -2674,26 +2674,59 @@ function renderReservationPanel(reservation) {
 
 function renderItemPanel(item) {
   const isManageView = currentView === "items";
+  const avail = getAvailableCount(item.id);
+  const unit = escapeHtml(item.unit || "개");
 
   els.workPanel.innerHTML = `
-    <div class="panel-card">
-      <p class="panel-title">${escapeHtml(item.name)}</p>
-      <p class="helper">${renderItemMeta(item)}</p>
-      <ul class="quiet-list">
-        <li>보관 장소 — ${escapeHtml(item.location)}</li>
-        <li>총 수량 — ${item.total} ${escapeHtml(item.unit || "개")}</li>
-        <li>사용 가능 — ${getAvailableCount(item.id)} ${escapeHtml(item.unit || "개")}</li>
-        <li>파손 ${item.damaged || 0} · 분실 ${item.lost || 0} · 폐기 ${item.disposed || 0}</li>
-      </ul>
+    <div class="panel-card item-detail-card">
+      <!-- 헤더: 이름 + 상태 -->
+      <div class="item-detail-header">
+        <div>
+          <p class="item-detail-name">${escapeHtml(item.name)}</p>
+          ${item.spec ? `<span class="item-detail-spec">규격 ${escapeHtml(item.spec)}</span>` : ""}
+        </div>
+        ${statusBadge(item.status)}
+      </div>
+
+      <!-- 수량 요약 -->
+      <div class="item-detail-metrics">
+        <div class="item-metric">
+          <span class="item-metric-label">사용 가능</span>
+          <strong class="item-metric-value">${avail} <small>${unit}</small></strong>
+        </div>
+        <div class="item-metric">
+          <span class="item-metric-label">총 수량</span>
+          <strong class="item-metric-value">${item.total} <small>${unit}</small></strong>
+        </div>
+        <div class="item-metric">
+          <span class="item-metric-label">파손·분실·폐기</span>
+          <strong class="item-metric-value">${(item.damaged||0)+(item.lost||0)+(item.disposed||0)} <small>${unit}</small></strong>
+        </div>
+      </div>
+
+      <!-- 상세 정보 그리드 -->
+      <dl class="item-detail-grid">
+        <dt>보관 장소</dt><dd>${escapeHtml(item.location || "-")}</dd>
+        <dt>카테고리</dt><dd>${escapeHtml(item.category || "-")}</dd>
+        <dt>관리 번호</dt><dd>${escapeHtml(item.code || "-")}</dd>
+        <dt>소모품</dt><dd>${item.consumable ? "예" : "아니오"}</dd>
+        <dt>구입일</dt><dd>${escapeHtml(item.purchasedAt || "-")}</dd>
+        <dt>구입 금액</dt><dd>${item.price ? Number(item.price).toLocaleString() + "원" : "-"}</dd>
+        ${item.note ? `<dt>비고</dt><dd class="item-detail-note">${escapeHtml(item.note)}</dd>` : ""}
+      </dl>
     </div>
+
     ${isManageView ? renderItemAcquisitionSummary(item) : (adminMode ? renderItemReservationSummary(item) : "")}
     ${isManageView ? "" : renderItemLogs(item)}
-    <div class="panel-section stack">
+
+    <div class="panel-section">
       ${isManageView
-        ? `<button class="panel-action panel-action-edit" id="editItemBtn" type="button">물품 수정</button>
-           <button class="panel-action panel-action-damage" id="manualDamageBtn" type="button">손망·분실 등록</button>
-           <button class="panel-action panel-action-delete" id="deleteItemBtn" type="button">물품 삭제</button>`
-        : `<button class="primary" id="reserveItemBtn" type="button">이 물품 예약</button>`
+        ? `<div class="item-action-row">
+             <button class="panel-action panel-action-edit" id="editItemBtn" type="button">물품 수정</button>
+             <button class="panel-action panel-action-damage" id="manualDamageBtn" type="button">손망·분실 등록</button>
+             <button class="panel-action panel-action-delete" id="deleteItemBtn" type="button">물품 삭제</button>
+           </div>`
+        : `<button class="primary" id="reserveItemBtn" type="button" style="width:100%;">이 물품 예약</button>`
       }
     </div>
   `;
