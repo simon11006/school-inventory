@@ -1835,12 +1835,25 @@ td strong {
 /* ── 구입요청 모달: 왼쪽 입력 / 오른쪽 검색결과 2단 ── */
 .purchase-modal-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.8fr 1.2fr;
   gap: 16px;
   align-items: stretch;
   margin-bottom: 16px;
 }
 .purchase-modal-left { margin: 0; gap: 14px; }
+
+/* 검색 결과 규격 칩 */
+.purchase-search-spec {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--sky);
+  background: var(--sky-soft);
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
 @media (max-width: 600px) {
   .purchase-modal-layout { grid-template-columns: 1fr; }
 }

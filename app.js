@@ -5022,7 +5022,7 @@ function openPurchaseRequestModal(prefill = {}) {
       const it = state.items.find((i) => i.id === relatedItemId);
       searchBody.innerHTML = it ? `
         <div class="purchase-search-note is-selected">
-          <span>➕ <strong>추가 구입</strong> · ${escapeHtml(it.name)} · ${escapeHtml(it.location)} · 현재 보유 ${it.total}${escapeHtml(it.unit || "개")}</span>
+          <span>➕ <strong>추가 구입</strong> · ${escapeHtml(it.name)}${it.spec ? ` <span class="purchase-search-spec">${escapeHtml(it.spec)}</span>` : ""} · ${escapeHtml(it.location)} · 현재 보유 ${it.total}${escapeHtml(it.unit || "개")}</span>
           <button type="button" class="ghost compact" id="purchaseClearRelated">신규로 변경</button>
         </div>` : "";
       modal.querySelector("#purchaseClearRelated")?.addEventListener("click", () => {
@@ -5051,7 +5051,10 @@ function openPurchaseRequestModal(prefill = {}) {
       <p class="helper" style="margin-bottom:6px;">수량이 부족하면 ‘추가 구입’으로 요청하세요.</p>
       ${matches.map((i) => `
         <div class="purchase-search-row">
-          <span><strong>${escapeHtml(i.name)}</strong> · ${escapeHtml(i.location)} · 보유 ${i.total}${escapeHtml(i.unit || "개")}</span>
+          <span>
+            <strong>${escapeHtml(i.name)}</strong>${i.spec ? ` <span class="purchase-search-spec">${escapeHtml(i.spec)}</span>` : ""}
+            · ${escapeHtml(i.location)} · 보유 ${i.total}${escapeHtml(i.unit || "개")}
+          </span>
           <button type="button" class="ghost compact" data-add-existing="${escapeHtml(i.id)}">추가 구입</button>
         </div>`).join("")}`;
     searchBody.querySelectorAll("[data-add-existing]").forEach((b) => {
