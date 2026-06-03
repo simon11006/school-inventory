@@ -5449,7 +5449,7 @@ function openReservationModal(defaultItemId = "") {
     `,
     onSubmit: (formData) => {
       const itemId = formData.get("itemId");
-      const quantity = Number(formData.get("quantity"));
+      let quantity = Number(formData.get("quantity"));
       const item = getItem(itemId);
       const startDate = formData.get("startDate");
       const endDate = formData.get("endDate");
@@ -5465,8 +5465,21 @@ function openReservationModal(defaultItemId = "") {
 
       const availability = checkReservationAvailability(itemId, startDate, endDate, quantity);
       if (!availability.ok) {
-        alert(formatAvailabilityMessage(item, quantity, availability.shortages));
-        return false;
+        const unit = item.unit || "개";
+        // 이 기간 동안 예약 가능한 최대 수량 = 날짜별 남은 수량 중 최솟값
+        const maxAvail = Math.min(...availability.shortages.map((s) => s.available));
+        const reason = formatAvailabilityMessage(item, quantity, availability.shortages);
+        if (maxAvail > 0) {
+          // 먼저 예약한 사람이 우선 — 뒤 사람은 남은 수량만 예약 가능하도록 제안
+          const ok = confirm(
+            `${reason}\n\n선택한 기간에는 먼저 예약된 건이 있어 최대 ${maxAvail}${unit}까지만 예약할 수 있어요.\n\n[확인] ${maxAvail}${unit}로 예약하기   ·   [취소] 그만두기`
+          );
+          if (!ok) return false;
+          quantity = maxAvail; // 남은 수량으로 자동 조정
+        } else {
+          alert(`${reason}\n\n선택한 기간에는 이미 모두 예약되어 빌릴 수 있는 수량이 없습니다.\n다른 날짜를 선택해 주세요.`);
+          return false;
+        }
       }
 
       const selfCheckout = formData.get("selfCheckout") === "yes";
