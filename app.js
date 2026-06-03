@@ -1124,6 +1124,8 @@ function saveState({ touch = true } = {}) {
 }
 
 function render() {
+  // 관리자 전용 뷰에 있다가 로그아웃하면 대시보드로 먼저 보정 (히어로가 갱신되도록 renderHero 전에)
+  if (!adminMode && ["records", "import", "items"].includes(currentView)) currentView = "dashboard";
   const hasSchoolName = Boolean((state.schoolName || "").trim());
   els.schoolName.textContent = hasSchoolName ? state.schoolName : "학교명을 설정해주세요";
   els.schoolName.classList.toggle("needs-setup", !hasSchoolName);
@@ -1511,29 +1513,39 @@ function saveSelectedTeacher(teacher) {
 
 function renderLocationFilter() {
   const current = els.locationFilter.value;
-  const locations = getAccessibleLocations();
+  const isRoomAdmin = adminMode && !isGlobalAdmin();
+  // 실별 관리자도 다른 물품실을 둘러보고 빌릴 수 있도록 전체 물품실 목록을 제공한다.
+  const locations = isRoomAdmin ? [...state.locations] : getAccessibleLocations();
   els.locationFilter.innerHTML = [
-    ...(adminMode && !isGlobalAdmin() ? [] : [`<option value="">전체</option>`]),
+    ...(isRoomAdmin ? [] : [`<option value="">전체</option>`]),
     ...locations.map((location) => `<option value="${escapeHtml(location)}">${escapeHtml(location)}</option>`),
   ].join("");
-  els.locationFilter.value = adminMode && !isGlobalAdmin()
-    ? (canManageLocation(current) ? current : locations[0] || "")
-    : current;
-  els.locationFilter.disabled = adminMode && !isGlobalAdmin() && locations.length <= 1;
+  if (isRoomAdmin) {
+    // 기존 선택 유지, 없으면 본인이 담당하는 물품실을 기본값으로
+    const fallback = getAccessibleLocations()[0] || locations[0] || "";
+    els.locationFilter.value = current && locations.includes(current) ? current : fallback;
+    els.locationFilter.disabled = false;
+  } else {
+    els.locationFilter.value = current;
+    els.locationFilter.disabled = false;
+  }
   syncMobileLocationFilter();
 }
 
 function renderStatusGrid() {
   if (window._superAdminMode) return;
   const location = els.locationFilter.value;
+  // 대시보드(물품 사용 예약)는 빌리는 화면이므로 관리자도 교사용 카드/범위로 본다.
+  const inBorrowView = currentView === "dashboard";
+  const showAdminCards = adminMode && !inBorrowView;
   const itemsInLocation = new Set(
-    state.items.filter((item) => isItemInAdminScope(item) && (!location || item.location === location)).map((item) => item.id)
+    state.items.filter((item) => (inBorrowView || isItemInAdminScope(item)) && (!location || item.location === location)).map((item) => item.id)
   );
   const reservationsInLocation = state.reservations.filter((res) => itemsInLocation.has(res.itemId));
   const availableItems = [...itemsInLocation].filter((id) => getAvailableCount(id) > 0).length;
 
   let cells;
-  if (adminMode) {
+  if (showAdminCards) {
     const todayReservations = reservationsInLocation.filter((res) => res.startDate <= today() && res.endDate >= today());
     const waitingCheckout = reservationsInLocation.filter((res) => res.status === "예약됨").length;
     const waitingReturn = reservationsInLocation.filter((res) => res.status === "분출됨").length;
@@ -1680,15 +1692,16 @@ function renderNavigation() {
     els.searchInput.placeholder = placeholders[currentView] || "검색";
   }
 
-  // 카테고리 필터: 물품 관리 탭에서만 표시
+  // 카테고리 필터: 물품 관리 탭 + 예약(대시보드) 탭에서 표시
   if (els.categoryFilter) {
-    const showCatFilter = currentView === "items";
+    const showCatFilter = currentView === "items" || currentView === "dashboard";
     els.categoryFilter.hidden = !showCatFilter;
     if (showCatFilter) {
       const location = els.locationFilter?.value || "";
+      const inBorrowView = currentView === "dashboard";
       const cats = [...new Set(
         state.items
-          .filter((i) => !location || i.location === location)
+          .filter((i) => (inBorrowView || isItemInAdminScope(i)) && (!location || i.location === location))
           .map((i) => i.category)
           .filter(Boolean)
       )].sort((a, b) => a.localeCompare(b, "ko"));
@@ -6078,10 +6091,13 @@ function getFilteredItems() {
   const keyword = els.searchInput.value.trim().toLowerCase();
   const location = els.locationFilter.value;
   const category = els.categoryFilter?.value || "";
+  // 예약(대시보드) 화면은 누구나(실별 관리자 포함) 선택한 물품실의 모든 물품을 빌릴 수 있어야 한다.
+  // 물품 관리 등 다른 탭에서는 관리 범위(scope)를 그대로 적용한다.
+  const inBorrowView = currentView === "dashboard";
   return state.items
     .filter((item) => {
       const haystack = `${item.name} ${item.category} ${item.code}`.toLowerCase();
-      return isItemInAdminScope(item)
+      return (inBorrowView || isItemInAdminScope(item))
         && (!keyword || haystack.includes(keyword))
         && (!location || item.location === location)
         && (!category || item.category === category);
