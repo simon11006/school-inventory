@@ -5392,7 +5392,8 @@ function openReservationModal(defaultItemId = "") {
     title: "물품 예약",
     submitText: "예약",
     body: `
-      <div class="field-grid">
+      <div class="field-grid res-modal-grid">
+        <!-- 1행: 교사명 + 물품 -->
         <label class="field">
           <span>교사명</span>
           <select name="teacher">
@@ -5404,19 +5405,33 @@ function openReservationModal(defaultItemId = "") {
           <span>물품</span>
           <select name="itemId">${itemOptions}</select>
         </label>
-        ${field("수량", "quantity", 1, true, "number")}
-        ${field("사용 시작일", "startDate", today(), true, "date")}
-        ${field("반납 예정일", "endDate", today(), true, "date")}
+        <!-- 2행: 수량(좁게) + 사용 시작일 + 반납 예정일 -->
+        <div class="res-date-row field full">
+          <label class="field res-qty">
+            <span>수량</span>
+            <input name="quantity" type="number" value="1" required />
+          </label>
+          <label class="field res-date">
+            <span>사용 시작일</span>
+            <input name="startDate" type="date" value="${today()}" required />
+          </label>
+          <label class="field res-date">
+            <span>반납 예정일</span>
+            <input name="endDate" type="date" value="${today()}" required />
+          </label>
+        </div>
+        <!-- 3행: 비고 -->
         <label class="field full">
           <span>비고</span>
           <textarea name="note"></textarea>
         </label>
-        <label class="field full self-checkout-field">
-          <span class="self-checkout-label">
-            <input type="checkbox" name="selfCheckout" value="yes" />
-            지금 직접 가져갈게요
-            <span class="helper">(사용 시작일에 직접 가져갈 예정)</span>
-          </span>
+        <!-- 4행: 직접 수령 체크박스 -->
+        <label class="field full res-self-checkout">
+          <input type="checkbox" name="selfCheckout" value="yes" />
+          <div>
+            <span class="res-checkout-main">직접 가져갈게요</span>
+            <span class="res-checkout-sub">사용 시작일에 본인이 직접 수령 예정 — 관리자 분출 처리 불필요</span>
+          </div>
         </label>
       </div>
     `,

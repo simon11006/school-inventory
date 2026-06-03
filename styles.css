@@ -2418,6 +2418,50 @@ td strong {
   cursor: pointer;
 }
 
+/* ── 물품 예약 모달 ── */
+
+/* 수량·시작일·반납일 가로 한 줄 */
+.res-date-row {
+  display: flex !important;
+  gap: 14px !important;
+  align-items: flex-end;
+}
+.res-qty { flex: 0 0 90px; }
+.res-date { flex: 1; }
+
+/* 직접 수령 체크박스 행 */
+.res-self-checkout {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+  background: var(--paper-deep) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-md) !important;
+  cursor: pointer;
+}
+.res-self-checkout input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--sage);
+  cursor: pointer;
+}
+.res-checkout-main {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.res-checkout-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-mute);
+  line-height: 1.4;
+}
+
 .self-checkout-notice {
   display: flex;
   align-items: flex-start;
