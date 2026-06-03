@@ -786,10 +786,10 @@ select {
   gap: 8px;
   margin: 0 0 16px;
   padding: 13px 14px;
-  border: 2px solid var(--sage);
+  border: 1px solid color-mix(in srgb, var(--sage) 45%, transparent);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--sage-soft) 55%, #fff);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sage) 10%, transparent), var(--shadow-sm);
+  background: color-mix(in srgb, var(--sage-soft) 45%, #fff);
+  box-shadow: var(--shadow-sm);
 }
 
 .room-select-label {
