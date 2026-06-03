@@ -332,11 +332,10 @@ h1, h2, h3, p {
 
 .brand-logo {
   display: block;
-  width: 184px;
-  height: 54px;
-  border-radius: 10px;
-  object-fit: cover;
-  object-position: center;
+  width: auto;
+  height: 84px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .brand-logo-dark {
@@ -1352,27 +1351,27 @@ select {
 }
 
 .primary {
-  background: var(--sage);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sage) 90%, #fff), var(--sage));
   color: #fff;
-  border-color: var(--sage-deep);
-  box-shadow: 0 2px 0 rgba(63, 107, 83, 0.4);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
 }
 
 .primary:hover {
   background: var(--sage-deep);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(63, 107, 83, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .primary:active {
   transform: translateY(0);
-  box-shadow: 0 1px 0 rgba(63, 107, 83, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 .ghost,
 .secondary {
-  background: #fff;
-  border-color: var(--line);
+  background: var(--card);
+  border-color: var(--line-strong);
   color: var(--ink);
 }
 
@@ -1385,7 +1384,7 @@ select {
 .ghost:hover,
 .secondary:hover {
   background: var(--card-soft);
-  border-color: var(--line-strong);
+  border-color: var(--ink-mute);
 }
 
 .danger {
@@ -3263,7 +3262,7 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
     padding: 12px 14px;
   }
   .brand-tagline { display: none; }
-  .brand-logo { width: 130px; height: 38px; }
+  .brand-logo { width: auto; height: 56px; }
   .brand-school { font-size: 13px; transform: none; }
   .brand-sep { height: 16px; transform: none; }
   .brand-title-row { gap: 8px; flex-wrap: wrap; }
