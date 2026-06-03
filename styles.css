@@ -280,7 +280,7 @@ h1, h2, h3, p {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr) 380px;
   grid-template-rows: auto 1fr;
   min-height: 100vh;
   gap: 0;
@@ -1640,8 +1640,7 @@ tbody tr[data-borrow-item-id] {
 }
 
 .borrow-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px 84px 72px 92px 84px auto;
+  display: flex;
   align-items: center;
   gap: 12px;
   background: var(--card);
@@ -1653,11 +1652,8 @@ tbody tr[data-borrow-item-id] {
   transition: border-color 0.14s, box-shadow 0.14s;
 }
 
-/* 컬럼 셀 — 칩이 없어도 자리 유지(정렬) */
-.bc-name { min-width: 0; }
-.bc-spec, .bc-cat, .bc-loc, .bc-status {
-  display: flex;
-  align-items: center;
+.card-grow {
+  flex: 1;
   min-width: 0;
 }
 
@@ -1836,19 +1832,16 @@ tbody tr[data-borrow-item-id] {
   white-space: nowrap;
 }
 
-/* 모바일·태블릿: 그리드 해제 → 칩 줄바꿈 플로우 */
+/* 모바일·태블릿: 칩 줄바꿈 플로우 */
 @media (max-width: 900px) {
   .borrow-card {
-    display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
-  .bc-name {
+  .card-grow {
     width: 100%;
     flex-basis: 100%;
   }
-  .bc-spec:empty,
-  .bc-cat:empty { display: none; }
   .card-avail { min-width: 0; }
 }
 
@@ -3529,15 +3522,22 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
 
 /* ─── Responsive ─── */
 
+@media (max-width: 1180px) {
+  .app-shell {
+    grid-template-columns: 200px minmax(0, 1fr) 340px;
+  }
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 180px minmax(0, 1fr);
   }
-}
-
-/* 데스크톱: work-panel은 드로어 모달로 대체 — DOM에는 유지(모바일 시트용) */
-@media (min-width: 769px) {
-  .work-panel { display: none !important; }
+  /* 작업 패널은 본문 아래로 전체 폭 배치 */
+  .work-panel {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
 }
 
 /* ─── Mobile-only elements default hidden on desktop ─── */

@@ -1806,15 +1806,17 @@ function renderBorrowStartView() {
           const codeMeta = renderItemCode(item);
           return `
             <div class="borrow-card${selectedItemId === item.id ? " is-selected" : ""}${unavail ? " is-unavail" : ""}" data-borrow-item-id="${item.id}">
-              <div class="bc-name">
-                <span class="card-name">${escapeHtml(item.name)}</span>
+              <div class="card-grow">
+                <div class="card-name-row">
+                  <span class="card-name">${escapeHtml(item.name)}</span>
+                  ${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}
+                  ${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}
+                  <span class="card-loc">${escapeHtml(item.location)}</span>
+                </div>
                 ${codeMeta ? `<div class="card-meta">${codeMeta}</div>` : ""}
               </div>
-              <div class="bc-spec">${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}</div>
-              <div class="bc-cat">${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}</div>
-              <div class="bc-loc"><span class="card-loc">${escapeHtml(item.location)}</span></div>
               <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
-              <div class="bc-status">${statusBadge(item.status)}</div>
+              ${statusBadge(item.status)}
               <button class="row-action" data-reserve-item-id="${item.id}" type="button"${unavail ? " disabled" : ""}>예약하기</button>
             </div>
           `;
@@ -2764,8 +2766,8 @@ function scrollWorkPanelIntoView() {
     requestAnimationFrame(() => { els.workPanel.scrollTop = 0; });
     return;
   }
-  // 데스크톱: 드로어 모달로 표시
-  openDesktopPanelDrawer();
+  // 데스크톱: 오른쪽 작업 패널이 항상 보이므로(sticky) 패널 내부만 맨 위로 올린다.
+  requestAnimationFrame(() => { els.workPanel.scrollTop = 0; });
 }
 
 function renderItemReservationSummary(item) {
