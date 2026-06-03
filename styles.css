@@ -2534,8 +2534,62 @@ td strong {
 .field-3col {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 1fr 1fr 1.4fr;
+  grid-template-columns: 0.8fr 0.8fr 1.4fr;
   gap: 14px;
+}
+/* 그리드 자식이 내부 입력의 최소 너비로 인해 넘치지 않도록 */
+.field-3col > .field {
+  min-width: 0;
+}
+.field-3col input,
+.field-3col select,
+.field-3col .code-field-wrap {
+  min-width: 0;
+  width: 100%;
+}
+/* 관리번호: 입력 + 자동생성 버튼이 칸을 넘지 않게 */
+.field-3col .code-field-wrap {
+  display: flex;
+  gap: 6px;
+}
+.field-3col .code-field-wrap input {
+  flex: 1;
+  min-width: 0;
+}
+.field-3col .code-field-wrap .ghost {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* 손망·분실 처리: 파손/분실/폐기 3등분 */
+.field-3col.damage-3col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* 손망 모달 상단 물품 정보 — 시인성 강화 */
+.damage-item-info {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.damage-item-info strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.damage-item-info span {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.damage-item-info span b {
+  font-weight: 800;
+  color: var(--sage-deep);
 }
 
 /* 학교 설정 등 설정 모달의 각 섹션을 또렷한 카드로 구분 (모달 본문은 항상 흰색) */

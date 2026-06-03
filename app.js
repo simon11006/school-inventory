@@ -5507,11 +5507,16 @@ function openDamageModal(reservationId = null, itemId = null) {
     title: "손망·분실 처리",
     submitText: "처리 저장",
     body: `
-      <p class="helper">${escapeHtml(item.name)} · 현재 사용 가능 ${getAvailableCount(item.id)}${escapeHtml(item.unit || "개")}</p>
+      <div class="damage-item-info">
+        <strong>${escapeHtml(item.name)}</strong>
+        <span>현재 사용 가능 <b>${getAvailableCount(item.id)}${escapeHtml(item.unit || "개")}</b></span>
+      </div>
       <div class="field-grid">
-        ${field("파손 수량", "damaged", 0, false, "number")}
-        ${field("분실 수량", "lost", 0, false, "number")}
-        ${field("폐기 수량", "disposed", 0, false, "number")}
+        <div class="field-3col damage-3col">
+          ${field("파손 수량", "damaged", 0, false, "number")}
+          ${field("분실 수량", "lost", 0, false, "number")}
+          ${field("폐기 수량", "disposed", 0, false, "number")}
+        </div>
         <label class="field full">
           <span>처리 사유</span>
           <textarea name="note" required></textarea>
