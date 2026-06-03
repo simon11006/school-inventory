@@ -1640,7 +1640,8 @@ tbody tr[data-borrow-item-id] {
 }
 
 .borrow-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 84px 72px 92px 84px auto;
   align-items: center;
   gap: 12px;
   background: var(--card);
@@ -1650,6 +1651,14 @@ tbody tr[data-borrow-item-id] {
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+/* 컬럼 셀 — 칩이 없어도 자리 유지(정렬) */
+.bc-name { min-width: 0; }
+.bc-spec, .bc-cat, .bc-loc, .bc-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .borrow-card:hover {
@@ -1819,19 +1828,20 @@ tbody tr[data-borrow-item-id] {
   white-space: nowrap;
 }
 
-/* 모바일: 칩 열 줄바꿈 */
-@media (max-width: 680px) {
+/* 모바일·태블릿: 그리드 해제 → 칩 줄바꿈 플로우 */
+@media (max-width: 900px) {
   .borrow-card {
+    display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
-  .card-grow {
+  .bc-name {
     width: 100%;
     flex-basis: 100%;
   }
-  .card-avail {
-    min-width: 0;
-  }
+  .bc-spec:empty,
+  .bc-cat:empty { display: none; }
+  .card-avail { min-width: 0; }
 }
 
 tbody tr:last-child td {
