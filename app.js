@@ -5986,10 +5986,24 @@ function isLogInAdminScope(log) {
 function getFilteredItems() {
   const keyword = els.searchInput.value.trim().toLowerCase();
   const location = els.locationFilter.value;
-  return state.items.filter((item) => {
-    const haystack = `${item.name} ${item.category} ${item.code}`.toLowerCase();
-    return isItemInAdminScope(item) && (!keyword || haystack.includes(keyword)) && (!location || item.location === location);
-  });
+  return state.items
+    .filter((item) => {
+      const haystack = `${item.name} ${item.category} ${item.code}`.toLowerCase();
+      return isItemInAdminScope(item) && (!keyword || haystack.includes(keyword)) && (!location || item.location === location);
+    })
+    .sort((a, b) => {
+      // 1순위: 보관 장소
+      const locCmp = (a.location || "").localeCompare(b.location || "", "ko");
+      if (locCmp !== 0) return locCmp;
+      // 2순위: 물품명 (같은 이름끼리 묶임)
+      const nameCmp = (a.name || "").localeCompare(b.name || "", "ko");
+      if (nameCmp !== 0) return nameCmp;
+      // 3순위: 규격 (같은 물품 내 규격 정렬)
+      const specCmp = (a.spec || "").localeCompare(b.spec || "", "ko");
+      if (specCmp !== 0) return specCmp;
+      // 4순위: 관리번호
+      return (a.code || "").localeCompare(b.code || "", "ko");
+    });
 }
 
 function getFilteredReservations(rows) {
