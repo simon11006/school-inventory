@@ -796,11 +796,11 @@ select {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   color: var(--sage-deep);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .room-select-label svg {
@@ -1742,6 +1742,26 @@ tbody tr[data-borrow-item-id] {
 .card-avail .avail-u {
   font-size: 12px;
   color: var(--ink-mute);
+}
+
+/* 카테고리 칩 */
+.card-cat {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 4px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 카드 목록 최대 너비 */
+.borrow-cards {
+  max-width: 900px;
 }
 
 /* 모바일: 칩 열 줄바꿈 */

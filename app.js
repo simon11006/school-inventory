@@ -1254,7 +1254,11 @@ function renderHero() {
   els.heroTitle.textContent = data.title;
   els.heroSub.classList.remove("hero-sub-notice");
   const zone = els.locationFilter && els.locationFilter.value;
-  els.heroSub.textContent = zone ? `${zone} · ${data.sub}` : data.sub;
+  if (zone && currentView === "dashboard") {
+    els.heroSub.textContent = `${zone} 물품을 검색하고 예약하세요.`;
+  } else {
+    els.heroSub.textContent = data.sub;
+  }
 
   // 뷰별 히어로 아이콘 업데이트
   const heroIconEl = document.querySelector("#heroBigIcon");
@@ -1741,13 +1745,14 @@ function renderBorrowStartView() {
         .map((item) => {
           const avail = getAvailableCount(item.id);
           const unavail = avail <= 0 || ["파손","분실","폐기","비활성"].includes(item.status);
-          const meta = [renderItemCode(item), item.category ? escapeHtml(item.category) : ""].filter(Boolean).join(" · ");
+          const codeMeta = renderItemCode(item);
           return `
             <div class="borrow-card${selectedItemId === item.id ? " is-selected" : ""}${unavail ? " is-unavail" : ""}" data-borrow-item-id="${item.id}">
               <div class="card-grow">
                 <div class="card-name">${escapeHtml(item.name)}</div>
-                ${meta ? `<div class="card-meta">${meta}</div>` : ""}
+                ${codeMeta ? `<div class="card-meta">${codeMeta}</div>` : ""}
               </div>
+              ${item.category ? `<span class="card-cat">${escapeHtml(item.category)}</span>` : ""}
               ${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}
               <span class="card-loc">${escapeHtml(item.location)}</span>
               <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
