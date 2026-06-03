@@ -2323,6 +2323,24 @@ td strong {
   gap: 8px;
 }
 
+/* 카테고리: '실 선택' 필터를 녹색으로 또렷하게 (모달 본문은 항상 흰색) */
+#categoryLocationSelect {
+  background: #e9f1e2;
+  border-color: #b9d3ad;
+  color: #2c5b3e;
+  font-weight: 700;
+}
+
+/* '실 선택'과 그 아래 카테고리 목록을 구분하는 라벨 */
+.category-list-label {
+  margin: 8px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed #ddd6c4;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b6657;
+}
+
 .teacher-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

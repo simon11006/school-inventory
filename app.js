@@ -3312,6 +3312,7 @@ function openSchoolSettingsModal() {
             ${state.locations.map((loc) => `<option value="${escapeHtml(loc)}" ${loc === initialCategoryLocation ? "selected" : ""}>${escapeHtml(loc)}</option>`).join("")}
           </select>
         </label>
+        <p class="category-list-label">선택한 실의 카테고리 목록</p>
         <div class="category-list" id="categoryList" data-current-location="${escapeHtml(initialCategoryLocation)}"></div>
         <p class="helper">물품 등록 화면에서 직접 입력한 새 카테고리도 그 실의 카테고리로 자동 추가됩니다.</p>
       </div>
@@ -3336,6 +3337,7 @@ function openSchoolSettingsModal() {
         ` : `
         <p class="helper"><strong>${escapeHtml(initialCategoryLocation)}</strong> (내 실)</p>
         `}
+        <p class="category-list-label">선택한 실의 카테고리 목록</p>
         <div class="category-list" id="categoryList" data-current-location="${escapeHtml(initialCategoryLocation)}"></div>
         <p class="helper">물품 등록 화면에서 직접 입력한 새 카테고리도 자동으로 추가됩니다.</p>
       </div>
