@@ -1744,21 +1744,27 @@ function shouldBlockUnconnectedTeacher() {
 }
 
 function renderConnectionRequiredView() {
+  els.mainView.className = "main-view is-conn-required";
   els.mainView.innerHTML = `
-    <div class="empty-state connection-required">
-      <h4>학교 데이터에 아직 연결되지 않았어요</h4>
+    <div class="conn-req">
+      <div class="conn-req-head">
+        <div class="conn-req-head-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+        </div>
+        <h3>학교 데이터에 아직 연결되지 않았어요</h3>
+        <p>아래 안내에 따라 학교 계정에 연결하면 물품 예약을 시작할 수 있어요.</p>
+      </div>
       <div class="conn-req-cards">
         <div class="conn-req-card">
-          <div class="conn-req-icon">📋</div>
+          <div class="conn-req-icon" aria-hidden="true">📋</div>
           <strong>학교 담당자라면</strong>
-          <p>학교 계정으로 로그인하거나 가입 신청하세요.<br/>승인 후 교사용 접속 링크를 발급받을 수 있습니다.</p>
-          <button class="primary compact" id="connReqAccountBtn" type="button">학교 계정 로그인 · 가입</button>
+          <p>학교 계정으로 로그인하거나 가입 신청하세요. 승인 후 교사용 접속 링크를 발급받을 수 있습니다.</p>
+          <button class="primary" id="connReqAccountBtn" type="button">학교 계정 로그인 · 가입</button>
         </div>
         <div class="conn-req-card">
-          <div class="conn-req-icon">👩‍🏫</div>
+          <div class="conn-req-icon" aria-hidden="true">👩‍🏫</div>
           <strong>교사라면</strong>
-          <p>담당자가 공유한 짧은 주소나 QR코드로 접속하세요.</p>
-          <p class="helper">링크를 열면 학교 데이터가 자동으로 연결됩니다.</p>
+          <p>담당자가 공유한 짧은 주소나 QR코드로 접속하세요. 링크를 열면 학교 데이터가 자동으로 연결됩니다.</p>
         </div>
       </div>
     </div>

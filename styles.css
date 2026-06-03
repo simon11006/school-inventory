@@ -3382,43 +3382,101 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   border: 1px solid var(--line);
 }
 
-/* ─── Connection required — two-card layout ─── */
-.conn-req-cards {
+/* ─── Connection required — 콤팩트 안내 화면 ─── */
+/* 연결 전 화면에서는 흰 박스가 화면 전체로 늘어나지 않도록 (빈 공간 제거) */
+.main-view.is-conn-required {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.conn-req {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 36px 28px 40px;
   display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 8px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.conn-req-head {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.conn-req-head-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+  background: var(--sage-soft);
+  color: var(--sage-deep);
+  display: grid;
+  place-items: center;
+}
+.conn-req-head-icon svg {
+  width: 30px;
+  height: 30px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.conn-req-head h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.conn-req-head p {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.conn-req-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
   width: 100%;
-  max-width: 560px;
 }
 
 .conn-req-card {
-  flex: 1 1 200px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card-soft, var(--surface));
-  text-align: left;
+  gap: 10px;
+  padding: 22px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card-soft);
 }
 
 .conn-req-icon {
-  font-size: 24px;
+  font-size: 30px;
   line-height: 1;
 }
 
 .conn-req-card strong {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 800;
   color: var(--ink);
 }
 
 .conn-req-card p {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
   margin: 0;
+  flex: 1;
+}
+
+.conn-req-card .primary {
+  margin-top: 4px;
+  width: 100%;
+}
+
+@media (max-width: 620px) {
+  .conn-req-cards { grid-template-columns: 1fr; }
 }
 
 /* ─── Import view ─── */
