@@ -1782,26 +1782,24 @@ tbody tr[data-borrow-item-id] {
   flex-shrink: 0;
 }
 
-/* 카드 목록 최대 너비 */
-.borrow-cards {
-  max-width: 900px;
-}
-
-/* 카드 목록 뷰: main-view 컨테이너 스타일 해제 */
+/* 카드 목록 뷰: 제목 + 카드들을 하나의 패널로 묶는다 */
 .main-view.is-card-list {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: var(--r-xl) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
 }
 
-/* 카드 목록 타이틀 (view-head 대체) */
+/* 패널 헤더 (제목 영역) */
 .borrow-list-head {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-bottom: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card-soft);
 }
 .borrow-list-head h3 {
   font-size: 17px;
@@ -1812,6 +1810,16 @@ tbody tr[data-borrow-item-id] {
 .borrow-list-meta {
   font-size: 13px;
   color: var(--ink-mute);
+}
+
+/* 패널 안 카드 영역 */
+.is-card-list .borrow-cards {
+  padding: 14px 16px 16px;
+  gap: 10px;
+}
+/* 패널 안에서는 카드 그림자를 빼서 이중 박스 느낌을 줄인다 */
+.is-card-list .borrow-card {
+  box-shadow: none;
 }
 
 /* 카드 이름행 — 이름 + 칩들을 한 줄에 */
@@ -4238,6 +4246,15 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   box-shadow: none !important;
   padding: 0 !important;
   gap: 12px !important;
+  align-items: center !important;
+}
+/* 검색창이 너무 길어 보이지 않도록 폭을 제한하고, 추가 버튼은 우측으로 */
+.search-wrap {
+  flex: 1 1 auto;
+  max-width: 520px;
+}
+.toolbar-actions {
+  margin-left: auto;
 }
 .search-wrap > label { display: none; }
 .search-input input {
@@ -4253,6 +4270,22 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 20%, transparent);
 }
 .search-icon { font-size: 16px; left: 13px; opacity: 0.55; }
+
+/* ── 일괄 등록 화면 본문 글자 가독성 ── */
+.import-zone .helper {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.import-zone .field > span {
+  font-size: 14px;
+}
+.import-zone .split-actions .ghost {
+  font-size: 14px;
+}
+.import-drop {
+  font-size: 14px;
+}
 
 /* ══════════════════════════════════════════════
    모달 폼 가독성 개선

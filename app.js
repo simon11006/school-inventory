@@ -1683,6 +1683,10 @@ function renderNavigation() {
   if (newReservationBtn) newReservationBtn.hidden = currentView !== "dashboard";
   if (newItemBtn) newItemBtn.hidden = currentView !== "items";
 
+  // 일괄 등록·사용 기록 화면에서는 상단 검색 툴바가 필요 없으므로 숨김
+  const toolbar = document.querySelector(".toolbar");
+  if (toolbar) toolbar.hidden = ["import", "records"].includes(currentView);
+
   // 검색 placeholder 뷰별 변경
   if (els.searchInput) {
     const placeholders = {
