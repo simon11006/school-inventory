@@ -1603,6 +1603,132 @@ tbody tr[data-borrow-item-id] {
   cursor: pointer;
 }
 
+/* ── 예약 탭 물품 카드 (v2 직관적 친화형) ── */
+.borrow-cards {
+  display: grid;
+  gap: 10px;
+}
+
+.borrow-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+.borrow-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.borrow-card.is-selected {
+  border-color: var(--sage);
+  background: color-mix(in srgb, var(--sage-soft) 35%, var(--card));
+}
+
+.borrow-card.is-unavail {
+  opacity: 0.65;
+}
+
+.card-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-meta {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--sky-soft);
+  border: 1.5px solid color-mix(in srgb, var(--sky) 28%, transparent);
+  border-radius: 10px;
+  padding: 5px 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-spec b {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--sky);
+  letter-spacing: 0.04em;
+}
+
+.card-loc {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 5px 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-avail {
+  text-align: right;
+  min-width: 72px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-avail .avail-n {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-avail .avail-u {
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+/* 모바일: 칩 열 줄바꿈 */
+@media (max-width: 680px) {
+  .borrow-card {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-grow {
+    width: 100%;
+    flex-basis: 100%;
+  }
+  .card-avail {
+    min-width: 0;
+  }
+}
+
 tbody tr:last-child td {
   border-bottom: 0;
 }

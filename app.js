@@ -1668,42 +1668,30 @@ function renderBorrowStartView() {
     <div class="view-head">
       <div>
         <h3>사용 예약할 물품 선택</h3>
-        <span class="view-meta">사용 가능한 수량을 확인하고 예약하세요</span>
+        <span class="view-meta">같은 물품도 <b>규격</b>을 보고 고르세요 · 사용 가능한 수량 확인</span>
       </div>
     </div>
-    <div class="table-wrap">
-      <table class="borrow-table">
-        <thead>
-          <tr>
-            <th>보관 장소</th>
-            <th>물품명</th>
-            <th>규격</th>
-            <th>카테고리</th>
-            <th>사용 가능</th>
-            <th>상태</th>
-            <th>예약</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows
-            .map(
-              (item) => `
-              <tr class="${selectedItemId === item.id ? "is-selected" : ""}" data-borrow-item-id="${item.id}">
-                <td>${escapeHtml(item.location)}</td>
-                <td>
-                  <strong>${escapeHtml(item.name)}</strong>${renderItemCode(item) ? `<br /><span class="helper">${renderItemCode(item)}</span>` : ""}
-                </td>
-                <td>${escapeHtml(item.spec || "-")}</td>
-                <td>${escapeHtml(item.category || "-")}</td>
-                <td>${getAvailableCount(item.id)} / ${item.total} ${escapeHtml(item.unit || "개")}</td>
-                <td>${statusBadge(item.status)}</td>
-                <td><button class="row-action" data-reserve-item-id="${item.id}" type="button">예약하기</button></td>
-              </tr>
-            `,
-            )
-            .join("")}
-        </tbody>
-      </table>
+    <div class="borrow-cards">
+      ${rows
+        .map((item) => {
+          const avail = getAvailableCount(item.id);
+          const unavail = avail <= 0 || ["파손","분실","폐기","비활성"].includes(item.status);
+          const meta = [renderItemCode(item), item.category ? escapeHtml(item.category) : ""].filter(Boolean).join(" · ");
+          return `
+            <div class="borrow-card${selectedItemId === item.id ? " is-selected" : ""}${unavail ? " is-unavail" : ""}" data-borrow-item-id="${item.id}">
+              <div class="card-grow">
+                <div class="card-name">${escapeHtml(item.name)}</div>
+                ${meta ? `<div class="card-meta">${meta}</div>` : ""}
+              </div>
+              ${item.spec ? `<span class="card-spec"><b>규격</b> ${escapeHtml(item.spec)}</span>` : ""}
+              <span class="card-loc">${escapeHtml(item.location)}</span>
+              <div class="card-avail"><span class="avail-n">${avail}</span><span class="avail-u"> / ${item.total} ${escapeHtml(item.unit || "개")}</span></div>
+              ${statusBadge(item.status)}
+              <button class="row-action" data-reserve-item-id="${item.id}" type="button"${unavail ? " disabled" : ""}>예약하기</button>
+            </div>
+          `;
+        })
+        .join("")}
     </div>
   `;
 
