@@ -783,29 +783,59 @@ select {
 
 .sidebar-room-select {
   display: grid;
-  gap: 7px;
-  margin: 0 4px 16px;
-  padding: 12px;
-  border: 1px solid var(--line);
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 13px 14px;
+  border: 2px solid var(--sage);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: var(--shadow-sm);
+  background: color-mix(in srgb, var(--sage-soft) 55%, #fff);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sage) 10%, transparent), var(--shadow-sm);
 }
 
-.sidebar-room-select > span {
-  font-family: var(--font-mono);
+.room-select-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: var(--ink-soft);
+  color: var(--sage-deep);
   text-transform: uppercase;
+}
+
+.room-select-label svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--sage);
+  flex-shrink: 0;
 }
 
 .sidebar-room-select select {
   width: 100%;
-  min-height: 38px;
+  min-height: 42px;
   background-color: #fff;
   font-weight: 700;
+  font-size: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--sage) 35%, var(--line));
+  border-radius: 10px;
+  padding: 0 10px;
+  color: var(--ink);
+}
+
+.sidebar-room-select select:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 22%, transparent);
+  outline: none;
+}
+
+body.dark-mode .sidebar-room-select {
+  background: color-mix(in srgb, var(--sage-soft) 70%, var(--card));
+  border-color: var(--sage);
+}
+
+body.dark-mode .sidebar-room-select select {
+  background-color: var(--card);
+  color: var(--ink);
 }
 
 .side-label {
