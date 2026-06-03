@@ -48,6 +48,7 @@ let adminMode = false;
 let adminScope = null;
 let darkMode = InventoryStorage.readText(THEME_KEY) === "dark";
 let recordsViewState = { date: "", type: "all" };
+let itemsSortState = { key: "", dir: "asc" }; // 물품 관리 표 정렬
 let setupState = loadSetupState();
 let fieldTestState = loadFieldTestState();
 let feedbackState = loadFeedbackState();
@@ -1681,7 +1682,7 @@ function renderNavigation() {
   const newReservationBtn = document.querySelector("#newReservationBtn");
   const newItemBtn = document.querySelector("#newItemBtn");
   if (newReservationBtn) newReservationBtn.hidden = currentView !== "dashboard";
-  if (newItemBtn) newItemBtn.hidden = currentView !== "items";
+  if (newItemBtn) newItemBtn.hidden = true; // 표 헤더 안으로 이동했으므로 툴바에서는 항상 숨김
 
   // 일괄 등록·사용 기록 화면에서는 상단 검색 툴바가 필요 없으므로 숨김
   const toolbar = document.querySelector(".toolbar");
@@ -1847,23 +1848,43 @@ function renderItemsTable() {
   const rows = getFilteredItems();
   if (!rows.length) {
     els.mainView.innerHTML = `
-      <div class="view-head">
+      <div class="view-head items-view-head">
         <h3>물품 목록</h3>
         <span class="view-meta">0건</span>
+        ${adminMode ? `<div class="items-head-actions"><button class="ghost compact" id="newItemBtnInTable" type="button">+ 물품 추가</button></div>` : ""}
       </div>
       <div class="empty-state">
         <div class="empty-state-illust">📦</div>
         <h4>조건에 맞는 물품이 없어요</h4>
         <p>검색어나 구역 필터를 바꿔보세요.</p>
       </div>`;
+    els.mainView.querySelector("#newItemBtnInTable")?.addEventListener("click", () => openItemModal());
     return;
   }
 
+  // 정렬 적용
+  const { key: sortKey, dir: sortDir } = itemsSortState;
+  const sortedRows = sortKey ? [...rows].sort((a, b) => {
+    const va = sortKey === "name" ? (a.name || "") : sortKey === "category" ? (a.category || "") : (a.status || "");
+    const vb = sortKey === "name" ? (b.name || "") : sortKey === "category" ? (b.category || "") : (b.status || "");
+    const cmp = va.localeCompare(vb, "ko");
+    return sortDir === "asc" ? cmp : -cmp;
+  }) : rows;
+
+  function sortIcon(key) {
+    if (sortKey !== key) return `<span class="th-sort-icon" aria-hidden="true">↕</span>`;
+    return `<span class="th-sort-icon active" aria-hidden="true">${sortDir === "asc" ? "↑" : "↓"}</span>`;
+  }
+
   els.mainView.innerHTML = `
-    <div class="view-head">
+    <div class="view-head items-view-head">
       <h3>물품 목록</h3>
       <span class="view-meta">총 ${rows.length}건</span>
-      ${adminMode ? `<button class="ghost compact danger" id="bulkDeleteItemsBtn" type="button" style="margin-left:auto;" disabled>선택 삭제</button>` : ""}
+      ${adminMode ? `
+        <div class="items-head-actions">
+          <button class="ghost compact" id="newItemBtnInTable" type="button">+ 물품 추가</button>
+          <button class="ghost compact danger" id="bulkDeleteItemsBtn" type="button" disabled>선택 삭제</button>
+        </div>` : ""}
     </div>
     <div class="table-wrap">
       <table>
@@ -1871,18 +1892,18 @@ function renderItemsTable() {
           <tr>
             ${adminMode ? `<th><input type="checkbox" id="itemSelectAll" aria-label="전체 선택" /></th>` : ""}
             <th>보관 장소</th>
-            <th>물품명</th>
+            <th class="th-sortable" data-sort="name">물품명 ${sortIcon("name")}</th>
             <th>규격</th>
-            <th>카테고리</th>
+            <th class="th-sortable" data-sort="category">카테고리 ${sortIcon("category")}</th>
             <th>사용 가능</th>
             <th>예약/분출</th>
-            <th>상태</th>
+            <th class="th-sortable" data-sort="status">상태 ${sortIcon("status")}</th>
             <th>비고</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          ${rows
+          ${sortedRows
             .map(
               (item) => `
               <tr class="${selectedItemId === item.id ? "is-selected" : ""}" data-item-row-id="${item.id}">
@@ -1930,6 +1951,22 @@ function renderItemsTable() {
     chk.addEventListener("change", updateBulkDeleteBtn);
     // 체크박스 클릭이 행 클릭으로 전파되지 않도록
     chk.addEventListener("click", (e) => e.stopPropagation());
+  });
+
+  // 물품 추가 버튼 (표 헤더 내 버튼)
+  els.mainView.querySelector("#newItemBtnInTable")?.addEventListener("click", () => openItemModal());
+
+  // 정렬 헤더 클릭
+  els.mainView.querySelectorAll(".th-sortable").forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      if (itemsSortState.key === key) {
+        itemsSortState.dir = itemsSortState.dir === "asc" ? "desc" : "asc";
+      } else {
+        itemsSortState = { key, dir: "asc" };
+      }
+      renderItemsTable();
+    });
   });
 
   // 선택 삭제 버튼

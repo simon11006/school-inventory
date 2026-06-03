@@ -1790,6 +1790,47 @@ tbody tr[data-borrow-item-id] {
   flex-shrink: 0;
 }
 
+/* ── 물품 관리 표 헤더 (물품 추가 + 선택 삭제) ── */
+.items-view-head {
+  align-items: center;
+}
+.items-head-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+/* 두 버튼 높이 통일 */
+.items-head-actions .ghost.compact {
+  height: 34px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+
+/* 정렬 가능 헤더 */
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.th-sortable:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--sage-soft) 30%, transparent);
+}
+.th-sort-icon {
+  font-size: 11px;
+  color: var(--ink-mute);
+  margin-left: 3px;
+  opacity: 0.5;
+}
+.th-sort-icon.active {
+  color: var(--sage);
+  opacity: 1;
+}
+
 /* 카드 목록 뷰: 제목 + 카드들을 하나의 패널로 묶는다 */
 .main-view.is-card-list {
   background: var(--card) !important;
