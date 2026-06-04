@@ -91,22 +91,32 @@
     .screen-sidebar { background: #fff; border-radius: 10px; border: 1px solid var(--border); padding: 14px; }
     .screen-sidebar-logo { margin-bottom: 16px; }
     .screen-sidebar-logo img { height: 20px; width: auto; }
-    .screen-nav-item { font-size: 10px; color: var(--ash); padding: 6px 8px; border-radius: 6px; margin-bottom: 2px; }
-    .screen-nav-item.active { background: #f0f6ff; color: var(--teal); font-weight: 500; }
-    .screen-main { display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
-    .screen-head { display: flex; align-items: center; justify-content: space-between; }
-    .screen-head h3 { font-size: 13px; font-weight: 600; color: var(--black); }
-    .screen-btn { background: var(--btn-black); color: #fff; border-radius: 100px; padding: 4px 10px; font-size: 9px; border: none; cursor: pointer; font-family: var(--font); }
-    .screen-table { background: #fff; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; flex: 1; }
-    .screen-table-head { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 80px; background: var(--cream); border-bottom: 1px solid var(--border); padding: 8px 14px; }
-    .screen-table-head span { font-size: 9px; color: var(--ash); font-weight: 500; }
-    .screen-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 80px; padding: 8px 14px; border-bottom: 1px solid #f5f5f5; align-items: center; }
-    .screen-row:last-child { border-bottom: none; }
-    .item-name { font-size: 10px; font-weight: 500; color: var(--black); }
-    .item-meta { font-size: 9px; color: var(--ash); }
-    .badge-ok { background: #e8f8f0; color: #1a9e5c; border-radius: 100px; padding: 2px 8px; font-size: 8px; font-weight: 500; }
-    .badge-warn { background: #fff4e5; color: #e07b00; border-radius: 100px; padding: 2px 8px; font-size: 8px; font-weight: 500; }
-    .row-btn { background: none; border: 1px solid var(--border); border-radius: 100px; padding: 3px 8px; font-size: 8px; color: var(--graphite); cursor: pointer; }
+    /* 실제 앱 톤(크림/세이지)에 맞춘 목업 */
+    .screen-body { background: #faf8f2; }
+    .screen-sidebar { background: #fdfcf8; }
+    .screen-nav-item { font-size: 10px; color: #6b6457; padding: 6px 8px; border-radius: 8px; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; }
+    .screen-nav-item .nav-ic { width: 16px; height: 16px; border-radius: 5px; flex-shrink: 0; }
+    .screen-nav-item.active { background: #fff; border: 1px solid #e9e4d6; color: #201f1a; font-weight: 600; }
+    .ic-sky { background: #e0eef6; } .ic-sage { background: #e4f0e6; } .ic-amber { background: #fbeccf; } .ic-plum { background: #efe6f6; } .ic-slate { background: #e7ecee; }
+    .screen-main { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+    /* 미니 히어로 */
+    .screen-hero { display: flex; align-items: center; gap: 10px; background: linear-gradient(180deg,#e4f0e6,#fff 160%); border: 1px solid #cfe3d4; border-radius: 12px; padding: 12px 14px; }
+    .screen-hero-ic { width: 34px; height: 34px; border-radius: 10px; background: #4f8a6a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .screen-hero h3 { font-size: 12px; font-weight: 800; color: #201f1a; }
+    .screen-hero p { font-size: 9px; color: #6b6457; margin-top: 1px; }
+    /* 카드 리스트 */
+    .screen-list-head { font-size: 11px; font-weight: 800; color: #201f1a; margin: 2px 2px 0; }
+    .screen-cards { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .screen-card { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e9e4d6; border-radius: 10px; padding: 8px 11px; }
+    .sc-name { width: 78px; flex-shrink: 0; }
+    .item-name { font-size: 10px; font-weight: 700; color: #201f1a; }
+    .item-meta { font-size: 8px; color: #897f6c; }
+    .chip-spec { font-size: 8px; font-weight: 800; color: #2c6188; background: #e0eef6; border: 1px solid #c3ddec; border-radius: 6px; padding: 2px 6px; flex-shrink: 0; }
+    .chip { font-size: 8px; font-weight: 600; color: #544f44; background: #faf8f2; border: 1px solid #e9e4d6; border-radius: 100px; padding: 2px 7px; flex-shrink: 0; }
+    .sc-avail { font-size: 9px; font-weight: 800; color: #201f1a; margin-left: auto; flex-shrink: 0; }
+    .sc-avail span { font-weight: 500; color: #897f6c; }
+    .badge-ok { background: #e4f0e6; color: #356b50; border-radius: 100px; padding: 2px 8px; font-size: 8px; font-weight: 700; flex-shrink: 0; }
+    .row-btn { background: none; border: 1px solid #d9b98a; border-radius: 100px; padding: 3px 8px; font-size: 8px; color: #9c6817; cursor: pointer; flex-shrink: 0; }
 
     /* ── SECTIONS ── */
     section { padding: 96px 40px; }
@@ -196,6 +206,10 @@
       .hero-feats { gap: 12px; }
       .screen-body { grid-template-columns: 1fr; height: auto; }
       .screen-sidebar { display: none; }
+      /* 좁은 화면: 목업 카드 칩 줄바꿈 */
+      .screen-card { flex-wrap: wrap; gap: 6px; }
+      .sc-name { width: 100%; }
+      .sc-avail { margin-left: 0; }
       section { padding: 60px 20px; }
       .section-title { font-size: 28px; }
       .features-grid { grid-template-columns: 1fr; }
@@ -256,41 +270,49 @@
           <div class="screen-sidebar-logo">
             <img src="./asset/logo.png" alt="교구이음">
           </div>
-          <div class="screen-nav-item active">대시보드</div>
-          <div class="screen-nav-item">물품 관리</div>
-          <div class="screen-nav-item">예약 목록</div>
-          <div class="screen-nav-item">구입 요청</div>
-          <div class="screen-nav-item">사용 기록</div>
+          <div class="screen-nav-item active"><span class="nav-ic ic-sky"></span>물품 사용 예약</div>
+          <div class="screen-nav-item"><span class="nav-ic ic-sage"></span>내 예약·반납</div>
+          <div class="screen-nav-item"><span class="nav-ic ic-amber"></span>물품 관리</div>
+          <div class="screen-nav-item"><span class="nav-ic ic-amber"></span>구입 요청</div>
+          <div class="screen-nav-item"><span class="nav-ic ic-plum"></span>일괄 등록</div>
+          <div class="screen-nav-item"><span class="nav-ic ic-slate"></span>사용 기록</div>
         </div>
         <div class="screen-main">
-          <div class="screen-head">
-            <h3>사용 예약할 물품 선택</h3>
-            <button class="screen-btn">+ 새 예약</button>
+          <div class="screen-hero">
+            <div class="screen-hero-ic">📅</div>
+            <div>
+              <h3>사용할 물품을 바로 찾아 예약하세요</h3>
+              <p>물품실을 고르고 검색한 뒤, 예약하기 버튼만 누르면 됩니다.</p>
+            </div>
           </div>
-          <div class="screen-table">
-            <div class="screen-table-head">
-              <span>물품명</span><span>물품실</span><span>사용 가능</span><span>상태</span><span>예약</span>
+          <div class="screen-list-head">사용 예약할 물품 선택</div>
+          <div class="screen-cards">
+            <div class="screen-card">
+              <div class="sc-name"><div class="item-name">축구공</div><div class="item-meta">PE-001</div></div>
+              <span class="chip-spec">규격 4호</span>
+              <span class="chip">구기종목</span>
+              <span class="chip">체육실</span>
+              <div class="sc-avail">6<span> / 6개</span></div>
+              <span class="badge-ok">사용 가능</span>
+              <button class="row-btn">예약하기</button>
             </div>
-            <div class="screen-row">
-              <div><div class="item-name">미술 가위 세트</div><div class="item-meta">소모품 · 미술실</div></div>
-              <div class="item-meta">미술실</div>
-              <div class="item-meta">12 / 15 개</div>
-              <div><span class="badge-ok">사용 가능</span></div>
-              <div><button class="row-btn">예약하기</button></div>
+            <div class="screen-card">
+              <div class="sc-name"><div class="item-name">축구공</div><div class="item-meta">PE-002</div></div>
+              <span class="chip-spec">규격 5호</span>
+              <span class="chip">구기종목</span>
+              <span class="chip">체육실</span>
+              <div class="sc-avail">2<span> / 2개</span></div>
+              <span class="badge-ok">사용 가능</span>
+              <button class="row-btn">예약하기</button>
             </div>
-            <div class="screen-row">
-              <div><div class="item-name">무선 마우스</div><div class="item-meta">전자기기 · 컴퓨터실</div></div>
-              <div class="item-meta">컴퓨터실</div>
-              <div class="item-meta">3 / 20 개</div>
-              <div><span class="badge-warn">일부 대출중</span></div>
-              <div><button class="row-btn">예약하기</button></div>
-            </div>
-            <div class="screen-row">
-              <div><div class="item-name">블루투스 스피커</div><div class="item-meta">음향기기 · 강당</div></div>
-              <div class="item-meta">강당</div>
-              <div class="item-meta">2 / 2 개</div>
-              <div><span class="badge-ok">사용 가능</span></div>
-              <div><button class="row-btn">예약하기</button></div>
+            <div class="screen-card">
+              <div class="sc-name"><div class="item-name">비커</div><div class="item-meta">SC-009</div></div>
+              <span class="chip-spec">규격 500ml</span>
+              <span class="chip">실험기구</span>
+              <span class="chip">과학실</span>
+              <div class="sc-avail">40<span> / 40개</span></div>
+              <span class="badge-ok">사용 가능</span>
+              <button class="row-btn">예약하기</button>
             </div>
           </div>
         </div>
@@ -377,26 +399,36 @@
         </div>
         <div class="how-visual-body">
           <div class="modal-preview">
-            <div class="modal-title">📦 블루투스 스피커 예약</div>
-            <div class="field">
-              <div class="field-label">사용 날짜</div>
-              <div class="field-input">2026년 6월 3일 (화)</div>
-            </div>
+            <div class="modal-title">물품 예약</div>
             <div class="field-row">
-              <div class="field">
-                <div class="field-label">수량</div>
-                <div class="field-input">1 개</div>
-              </div>
               <div class="field">
                 <div class="field-label">사용 교사</div>
                 <div class="field-input">김선생님</div>
               </div>
+              <div class="field">
+                <div class="field-label">물품</div>
+                <div class="field-input">축구공 (6개)</div>
+              </div>
             </div>
             <div class="field">
-              <div class="field-label">사용 목적 (선택)</div>
-              <div class="field-input" style="color:#8d8d8d;">예: 음악 수업</div>
+              <div class="field-label">수량</div>
+              <div class="field-input">1 개</div>
             </div>
-            <button class="modal-btn">예약 확정하기</button>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">사용 시작일</div>
+                <div class="field-input">2026-06-03</div>
+              </div>
+              <div class="field">
+                <div class="field-label">반납 예정일</div>
+                <div class="field-input">2026-06-05</div>
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">비고 (선택)</div>
+              <div class="field-input" style="color:#8d8d8d;">예: 체육 수업</div>
+            </div>
+            <button class="modal-btn">예약</button>
           </div>
         </div>
       </div>
