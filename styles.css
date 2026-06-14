@@ -2680,6 +2680,21 @@ td strong {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
+/* 반납 처리: 정상반납/파손/분실/폐기 4등분 한 줄 */
+.field-4col {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.field-4col > .field {
+  min-width: 0;
+}
+.field-4col input {
+  min-width: 0;
+  width: 100%;
+}
+
 /* 손망 모달 상단 물품 정보 — 시인성 강화 */
 .damage-item-info {
   display: flex;
@@ -3892,6 +3907,9 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   .field-3col,
   .category-row,
   .location-row { grid-template-columns: 1fr; }
+
+  /* 반납 처리 4칸은 좁은 화면에서 2×2로 접기 */
+  .field-4col { grid-template-columns: 1fr 1fr; }
 
   /* 예약 모달: 수량·시작일·반납일을 세로로 쌓아 가로 스크롤 방지 */
   .res-date-row {

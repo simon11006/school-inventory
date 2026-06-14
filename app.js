@@ -1194,7 +1194,7 @@ function render() {
 function renderModeLabels() {
   const asAdmin = displayAsAdmin();
   if (els.reservationNavLabel) {
-    els.reservationNavLabel.textContent = asAdmin ? "예약·반납 목록" : "내 예약·반납";
+    els.reservationNavLabel.textContent = asAdmin ? "예약·분출 목록" : "내 예약·반납";
   }
   const mobLabel = document.querySelector("#mobReservationTabLabel");
   if (mobLabel) mobLabel.textContent = asAdmin ? "예약 목록" : "내 예약";
@@ -2534,7 +2534,7 @@ function renderAdminGuidePanel() {
       points: ["미구입 요청 우선 확인", "요청 이유 검토", "구입 완료 체크"],
     },
     reservations: {
-      title: "예약·반납 목록",
+      title: "예약·분출 목록",
       text: "왼쪽 목록에서 예약을 선택하면 분출·반납·손망 처리를 할 수 있어요.",
       points: ["예약 분출 처리", "반납 수량 기록", "파손·분실 사유 기록"],
     },
@@ -2773,8 +2773,7 @@ function renderReservationPanel(reservation) {
       }
       ${
         displayStatus === "분출됨"
-          ? `<button class="primary" id="returnBtn" type="button">반납 처리</button>
-             <button class="danger" id="damageBtn" type="button">손망 처리</button>`
+          ? `<button class="primary" id="returnBtn" type="button">반납 처리</button>`
           : ""
       }
     </div>
@@ -2788,9 +2787,6 @@ function renderReservationPanel(reservation) {
 
   const returnBtn = document.querySelector("#returnBtn");
   if (returnBtn) returnBtn.addEventListener("click", () => openReturnModal(reservation.id));
-
-  const damageBtn = document.querySelector("#damageBtn");
-  if (damageBtn) damageBtn.addEventListener("click", () => openDamageModal(reservation.id));
 
 }
 
@@ -5476,10 +5472,10 @@ function openReservationModal(defaultItemId = "") {
   // 관리자처럼 표시될 때만 관리 범위로 제한. 교사·실별관리자 타실 예약 시에는 모든 활성 물품을 빌릴 수 있다.
   const itemOptions = state.items
     .filter((item) => item.status !== "비활성" && (!displayAsAdmin() || isItemInAdminScope(item)))
-    .map((item) => `<option value="${item.id}" ${defaultItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)} (${getAvailableCount(item.id)}${escapeHtml(item.unit || "개")})</option>`)
+    .map((item) => `<option value="${item.id}" ${defaultItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)} (${getAvailableCountOnDate(item.id, today())}${escapeHtml(item.unit || "개")})</option>`)
     .join("");
 
-  openModal({
+  const modal = openModal({
     title: "물품 예약",
     submitText: "예약",
     body: `
@@ -5600,6 +5596,22 @@ function openReservationModal(defaultItemId = "") {
       return true;
     },
   });
+
+  // 물품 옵션의 사용 가능 수량을 '사용 시작일' 기준으로 표시하고, 날짜가 바뀌면 갱신한다.
+  const itemSelect = modal.querySelector('select[name="itemId"]');
+  const startDateInput = modal.querySelector('input[name="startDate"]');
+  if (itemSelect && startDateInput) {
+    const refreshAvailabilityLabels = () => {
+      const date = startDateInput.value || today();
+      Array.from(itemSelect.options).forEach((option) => {
+        const item = getItem(option.value);
+        if (!item) return;
+        option.textContent = `${item.name} (${getAvailableCountOnDate(item.id, date)}${item.unit || "개"})`;
+      });
+    };
+    startDateInput.addEventListener("change", refreshAvailabilityLabels);
+    refreshAvailabilityLabels();
+  }
 }
 
 function openReturnModal(reservationId) {
@@ -5616,9 +5628,12 @@ function openReturnModal(reservationId) {
     body: `
       <p class="helper">${escapeHtml(item.name)} · 분출 수량 ${reservation.quantity}${escapeHtml(item.unit || "개")}</p>
       <div class="field-grid">
-        ${field("정상 반납", "returned", reservation.quantity, true, "number")}
-        ${field("파손", "damaged", 0, false, "number")}
-        ${field("분실", "lost", 0, false, "number")}
+        <div class="field-4col">
+          ${field("정상 반납", "returned", reservation.quantity, true, "number")}
+          ${field("파손", "damaged", 0, false, "number")}
+          ${field("분실", "lost", 0, false, "number")}
+          ${field("폐기", "disposed", 0, false, "number")}
+        </div>
         <label class="field full">
           <span>비고</span>
           <textarea name="note"></textarea>
@@ -5629,18 +5644,19 @@ function openReturnModal(reservationId) {
       const returned = Number(formData.get("returned") || 0);
       const damaged = Number(formData.get("damaged") || 0);
       const lost = Number(formData.get("lost") || 0);
-      const processedTotal = returned + damaged + lost;
+      const disposed = Number(formData.get("disposed") || 0);
+      const processedTotal = returned + damaged + lost + disposed;
       const note = formData.get("note").trim();
-      if (![returned, damaged, lost].every((count) => Number.isFinite(count) && count >= 0)) {
+      if (![returned, damaged, lost, disposed].every((count) => Number.isFinite(count) && count >= 0)) {
         alert("반납 수량은 0 이상의 숫자로 입력하세요.");
         return false;
       }
       if (processedTotal !== reservation.quantity) {
-        alert("정상 반납, 파손, 분실 수량의 합이 분출 수량과 같아야 합니다.");
+        alert("정상 반납, 파손, 분실, 폐기 수량의 합이 분출 수량과 같아야 합니다.");
         return false;
       }
-      if ((damaged || lost) && !note) {
-        alert("파손 또는 분실 수량이 있으면 비고에 사유를 입력하세요.");
+      if ((damaged || lost || disposed) && !note) {
+        alert("파손·분실·폐기 수량이 있으면 비고에 사유를 입력하세요.");
         return false;
       }
 
@@ -5649,10 +5665,11 @@ function openReturnModal(reservationId) {
       reservation.returned = returned;
       reservation.damaged = damaged;
       reservation.lost = lost;
+      reservation.disposed = disposed;
       reservation.returnNote = note;
 
-      if (damaged || lost) applyDamage(item.id, damaged, lost, 0, reservation.id, note);
-      addLog("회수", `${item.name} ${returned}${item.unit}을 회수했습니다. 파손 ${damaged}${item.unit}, 분실 ${lost}${item.unit}.`, "관리자", item.id);
+      if (damaged || lost || disposed) applyDamage(item.id, damaged, lost, disposed, reservation.id, note);
+      addLog("회수", `${item.name} ${returned}${item.unit}을 회수했습니다. 파손 ${damaged}${item.unit}, 분실 ${lost}${item.unit}, 폐기 ${disposed}${item.unit}.`, "관리자", item.id);
       saveState();
       render();
       toast(`${item.name} 회수가 기록되었어요`, "success");
