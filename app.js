@@ -418,7 +418,7 @@ function openHelpModal() {
             </section>
             <section>
               <h4>⑤ 자동 동기화 표시</h4>
-              <p>사이드바 아래 <strong>정보 업데이트</strong> 카드에 마지막 동기화 시각이 표시됩니다. 자동 동기화가 켜져 있으면 20초마다 다른 PC의 변경이 자동으로 들어옵니다.</p>
+              <p>사이드바 아래 <strong>정보 업데이트</strong> 카드에 마지막 동기화 시각이 표시됩니다. 자동 동기화가 켜져 있으면 10초마다 다른 PC의 변경이 자동으로 들어옵니다.</p>
             </section>
           </div>
         </div>
@@ -540,7 +540,7 @@ function openHelpModal() {
             </section>
             <section>
               <h4>6. 자동 동기화 모드 설정</h4>
-              <p>학교 설정의 <strong>저장소 연결 → 고급</strong>에서 <strong>자동 동기화</strong>를 <strong>저장 후 원격에 자동 올리기</strong>로 두면 변경이 일어날 때마다 즉시 스프레드시트에 저장되고, 20초마다 다른 PC의 변경을 자동으로 가져옵니다. 운영 중에는 이 모드를 권장합니다.</p>
+              <p>학교 설정의 <strong>저장소 연결 → 고급</strong>에서 <strong>자동 동기화</strong>를 <strong>저장 후 원격에 자동 올리기</strong>로 두면 변경이 일어날 때마다 즉시 스프레드시트에 저장되고, 10초마다 다른 PC의 변경을 자동으로 가져옵니다. 운영 중에는 이 모드를 권장합니다.</p>
             </section>
             <section>
               <h4>7. 담당자 인수인계</h4>
@@ -1556,7 +1556,9 @@ function renderLocationFilter() {
     els.locationFilter.value = current && locations.includes(current) ? current : fallback;
     els.locationFilter.disabled = false;
   } else {
-    els.locationFilter.value = current;
+    // 현재 선택값이 더 이상 없는 물품실(삭제됨)이면 '전체'(빈 값)로 보정한다.
+    // (그대로 두면 select 에 일치하는 옵션이 없어 빈 칸으로 보인다.)
+    els.locationFilter.value = current && locations.includes(current) ? current : "";
     els.locationFilter.disabled = false;
   }
   syncMobileLocationFilter();
