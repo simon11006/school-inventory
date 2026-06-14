@@ -2129,11 +2129,10 @@ function renderReservationsTable(rows, title = "예약 목록") {
   const filteredRows = getFilteredReservations(rows);
   const visibleRows = filterReservationsByTab(filteredRows, reservationListTab);
   const headHtml = `
-    <div class="view-head">
-      <h3>${escapeHtml(title)}</h3>
+    <div class="view-head view-head-reservations">
+      ${renderReservationTabs(filteredRows)}
       <span class="view-meta">총 ${visibleRows.length}건</span>
-    </div>
-    ${renderReservationTabs(filteredRows)}`;
+    </div>`;
 
   if (!visibleRows.length) {
     els.mainView.innerHTML = headHtml + `
