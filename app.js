@@ -116,6 +116,7 @@ function bindElements() {
   els.mobileSheetBackdrop = document.querySelector("#mobileSheetBackdrop");
   els.mobileMoreSheet = document.querySelector("#mobileMoreSheet");
   els.mobileLocationFilter = document.querySelector("#mobileLocationFilter");
+  els.toolbarLocationFilter = document.querySelector("#toolbarLocationFilter");
 }
 
 function bindEvents() {
@@ -261,6 +262,14 @@ function bindMobileEvents() {
       els.locationFilter.dispatchEvent(new Event("change"));
     }
   });
+
+  // 툴바(예약 화면)의 물품실 선택 → 상단(사이드바) 물품실 선택과 연동
+  els.toolbarLocationFilter?.addEventListener("change", () => {
+    if (els.locationFilter && els.locationFilter.value !== els.toolbarLocationFilter.value) {
+      els.locationFilter.value = els.toolbarLocationFilter.value;
+      els.locationFilter.dispatchEvent(new Event("change"));
+    }
+  });
 }
 
 /* ── 데스크톱 우측 패널 드로어 ── */
@@ -347,14 +356,20 @@ function attachTableScrollAffordance() {
 }
 
 function syncMobileLocationFilter() {
-  if (!els.mobileLocationFilter || !els.locationFilter) return;
-  if (els.mobileLocationFilter.innerHTML !== els.locationFilter.innerHTML) {
-    els.mobileLocationFilter.innerHTML = els.locationFilter.innerHTML;
+  syncLocationMirror(els.mobileLocationFilter);
+  syncLocationMirror(els.toolbarLocationFilter);
+}
+
+// 보조 물품실 선택(모바일/툴바)을 상단(사이드바) 물품실 선택과 동일하게 맞춘다.
+function syncLocationMirror(target) {
+  if (!target || !els.locationFilter) return;
+  if (target.innerHTML !== els.locationFilter.innerHTML) {
+    target.innerHTML = els.locationFilter.innerHTML;
   }
-  if (els.mobileLocationFilter.value !== els.locationFilter.value) {
-    els.mobileLocationFilter.value = els.locationFilter.value;
+  if (target.value !== els.locationFilter.value) {
+    target.value = els.locationFilter.value;
   }
-  els.mobileLocationFilter.disabled = els.locationFilter.disabled;
+  target.disabled = els.locationFilter.disabled;
 }
 
 function copySupportEmail() {
@@ -1734,6 +1749,11 @@ function renderNavigation() {
   if (els.categoryFilter) {
     const showCatFilter = currentView === "items" || currentView === "dashboard";
     els.categoryFilter.hidden = !showCatFilter;
+    // 툴바 물품실 선택도 같은 화면에서 함께 표시(상단 선택과 연동)
+    if (els.toolbarLocationFilter) {
+      els.toolbarLocationFilter.hidden = !showCatFilter;
+      syncLocationMirror(els.toolbarLocationFilter);
+    }
     if (showCatFilter) {
       const location = els.locationFilter?.value || "";
       const inBorrowView = currentView === "dashboard";
