@@ -4828,7 +4828,12 @@ function openItemModal(item = null) {
           </div>
           <input name="categoryCustom" id="categoryCustom" type="text" value="${escapeHtml(usesCustomCategory ? currentCategory : "")}" placeholder="새 카테고리 입력" ${usesCustomCategory ? "" : "hidden"} />
         </label>
-        ${field("보관 장소", "location", defaultLocation, true)}
+        <label class="field">
+          <span>보관 장소</span>
+          <select name="location" required>
+            ${getAccessibleLocations().map((loc) => `<option value="${escapeHtml(loc)}" ${loc === defaultLocation ? "selected" : ""}>${escapeHtml(loc)}</option>`).join("")}
+          </select>
+        </label>
         <div class="field-3col">
           ${field("총 수량", "total", item?.total || 1, true, "number")}
           ${field("단위", "unit", item?.unit || "개")}
