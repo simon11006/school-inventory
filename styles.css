@@ -4435,6 +4435,8 @@ body.super-admin-mode #sadminSideNav .side-label { display: block !important; }
   color: var(--ink-soft);
   display: block;
   margin: 0;
+  /* '오늘 예약'이 '오늘 예'/'약'처럼 음절 단위로 끊기지 않고 공백에서만 줄바꿈되도록 */
+  word-break: keep-all;
 }
 .stat-num {
   font-size: 30px;
