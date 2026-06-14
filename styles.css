@@ -1610,7 +1610,7 @@ body.dark-mode .sidebar-room-select select {
   border-radius: 8px;
   background: var(--card);
   color: var(--ink-soft);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
