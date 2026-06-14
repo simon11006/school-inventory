@@ -305,6 +305,9 @@ function getDiagnostics_() {
   const sheets = Object.fromEntries(Object.keys(TABLES).map((sheetName) => [sheetName, getSheetStatus_(sheetName)]));
   return {
     scriptVersion: SCRIPT_VERSION,
+    // 역할(role) 기반 안전 병합을 지원하는 스크립트임을 앱에 알린다.
+    // 앱은 이 값이 true 일 때만 '교사' 변경분을 올린다(옛 스크립트에서의 전체 덮어쓰기 방지).
+    mergeSupport: true,
     spreadsheetId: spreadsheet.getId(),
     spreadsheetName: spreadsheet.getName(),
     spreadsheetUrl: spreadsheet.getUrl(),
