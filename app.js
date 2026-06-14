@@ -4798,7 +4798,12 @@ function openItemModal(item = null) {
     alert("이 물품실의 물품을 수정할 권한이 없습니다.");
     return;
   }
-  const defaultLocation = item?.location || getAccessibleLocations()[0] || state.locations[0] || "";
+  // 새 물품 추가 시에는 현재 선택한 물품실을 보관 장소 기본값으로 쓴다(관리 권한 있는 경우).
+  // '전체'(빈 값) 선택이거나 권한 없는 물품실이면 담당 물품실 중 첫 번째로 보정한다.
+  const selectedLocation = els.locationFilter?.value || "";
+  const defaultLocation = item?.location
+    || (selectedLocation && canManageLocation(selectedLocation) ? selectedLocation : "")
+    || getAccessibleLocations()[0] || state.locations[0] || "";
   const currentCategory = item?.category || "";
   const getCategoryOptionsFor = (loc) => [...new Set((state.categoriesByLocation?.[loc] || []))].filter(Boolean);
   let categoryOptions = getCategoryOptionsFor(defaultLocation);
