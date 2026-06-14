@@ -49,6 +49,7 @@ let adminScope = null;
 let darkMode = InventoryStorage.readText(THEME_KEY) === "dark";
 let recordsViewState = { date: "", type: "all" };
 let itemsSortState = { key: "", dir: "asc" }; // 물품 관리 표 정렬
+let reservationListTab = "all"; // 예약 목록 탭: all | reserved | checkout
 let setupState = loadSetupState();
 let fieldTestState = loadFieldTestState();
 let feedbackState = loadFeedbackState();
@@ -2080,33 +2081,79 @@ function renderItemsTable() {
   });
 }
 
+const RESERVATION_TABS = [
+  ["all", "전체"],
+  ["reserved", "예약 목록"],
+  ["checkout", "분출 목록"],
+];
+
+// 탭별 표시 대상 추리기. '전체'는 예약됨 → 분출됨 → 기타 순으로 정렬한다.
+function filterReservationsByTab(rows, tab) {
+  if (tab === "reserved") return rows.filter((res) => getReservationDisplayStatus(res) === "예약됨");
+  if (tab === "checkout") return rows.filter((res) => getReservationDisplayStatus(res) === "분출됨");
+  const rank = (res) => {
+    const status = getReservationDisplayStatus(res);
+    if (status === "예약됨") return 0;
+    if (status === "분출됨") return 1;
+    return 2;
+  };
+  return [...rows].sort((a, b) => rank(a) - rank(b));
+}
+
+function renderReservationTabs(filteredRows) {
+  const reservedCount = filteredRows.filter((res) => getReservationDisplayStatus(res) === "예약됨").length;
+  const checkoutCount = filteredRows.filter((res) => getReservationDisplayStatus(res) === "분출됨").length;
+  const countFor = (key) => key === "reserved" ? reservedCount : key === "checkout" ? checkoutCount : filteredRows.length;
+  return `
+    <div class="reservation-tabs" role="tablist">
+      ${RESERVATION_TABS.map(([key, label]) => `
+        <button class="reservation-tab ${reservationListTab === key ? "is-active" : ""}" data-reservation-tab="${key}" type="button" role="tab" aria-selected="${reservationListTab === key}">
+          ${label}<span class="reservation-tab-count">${countFor(key)}</span>
+        </button>
+      `).join("")}
+    </div>`;
+}
+
+function bindReservationTabs() {
+  els.mainView.querySelectorAll("[data-reservation-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.reservationTab;
+      if (reservationListTab === tab) return;
+      reservationListTab = tab;
+      renderMainView();
+    });
+  });
+}
+
 function renderReservationsTable(rows, title = "예약 목록") {
   const filteredRows = getFilteredReservations(rows);
-  if (!filteredRows.length) {
-    els.mainView.innerHTML = `
-      <div class="view-head">
-        <h3>${escapeHtml(title)}</h3>
-        <span class="view-meta">0건</span>
-      </div>
+  const visibleRows = filterReservationsByTab(filteredRows, reservationListTab);
+  const headHtml = `
+    <div class="view-head">
+      <h3>${escapeHtml(title)}</h3>
+      <span class="view-meta">총 ${visibleRows.length}건</span>
+    </div>
+    ${renderReservationTabs(filteredRows)}`;
+
+  if (!visibleRows.length) {
+    els.mainView.innerHTML = headHtml + `
       <div class="empty-state">
         <div class="empty-state-illust">🌿</div>
-        <h4>아직 예약이 없어요</h4>
-        <p>위의 “+ 새 예약”으로 입력해 보세요.</p>
+        <h4>해당하는 예약이 없어요</h4>
+        <p>다른 탭을 확인하거나 검색어를 지워보세요.</p>
       </div>`;
+    bindReservationTabs();
     return;
   }
 
-  els.mainView.innerHTML = `
-    <div class="view-head">
-      <h3>${escapeHtml(title)}</h3>
-      <span class="view-meta">총 ${filteredRows.length}건</span>
-    </div>
+  els.mainView.innerHTML = headHtml + `
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>물품실</th>
             <th>물품</th>
+            <th>규격</th>
             <th>교사</th>
             <th>수량</th>
             <th>사용일</th>
@@ -2116,7 +2163,7 @@ function renderReservationsTable(rows, title = "예약 목록") {
           </tr>
         </thead>
         <tbody>
-          ${filteredRows
+          ${visibleRows
             .map((res) => {
               const item = getItem(res.itemId);
               return `
@@ -2125,6 +2172,7 @@ function renderReservationsTable(rows, title = "예약 목록") {
                   <td class="cell-item">
                     <strong>${escapeHtml(item?.name || "삭제된 물품")}</strong>
                   </td>
+                  <td class="cell-nowrap">${escapeHtml(item?.spec || "-")}</td>
                   <td class="cell-nowrap">${escapeHtml(res.teacher)}</td>
                   <td class="cell-nowrap">${res.quantity} ${escapeHtml(item?.unit || "개")}</td>
                   <td class="cell-nowrap">${escapeHtml(toDisplayDate(res.startDate))} ~ ${escapeHtml(toDisplayDate(res.endDate))}</td>
@@ -2139,6 +2187,8 @@ function renderReservationsTable(rows, title = "예약 목록") {
       </table>
     </div>
   `;
+
+  bindReservationTabs();
 
   els.mainView.querySelectorAll("[data-reservation-id]").forEach((button) => {
     button.addEventListener("click", () => {

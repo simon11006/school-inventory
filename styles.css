@@ -1588,6 +1588,49 @@ body.dark-mode .sidebar-room-select select {
   font-family: var(--font-mono);
 }
 
+/* 예약 목록 탭 (전체 / 예약 목록 / 분출 목록) */
+.reservation-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.reservation-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.reservation-tab:hover {
+  border-color: var(--sage);
+}
+.reservation-tab.is-active {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #fff;
+}
+.reservation-tab-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+.reservation-tab.is-active .reservation-tab-count {
+  background: rgba(255, 255, 255, .28);
+  color: #fff;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
