@@ -1591,6 +1591,7 @@ body.dark-mode .sidebar-room-select select {
 /* 예약 목록 탭 (전체 / 예약 목록 / 분출 목록) — 헤더에 인라인 배치 */
 .view-head-reservations {
   flex-wrap: wrap;
+  padding: 10px 16px;
 }
 .view-head-reservations .reservation-tabs {
   margin-right: auto;
@@ -1604,12 +1605,12 @@ body.dark-mode .sidebar-room-select select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--card);
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
@@ -1624,9 +1625,9 @@ body.dark-mode .sidebar-room-select select {
 }
 .reservation-tab-count {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 5px;
   background: var(--paper-deep);
   color: var(--ink-soft);
