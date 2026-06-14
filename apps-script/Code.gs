@@ -1,5 +1,5 @@
 const API_KEY_PROPERTY = "SCHOOL_INVENTORY_API_KEY";
-const SCRIPT_VERSION = "2026-06-02-generic-all";
+const SCRIPT_VERSION = "2026-06-14-role-merge";
 const APP_BASE_URL = "https://item-school.netlify.app/index.html";
 
 function onOpen() {
@@ -274,7 +274,7 @@ function handleRequest_(event) {
     if (body.action === "ping") return json_({ ok: true, ...getDiagnostics_() });
     if (body.action === "diagnose") return json_({ ok: true, ...getDiagnostics_() });
     if (body.action === "save") {
-      const savedAt = saveData_(body.data, body.expectedRemoteSavedAt || "");
+      const savedAt = saveData_(body.data, body.role || "admin", body.deletions || []);
       return json_({ ok: true, savedAt });
     }
     if (body.action === "load") {
@@ -332,30 +332,84 @@ function getSheetStatus_(sheetName) {
   };
 }
 
-function saveData_(data, expectedRemoteSavedAt) {
+// role: "admin"(학교 관리자·실별 담당자) | "teacher"(일반 교사)
+//  - admin   : 전 영역 권한. 물품·예약·구입요청은 id 기준 병합(원격 단독 항목 보존)하고,
+//              교사 명부·물품실·설정은 권위 있게 덮어쓴다.
+//  - teacher : 본인 예약·구입요청만 추가/본인 항목 갱신. 관리자 영역(물품·명부·설정 등)은
+//              원격을 그대로 보존해 오래된 사본이 관리자 데이터를 덮어쓰지 않게 한다.
+// 삭제는 deletions(툼스톤)로 전파한다(원격 단독 항목은 기본 보존되므로).
+function saveData_(data, role, deletions) {
   if (!data) throw new Error("저장할 데이터가 없습니다.");
+  role = role === "teacher" ? "teacher" : "admin";
   const lock = LockService.getDocumentLock();
   let locked = false;
   try {
     lock.waitLock(15000);
     locked = true;
-    const settings = Object.fromEntries(readTable_("settings").map((row) => [row.key, row.value]));
-    const currentSavedAt = settings.updatedAt || "";
-    if (expectedRemoteSavedAt && currentSavedAt && expectedRemoteSavedAt !== currentSavedAt) {
-      throw new Error("스프레드시트가 다른 곳에서 먼저 변경되었습니다. 가져오기 후 다시 저장하세요.");
-    }
+
+    const remote = loadData_();
     const savedAt = new Date().toISOString();
-    writeTable_("items", data.items || []);
-    writeTable_("reservations", data.reservations || []);
-    writeTable_("logs", data.logs || []);
-    writeTable_("teachers", (data.teachers || []).map((name) => ({ name })));
-    writeTable_("locations", (data.locations || []).map((name) => ({ name })));
+
+    const mergedDeletions = mergeDeletions_(remote.deletions, deletions);
+    const deletedItems = collectDeletedIds_(mergedDeletions, "items");
+    const deletedRequests = collectDeletedIds_(mergedDeletions, "purchaseRequests");
+
+    // 로그는 추가 전용 → id 기준 합집합
+    const logs = mergeById_(remote.logs, data.logs);
+
+    let items, reservations, purchaseRequests, teachers, locations;
+    let schoolName, adminPin, locationManagers, categories, categoriesByLocation;
+
+    if (role === "teacher") {
+      // 관리자 영역은 원격 보존
+      items = remote.items;
+      teachers = remote.teachers;
+      locations = remote.locations;
+      schoolName = remote.schoolName;
+      adminPin = remote.adminPin;
+      locationManagers = remote.locationManagers;
+      categories = remote.categories;
+      categoriesByLocation = remote.categoriesByLocation;
+      // 본인 소유 항목만 추가/갱신
+      reservations = mergeOwned_(remote.reservations, data.reservations, "teacher");
+      purchaseRequests = mergeOwned_(remote.purchaseRequests, data.purchaseRequests, "requester");
+    } else {
+      items = mergeById_(remote.items, data.items);
+      reservations = mergeById_(remote.reservations, data.reservations);
+      purchaseRequests = mergeById_(remote.purchaseRequests, data.purchaseRequests);
+      teachers = (data.teachers || []).filter(String);
+      locations = (data.locations || []).filter(String);
+      schoolName = data.schoolName || "";
+      adminPin = data.adminPin || "";
+      locationManagers = data.locationManagers || {};
+      categories = data.categories || [];
+      categoriesByLocation = data.categoriesByLocation || {};
+    }
+
+    // 삭제 적용: 삭제된 물품/구입요청 제거 + 삭제된 물품의 예약 제거
+    if (deletedItems.length) {
+      items = items.filter((i) => deletedItems.indexOf(String(i.id)) === -1);
+    }
+    if (deletedRequests.length) {
+      purchaseRequests = purchaseRequests.filter((p) => deletedRequests.indexOf(String(p.id)) === -1);
+    }
+    if (deletedItems.length) {
+      reservations = reservations.filter((r) => deletedItems.indexOf(String(r.itemId)) === -1);
+    }
+
+    writeTable_("items", items);
+    writeTable_("reservations", reservations);
+    writeTable_("logs", logs);
+    writeTable_("teachers", teachers.map((name) => ({ name })));
+    writeTable_("locations", locations.map((name) => ({ name })));
     writeTable_("settings", [
-      { key: "schoolName", value: data.schoolName || "" },
-      { key: "adminPin", value: data.adminPin || "" },
-      { key: "locationManagers", value: JSON.stringify(data.locationManagers || {}) },
-      { key: "categories", value: JSON.stringify(data.categories || []) },
-      { key: "purchaseRequests", value: JSON.stringify(data.purchaseRequests || []) },
+      { key: "schoolName", value: schoolName || "" },
+      { key: "adminPin", value: adminPin || "" },
+      { key: "locationManagers", value: JSON.stringify(locationManagers || {}) },
+      { key: "categories", value: JSON.stringify(categories || []) },
+      { key: "categoriesByLocation", value: JSON.stringify(categoriesByLocation || {}) },
+      { key: "purchaseRequests", value: JSON.stringify(purchaseRequests || []) },
+      { key: "deletions", value: JSON.stringify(mergedDeletions || []) },
       { key: "updatedAt", value: savedAt },
       { key: "clientUpdatedAt", value: data.meta?.updatedAt || "" },
       { key: "deviceId", value: data.meta?.deviceId || "" },
@@ -364,6 +418,50 @@ function saveData_(data, expectedRemoteSavedAt) {
   } finally {
     if (locked) lock.releaseLock();
   }
+}
+
+// id 기준 병합: 원격을 바탕으로 incoming이 같은 id를 덮어쓰고, 원격 단독 항목은 보존한다.
+function mergeById_(remoteList, incomingList) {
+  const map = {};
+  (remoteList || []).forEach((r) => { if (r && r.id != null && r.id !== "") map[String(r.id)] = r; });
+  (incomingList || []).forEach((r) => { if (r && r.id != null && r.id !== "") map[String(r.id)] = r; });
+  return Object.keys(map).map((k) => map[k]);
+}
+
+// 교사 푸시용: 새 항목은 추가, 같은 id는 본인 소유(ownerField 일치)일 때만 갱신.
+// 그 외(남의 항목)는 원격을 그대로 유지 → 오래된 사본으로 남의 것을 덮어쓰지 않는다.
+function mergeOwned_(remoteList, incomingList, ownerField) {
+  const map = {};
+  (remoteList || []).forEach((r) => { if (r && r.id != null && r.id !== "") map[String(r.id)] = r; });
+  (incomingList || []).forEach((i) => {
+    if (!i || i.id == null || i.id === "") return;
+    const id = String(i.id);
+    const existing = map[id];
+    if (!existing) { map[id] = i; return; }
+    if (existing[ownerField] && i[ownerField] && existing[ownerField] === i[ownerField]) {
+      map[id] = i;
+    }
+  });
+  return Object.keys(map).map((k) => map[k]);
+}
+
+function mergeDeletions_(remoteDel, incomingDel) {
+  const map = {};
+  const add = (list) => (list || []).forEach((d) => {
+    if (!d || !d.coll || d.id == null || d.id === "") return;
+    map[d.coll + ":" + d.id] = { coll: d.coll, id: String(d.id), at: d.at || "" };
+  });
+  add(remoteDel);
+  add(incomingDel);
+  const arr = Object.keys(map).map((k) => map[k]);
+  arr.sort((a, b) => ((b.at || "") < (a.at || "") ? -1 : 1)); // 최근 우선
+  return arr.slice(0, 1000);
+}
+
+function collectDeletedIds_(deletions, coll) {
+  const ids = [];
+  (deletions || []).forEach((d) => { if (d && d.coll === coll) ids.push(String(d.id)); });
+  return ids;
 }
 
 function loadData_() {
@@ -396,12 +494,18 @@ function loadData_() {
   try { categories = settings.categories ? JSON.parse(settings.categories) : []; } catch (e) {}
   let purchaseRequests = [];
   try { purchaseRequests = settings.purchaseRequests ? JSON.parse(settings.purchaseRequests) : []; } catch (e) {}
+  let categoriesByLocation = {};
+  try { categoriesByLocation = settings.categoriesByLocation ? JSON.parse(settings.categoriesByLocation) : {}; } catch (e) {}
+  let deletions = [];
+  try { deletions = settings.deletions ? JSON.parse(settings.deletions) : []; } catch (e) {}
 
   return {
     schoolName: settings.schoolName || "",
     adminPin: settings.adminPin || "",
     locationManagers,
     categories: Array.isArray(categories) ? categories.filter(Boolean) : [],
+    categoriesByLocation: (categoriesByLocation && typeof categoriesByLocation === "object") ? categoriesByLocation : {},
+    deletions: Array.isArray(deletions) ? deletions : [],
     purchaseRequests: Array.isArray(purchaseRequests) ? purchaseRequests : [],
     teachers: (data.teachers || []).map((row) => row.name).filter(Boolean),
     locations: (data.locations || []).map((row) => row.name).filter(Boolean),

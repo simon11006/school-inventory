@@ -611,8 +611,17 @@ function migrateState(data) {
 
   data.teachers = data.teachers || [];
   data.locations = [...new Set((data.locations || []).map((location) => locationMap[location] || location))];
-  data.reservations = data.reservations || [];
+  // 예약 날짜 정규화: 스프레드시트가 날짜 칸을 Date로 바꿔 "2026-06-13T15:00:00.000Z"
+  // 같은 ISO 시각으로 돌려주면 표시뿐 아니라 startDate<=today() 같은 비교도 어긋난다.
+  // 항상 YYYY-MM-DD 문자열로 맞춰 둔다.
+  data.reservations = (data.reservations || []).map((reservation) => ({
+    ...reservation,
+    startDate: normalizeDateValue(reservation.startDate),
+    endDate: normalizeDateValue(reservation.endDate),
+  }));
   data.logs = data.logs || [];
+  // 삭제 기록(툼스톤): 어떤 기기에서 무엇을 지웠는지 추적해 서버 병합 시 부활을 막는다.
+  data.deletions = Array.isArray(data.deletions) ? data.deletions : [];
   data.purchaseRequests = (data.purchaseRequests || []).map((request) => ({
     id: request.id || createId("purchase"),
     itemName: request.itemName || request.name || "",
@@ -787,7 +796,14 @@ function loadSyncConfig() {
     lastRemoteSavedAt: "",
     schoolCode: "",  // 짧은 주소(?s=) 로 연결된 학교 코드 (heartbeat 용)
   };
-  return { ...fallback, ...InventoryStorage.readJson(SYNC_CONFIG_KEY, {}) };
+  const cfg = { ...fallback, ...InventoryStorage.readJson(SYNC_CONFIG_KEY, {}) };
+  // (구버전 호환) 교사·실별 담당자도 변경분을 스프레드시트에 올려야 동기화가 된다.
+  // 과거 읽기 전용(pullOnStart)으로 저장된 연결을 쓰기 모드(pushAfterSave)로 승격한다.
+  // 서버가 역할(role)에 따라 안전하게 병합하므로 교사가 관리자 데이터를 덮어쓰지 않는다.
+  if (cfg.provider === "appsScript" && cfg.autoSync === "pullOnStart") {
+    cfg.autoSync = "pushAfterSave";
+  }
+  return cfg;
 }
 
 function saveSyncConfig() {
@@ -818,11 +834,12 @@ function applyConnectionFromAccount(conn, options = {}) {
   syncConfig.apiKey   = conn.apiKey;
   if (conn.shortCode) syncConfig.schoolCode = conn.shortCode;
   if (conn.schoolName) syncConfig.schoolName = conn.schoolName;
-  // 학교 관리자(소유자)는 쓰기 모드 — 저장 시 스프레드시트로 올림(pushAfterSave).
-  // 교사용(?s= 접속)은 읽기 모드 — 로드 시 최신 데이터를 당김(pullOnStart).
-  // ⚠️ 관리자에게 pullOnStart를 주면 관리자가 만든 데이터가 원격에 영영 안 올라가
-  //    교사용 화면이 0개로 보인다(이전 버그). 반드시 구분해서 설정한다.
-  syncConfig.autoSync = options.asAdmin ? "pushAfterSave" : "pullOnStart";
+  // 학교 관리자·실별 담당자·교사 모두 변경분을 스프레드시트로 올려야 한다(쓰기 모드).
+  // 예전에는 교사용(?s=)을 읽기 전용(pullOnStart)으로 두어 교사가 만든 예약·구입요청이
+  // 원격에 올라가지 않아 관리자에게 보이지 않았다. 서버(Apps Script)가 역할(role)에 따라
+  // 안전하게 병합하므로 교사 푸시가 관리자 데이터를 덮어쓰지 않는다.
+  // role 은 저장 시점의 adminMode 로 판단한다(관리자/실별담당자=admin, 일반 교사=teacher).
+  syncConfig.autoSync = "pushAfterSave";
   saveSyncConfig();
   justConnectedViaLink = true;
   sessionStorage.setItem(SESSION_CONNECTED_KEY, "1");
@@ -1121,6 +1138,16 @@ function saveState({ touch = true } = {}) {
     scheduleAutoPush();
     if (syncConfig.schoolCode) window.account?.heartbeat?.(syncConfig.schoolCode);
   }
+}
+
+// 삭제를 다른 기기에도 전파하기 위한 툼스톤 기록.
+// 서버 병합은 원격 단독 항목을 보존하므로, 삭제는 이 기록이 있어야 실제로 전파된다.
+// (예약 취소·반납은 '삭제'가 아니라 상태 변경이므로 여기 대상이 아니다.)
+function recordDeletion(coll, id) {
+  if (!id) return;
+  if (!Array.isArray(state.deletions)) state.deletions = [];
+  state.deletions.push({ coll, id: String(id), at: new Date().toISOString() });
+  if (state.deletions.length > 1000) state.deletions = state.deletions.slice(-1000);
 }
 
 function render() {
@@ -1993,6 +2020,7 @@ function renderItemsTable() {
     ].filter((l) => l !== "").join("\n");
     if (!confirm(msg)) return;
     const idSet = new Set(ids);
+    ids.forEach((id) => recordDeletion("items", id));
     state.items = state.items.filter((i) => !idSet.has(i.id));
     state.reservations = state.reservations.filter((r) => !idSet.has(r.itemId));
     addLog("물품 삭제", `물품 ${ids.length}건을 일괄 삭제했습니다: ${names.slice(0, 5).join(", ")}${names.length > 5 ? " 외" : ""}`, "관리자");
@@ -2187,6 +2215,7 @@ function cancelOwnPurchaseRequest(requestId) {
   const request = (state.purchaseRequests || []).find((row) => row.id === requestId);
   if (!request || request.requester !== teacher || request.status !== "요청됨") return;
   if (!confirm(`“${request.itemName}” 구입 요청을 취소할까요?`)) return;
+  recordDeletion("purchaseRequests", requestId);
   state.purchaseRequests = (state.purchaseRequests || []).filter((row) => row.id !== requestId);
   addLog("구입 요청 취소", `${teacher} 교사가 ${request.itemName} 구입 요청을 취소했습니다.`, teacher);
   saveState();
@@ -2615,7 +2644,7 @@ function renderBorrowingStatusRow(reservation) {
         <p class="helper">${escapeHtml(reservation.teacher || "-")} · ${reservation.quantity} ${unit}</p>
       </div>
       <div class="item-hold-meta">
-        <span>${dateLabel}: ${escapeHtml(reservation.startDate || "-")} ~ ${escapeHtml(reservation.endDate || "-")}</span>
+        <span>${dateLabel}: ${escapeHtml(formatDateOnly(reservation.startDate))} ~ ${escapeHtml(formatDateOnly(reservation.endDate))}</span>
       </div>
     </div>
   `;
@@ -2682,7 +2711,7 @@ function renderMyReservationRow(reservation) {
         <p class="helper">${statusBadge(getReservationDisplayStatus(reservation))} · ${reservation.quantity} ${escapeHtml(item?.unit || "개")}</p>
       </div>
       <div class="item-hold-meta">
-        <span>${dateLabel}: ${escapeHtml(reservation.startDate || "-")} ~ ${escapeHtml(reservation.endDate || "-")}</span>
+        <span>${dateLabel}: ${escapeHtml(formatDateOnly(reservation.startDate))} ~ ${escapeHtml(formatDateOnly(reservation.endDate))}</span>
       </div>
     </div>
   `;
@@ -2696,7 +2725,7 @@ function renderReservationPanel(reservation) {
       <p class="panel-title">${escapeHtml(item?.name || "삭제된 물품")}</p>
       <p class="helper">${escapeHtml(reservation.teacher)} · ${reservation.quantity} ${escapeHtml(item?.unit || "개")} · ${statusBadge(displayStatus)}</p>
       <ul class="quiet-list">
-        <li>사용일 — ${escapeHtml(reservation.startDate)} ~ ${escapeHtml(reservation.endDate)}</li>
+        <li>사용일 — ${escapeHtml(formatDateOnly(reservation.startDate))} ~ ${escapeHtml(formatDateOnly(reservation.endDate))}</li>
         <li>보관 장소 — ${escapeHtml(item?.location || "-")}</li>
         ${reservation.selfCheckout ? `<li>분출 방식 — <span class="badge orange">직접 가져감</span></li>` : ""}
         <li>비고 — ${escapeHtml(reservation.note || "-")}</li>
@@ -2909,7 +2938,7 @@ function renderItemLogs(item) {
 function renderItemHoldRow(reservation, item) {
   const unit = escapeHtml(item.unit || "개");
   const statusText = reservation.status === "분출됨" ? "분출 중" : "예약 중";
-  const dateText = `${escapeHtml(reservation.startDate || "-")} ~ ${escapeHtml(reservation.endDate || "-")}`;
+  const dateText = `${escapeHtml(formatDateOnly(reservation.startDate))} ~ ${escapeHtml(formatDateOnly(reservation.endDate))}`;
   const checkoutText = reservation.status === "분출됨"
     ? `<span>분출: ${reservation.checkedOutAt ? formatDateTime(reservation.checkedOutAt) : reservation.selfCheckout ? "직접 가져감" : "-"}</span>`
     : `<span>사용 예정: ${dateText}</span>`;
@@ -3890,6 +3919,7 @@ function openSchoolSettingsModal() {
     }
 
     state.schoolName = schoolName;
+    removedItemIds.forEach((id) => recordDeletion("items", id));
     // 카테고리 이름 변경 propagate: pendingDeletedCategoryByLocation의 키는 옛(현재) 실 이름 기준
     state.items = state.items
       .filter((item) => !removedLocations.includes(item.location))
@@ -4411,7 +4441,7 @@ async function runSyncAction(modal, action) {
 
     const result = await requestSpreadsheet(
       action,
-      action === "save" ? { data: state, clientUpdatedAt: state.meta?.updatedAt || "", expectedRemoteSavedAt: syncConfig.lastRemoteSavedAt || "" } : {},
+      action === "save" ? { data: state, role: adminMode ? "admin" : "teacher", deletions: state.deletions || [], clientUpdatedAt: state.meta?.updatedAt || "" } : {},
     );
 
     if (action === "load") {
@@ -4528,27 +4558,21 @@ async function autoPushState() {
   if (autoSyncInFlight || !canUseRemoteSync() || syncConfig.autoSync !== "pushAfterSave") return;
   autoSyncInFlight = true;
   try {
-    const remote = await requestSpreadsheet("diagnose", {});
-    const remoteSavedAt = remote.savedAt || "";
-    markSyncChecked(remoteSavedAt);
-
-    if (isAfter(remoteSavedAt, syncConfig.lastSyncedAt) && isAfter(remoteSavedAt, state.meta?.updatedAt)) {
-      toast("원격 데이터가 더 새로워 자동 올리기를 멈췄습니다.", "warn");
-      return;
-    }
-
+    // 서버가 role(admin/teacher)에 따라 id 기준으로 안전하게 병합한다.
+    // → 원격이 더 새롭더라도 내 변경분이 남의 것을 덮어쓰지 않으므로 그대로 올린다.
+    //   (예전엔 여기서 '원격이 더 새로움'을 만나면 멈춰서 영영 동기화가 막혔다.)
     const result = await requestSpreadsheet("save", {
       data: state,
+      role: adminMode ? "admin" : "teacher",
+      deletions: state.deletions || [],
       clientUpdatedAt: state.meta?.updatedAt || "",
-      expectedRemoteSavedAt: syncConfig.lastRemoteSavedAt || "",
     });
     syncConfig.lastSyncedAt = new Date().toISOString();
     syncConfig.lastCheckedAt = syncConfig.lastSyncedAt;
     syncConfig.lastRemoteSavedAt = result.savedAt || syncConfig.lastRemoteSavedAt || "";
     saveSyncConfig();
-    toast("변경 내용을 스프레드시트에 자동 저장했습니다.", "success");
   } catch (error) {
-    toast(`자동 동기화 실패: ${error.message}`, "error");
+    // 네트워크 오류 등은 다음 변경/폴링 때 다시 시도된다(토스트 폭주 방지를 위해 조용히).
   } finally {
     autoSyncInFlight = false;
   }
@@ -4635,8 +4659,9 @@ async function pushLocalToRemoteIfEmpty() {
     if (remoteSavedAt) return; // 원격에 이미 데이터 있음 → 보호
     const result = await requestSpreadsheet("save", {
       data: state,
+      role: adminMode ? "admin" : "teacher",
+      deletions: state.deletions || [],
       clientUpdatedAt: state.meta?.updatedAt || "",
-      expectedRemoteSavedAt: "",
     });
     syncConfig.lastSyncedAt = new Date().toISOString();
     syncConfig.lastCheckedAt = syncConfig.lastSyncedAt;
@@ -5393,6 +5418,7 @@ function deleteItem(itemId) {
   ].join("\n");
   if (!confirm(message)) return;
 
+  recordDeletion("items", itemId);
   state.items = state.items.filter((row) => row.id !== itemId);
   state.reservations = state.reservations.filter((reservation) => reservation.itemId !== itemId);
   state.logs = state.logs.filter((log) => log.itemId !== itemId);
@@ -6300,6 +6326,7 @@ function deletePurchaseRequests(requestIds) {
   const ids = new Set(requestIds);
   const deletable = (state.purchaseRequests || []).filter((request) => ids.has(request.id) && canManagePurchaseRequest(request));
   if (!deletable.length) return;
+  deletable.forEach((request) => recordDeletion("purchaseRequests", request.id));
   state.purchaseRequests = (state.purchaseRequests || []).filter((request) => !ids.has(request.id) || !canManagePurchaseRequest(request));
   addLog("구입 요청 삭제", `구입 요청 ${deletable.length}건을 삭제했습니다.`, "관리자");
   saveState();
@@ -6692,6 +6719,23 @@ function formatDateTime(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("ko-KR");
+}
+
+// 날짜 값을 항상 YYYY-MM-DD 문자열로 맞춘다(빈 값은 "").
+// 스프레드시트가 날짜 칸을 Date로 바꿔 "2026-06-13T15:00:00.000Z" 같은 ISO 시각으로
+// 돌려주는 경우 한국 시간 기준 날짜만 추출한다.
+function normalizeDateValue(value) {
+  if (!value) return "";
+  const s = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // 이미 날짜 형태면 그대로
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s.slice(0, 10);
+  return formatDateInTimeZone(d);
+}
+
+// 화면 표시용: 날짜만, 없으면 "-"
+function formatDateOnly(value) {
+  return normalizeDateValue(value) || "-";
 }
 
 function formatDateInTimeZone(date, timeZone = KOREA_TIME_ZONE) {
