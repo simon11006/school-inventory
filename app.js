@@ -2803,7 +2803,7 @@ function renderItemPanel(item) {
         <dt>보관 장소</dt><dd>${escapeHtml(item.location || "-")}</dd>
         <dt>카테고리</dt><dd>${escapeHtml(item.category || "-")}</dd>
         <dt>관리 번호</dt><dd>${escapeHtml(item.code || "-")}</dd>
-        <dt>소모품</dt><dd>${item.consumable ? "예" : "아니오"}</dd>
+        <dt>소모품 여부</dt><dd>${item.consumable ? "소모품" : "비품"}</dd>
         <dt>구입일</dt><dd>${escapeHtml(item.purchasedAt || "-")}</dd>
         <dt>구입 금액</dt><dd>${item.price ? Number(item.price).toLocaleString() + "원" : "-"}</dd>
         ${item.note ? `<dt>비고</dt><dd class="item-detail-note">${escapeHtml(item.note)}</dd>` : ""}
@@ -4861,8 +4861,8 @@ function openItemModal(item = null) {
         <label class="field">
           <span>소모품 여부</span>
           <select name="consumable">
-            <option value="true" ${item ? (item.consumable ? "selected" : "") : "selected"}>예</option>
-            <option value="false" ${item && !item.consumable ? "selected" : ""}>아니오</option>
+            <option value="true" ${item ? (item.consumable ? "selected" : "") : "selected"}>소모품</option>
+            <option value="false" ${item && !item.consumable ? "selected" : ""}>비품</option>
           </select>
         </label>
         <label class="field full">
@@ -5886,7 +5886,7 @@ function buildImportPlan(rows, sourceName) {
       location,
       total,
       unit,
-      consumable: ["예", "true", "TRUE", "1", "Y", "y"].includes(String(record.consumable || "").trim()),
+      consumable: ["소모품", "예", "true", "TRUE", "1", "Y", "y"].includes(String(record.consumable || "").trim()),
       code,
       purchasedAt: normalizeDateCell(record.purchasedAt),
       price: Number(String(record.price || 0).replaceAll(",", "")) || 0,
@@ -5944,7 +5944,7 @@ function renderImportPreviewTable(items) {
               <td>${escapeHtml(item.location)}</td>
               <td>${item.total}</td>
               <td>${escapeHtml(item.unit)}</td>
-              <td>${item.consumable ? "예" : "아니요"}</td>
+              <td>${item.consumable ? "소모품" : "비품"}</td>
               <td>${escapeHtml(item.code || "-")}</td>
               <td>${escapeHtml(item.purchasedAt || "-")}</td>
               <td>${item.price ? item.price.toLocaleString() + "원" : "-"}</td>
