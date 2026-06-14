@@ -4811,7 +4811,10 @@ function openItemModal(item = null) {
           </label>
         </div>
         ${field("구입일", "purchasedAt", item?.purchasedAt || new Intl.DateTimeFormat("sv-SE", { timeZone: KOREA_TIME_ZONE }).format(new Date()), false, "date")}
-        ${field("구입 금액", "price", item?.price ?? "", false, "number")}
+        <label class="field">
+          <span>구입 금액</span>
+          <input name="price" type="text" inputmode="numeric" value="${item?.price ? Number(item.price).toLocaleString() : ""}" placeholder="예) 50,000" />
+        </label>
         <label class="field">
           <span>상태</span>
           <select name="status">
@@ -4849,7 +4852,7 @@ function openItemModal(item = null) {
         consumable: formData.get("consumable") === "true",
         code: formData.get("code").trim(),
         purchasedAt: formData.get("purchasedAt"),
-        price: Number(formData.get("price") || 0),
+        price: Number(String(formData.get("price") || "").replace(/[^\d.]/g, "")) || 0,
         damaged: item?.damaged || 0,
         lost: item?.lost || 0,
         disposed: item?.disposed || 0,
@@ -4967,6 +4970,18 @@ function openItemModal(item = null) {
   locationInput.addEventListener("change", () => refreshCategorySelectForLocation(locationInput.value.trim()));
   locationInput.addEventListener("blur", () => refreshCategorySelectForLocation(locationInput.value.trim()));
 
+  // 구입 금액 입력 시 세 자리마다 콤마 자동 표시 (커서 위치 유지)
+  const priceInput = modal.querySelector('[name="price"]');
+  if (priceInput) {
+    priceInput.addEventListener("input", () => {
+      const caretFromEnd = priceInput.value.length - (priceInput.selectionStart ?? priceInput.value.length);
+      const digits = priceInput.value.replace(/[^\d]/g, "");
+      priceInput.value = digits ? Number(digits).toLocaleString() : "";
+      const pos = Math.max(0, priceInput.value.length - caretFromEnd);
+      priceInput.setSelectionRange(pos, pos);
+    });
+  }
+
   if (state.items.length > 0) {
     const nameInput = modal.querySelector('[name="name"]');
     const dropdown = document.createElement("div");
@@ -4981,7 +4996,7 @@ function openItemModal(item = null) {
       modal.querySelector('[name="unit"]').value = source.unit || "개";
       modal.querySelector('[name="code"]').value = source.code || "";
       modal.querySelector('[name="purchasedAt"]').value = source.purchasedAt || "";
-      modal.querySelector('[name="price"]').value = source.price || 0;
+      modal.querySelector('[name="price"]').value = source.price ? Number(source.price).toLocaleString() : "";
       modal.querySelector('[name="status"]').value = source.status || "사용 가능";
       modal.querySelector('[name="consumable"]').value = String(source.consumable || false);
       modal.querySelector('[name="note"]').value = source.note || "";
