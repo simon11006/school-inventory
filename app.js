@@ -366,6 +366,11 @@ function syncLocationMirror(target) {
   if (target.innerHTML !== els.locationFilter.innerHTML) {
     target.innerHTML = els.locationFilter.innerHTML;
   }
+  // 툴바 미러는 '전체' 대신 '물품실 선택'을 안내 문구로 보여준다. (사이드바는 그대로 '전체')
+  if (target === els.toolbarLocationFilter) {
+    const emptyOption = target.querySelector('option[value=""]');
+    if (emptyOption) emptyOption.textContent = "물품실 선택";
+  }
   if (target.value !== els.locationFilter.value) {
     target.value = els.locationFilter.value;
   }
