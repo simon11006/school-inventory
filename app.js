@@ -61,8 +61,6 @@ let autoSyncInFlight = false;
 let pollingTimer = null;
 let pollingInFlight = false;
 const POLL_INTERVAL_MS = 20000;
-// 교사 push가 옛 Apps Script(전체 덮어쓰기)로 막혔다는 1회용 안내 플래그
-let teacherPushBlockedWarned = false;
 
 const els = {};
 
@@ -4501,14 +4499,6 @@ async function ensureCanPush(statusEl) {
   const remote = await requestSpreadsheet("diagnose", {});
   const remoteSavedAt = remote.savedAt || "";
   markSyncChecked(remoteSavedAt);
-  updateMergeSupport(remote.mergeSupport === true);
-
-  // 교사 계정이 옛 Apps Script에 올리면 전체 덮어쓰기로 데이터가 손상되므로 막는다.
-  if (!adminMode && remote.mergeSupport !== true) {
-    const message = "학교 서버(Apps Script)가 아직 업데이트되지 않아 교사 화면에서는 올릴 수 없습니다. 담당자에게 Apps Script 업데이트를 요청하세요.";
-    statusEl.textContent = message;
-    throw new Error(message);
-  }
 
   if (isAfter(remoteSavedAt, syncConfig.lastSyncedAt) && isAfter(remoteSavedAt, state.meta?.updatedAt)) {
     const message = "스프레드시트에 이 브라우저보다 새로운 데이터가 있습니다. 먼저 가져오기를 실행하세요.";
@@ -4564,47 +4554,16 @@ function scheduleAutoPush() {
   autoSyncTimer = setTimeout(autoPushState, 1200);
 }
 
-// 진단 결과로 받은 '병합 지원' 여부를 기억한다(바뀌었을 때만 저장).
-function updateMergeSupport(ok) {
-  if ((syncConfig.remoteMergeSupport === true) !== (ok === true)) {
-    syncConfig.remoteMergeSupport = ok === true;
-    saveSyncConfig();
-  }
-}
-
-// 교사 변경분을 올려도 되는지: 학교 Apps Script가 역할 기반 안전 병합을 지원해야 한다.
-// (옛 스크립트에 교사가 push하면 전체 덮어쓰기로 데이터가 손상되므로 막는다.)
-async function teacherPushAllowed() {
-  if (syncConfig.remoteMergeSupport === true) return true;
-  try {
-    const d = await requestSpreadsheet("diagnose", {});
-    markSyncChecked(d.savedAt || "");
-    updateMergeSupport(d.mergeSupport === true);
-  } catch {
-    return false;
-  }
-  return syncConfig.remoteMergeSupport === true;
-}
-
 async function autoPushState() {
   if (autoSyncInFlight || !canUseRemoteSync() || syncConfig.autoSync !== "pushAfterSave") return;
   autoSyncInFlight = true;
   try {
-    const role = adminMode ? "admin" : "teacher";
-    // 교사는 학교 Apps Script가 안전 병합을 지원할 때만 올린다(옛 스크립트 덮어쓰기 방지).
-    if (role === "teacher" && !(await teacherPushAllowed())) {
-      if (!teacherPushBlockedWarned) {
-        teacherPushBlockedWarned = true;
-        toast("학교 서버(Apps Script) 업데이트 전이라 변경 내용이 아직 동기화되지 않습니다. 담당자에게 Apps Script 업데이트를 요청하세요.", "warn");
-      }
-      return;
-    }
     // 서버가 role(admin/teacher)에 따라 id 기준으로 안전하게 병합한다.
     // → 원격이 더 새롭더라도 내 변경분이 남의 것을 덮어쓰지 않으므로 그대로 올린다.
     //   (예전엔 여기서 '원격이 더 새로움'을 만나면 멈춰서 영영 동기화가 막혔다.)
     const result = await requestSpreadsheet("save", {
       data: state,
-      role,
+      role: adminMode ? "admin" : "teacher",
       deletions: state.deletions || [],
       clientUpdatedAt: state.meta?.updatedAt || "",
     });
@@ -4769,7 +4728,6 @@ async function pullRemoteState() {
     const remoteSavedAt = remote.savedAt || "";
     const previousRemoteSavedAt = syncConfig.lastRemoteSavedAt;
     markSyncChecked(remoteSavedAt);
-    updateMergeSupport(remote.mergeSupport === true);
     if (!remoteSavedAt) return;
     if (remoteSavedAt === previousRemoteSavedAt) return;
     if (isAfter(state.meta?.updatedAt, syncConfig.lastSyncedAt)) return;
