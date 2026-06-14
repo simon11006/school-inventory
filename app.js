@@ -2100,6 +2100,7 @@ function renderReservationsTable(rows, title = "예약 목록") {
       <table>
         <thead>
           <tr>
+            <th>물품실</th>
             <th>물품</th>
             <th>교사</th>
             <th>수량</th>
@@ -2115,9 +2116,9 @@ function renderReservationsTable(rows, title = "예약 목록") {
               const item = getItem(res.itemId);
               return `
                 <tr>
+                  <td class="cell-nowrap">${escapeHtml(item?.location || "-")}</td>
                   <td class="cell-item">
-                    <strong>${escapeHtml(item?.name || "삭제된 물품")}</strong><br />
-                    <span class="helper">${escapeHtml(item?.location || "-")}</span>
+                    <strong>${escapeHtml(item?.name || "삭제된 물품")}</strong>
                   </td>
                   <td class="cell-nowrap">${escapeHtml(res.teacher)}</td>
                   <td class="cell-nowrap">${res.quantity} ${escapeHtml(item?.unit || "개")}</td>
