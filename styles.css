@@ -2372,6 +2372,12 @@ td strong {
   font-size: 12.5px;
 }
 
+.modal-confirm-text {
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
 .quiet-list {
   margin: 8px 0 0;
   padding: 0;

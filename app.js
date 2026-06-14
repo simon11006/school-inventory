@@ -5783,7 +5783,7 @@ function checkoutReservation(reservationId) {
   openModal({
     title: "분출 처리",
     body: `
-      <p class="helper">${escapeHtml(item.name)} ${reservation.quantity}${escapeHtml(item.unit || "개")}을(를)
+      <p class="modal-confirm-text">${escapeHtml(item.name)} ${reservation.quantity}${escapeHtml(item.unit || "개")}을(를)
       ${escapeHtml(reservation.teacher)} 교사에게 분출 처리할까요?</p>`,
     submitText: "분출 처리",
     onSubmit: () => {
