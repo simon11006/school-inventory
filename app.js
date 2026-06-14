@@ -1150,6 +1150,13 @@ function recordDeletion(coll, id) {
   if (state.deletions.length > 1000) state.deletions = state.deletions.slice(-1000);
 }
 
+// 특정 컬렉션에서 주어진 id(이름)들의 삭제 기록을 제거한다(재생성/유지 시 부활 허용).
+function clearDeletions(coll, ids) {
+  if (!Array.isArray(state.deletions) || !state.deletions.length) return;
+  const keep = new Set((ids || []).map((id) => String(id)));
+  state.deletions = state.deletions.filter((d) => !(d && d.coll === coll && keep.has(String(d.id))));
+}
+
 function render() {
   const hasSchoolName = Boolean((state.schoolName || "").trim());
   els.schoolName.textContent = hasSchoolName ? state.schoolName : "학교명을 설정해주세요";
@@ -3920,6 +3927,16 @@ function openSchoolSettingsModal() {
 
     state.schoolName = schoolName;
     removedItemIds.forEach((id) => recordDeletion("items", id));
+    // 물품실/교사 삭제도 툼스톤으로 전파해야, 아직 갱신 안 된 다른 관리자(실별 담당자 등)가
+    // 옛 목록을 올려도 삭제한 물품실/교사가 되살아나지 않는다. 이름 변경(rename)은
+    // 옛 이름 삭제 + 새 이름 추가이므로 옛 이름도 함께 기록한다.
+    removedLocations.forEach((loc) => recordDeletion("locations", loc));
+    removedTeachers.forEach((name) => recordDeletion("teachers", name));
+    renameMap.forEach((next, old) => recordDeletion("locations", old));
+    teacherRenameMap.forEach((next, old) => recordDeletion("teachers", old));
+    // 유지·신규(재생성 포함)되는 이름은 혹시 남아 있을 삭제 기록을 지워 되살아나게 한다.
+    clearDeletions("locations", nextLocations);
+    clearDeletions("teachers", nextTeachers);
     // 카테고리 이름 변경 propagate: pendingDeletedCategoryByLocation의 키는 옛(현재) 실 이름 기준
     state.items = state.items
       .filter((item) => !removedLocations.includes(item.location))

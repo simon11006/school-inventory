@@ -1,5 +1,7 @@
 const API_KEY_PROPERTY = "SCHOOL_INVENTORY_API_KEY";
-const SCRIPT_VERSION = "2026-06-14-role-merge";
+const SCRIPT_VERSION = "2026-06-14-role-merge-2";
+// 물품실·교사(이름 기반) 삭제 툼스톤 적용 기간 — 동기화 지연 관리자의 부활을 막는 창
+const NAME_TOMBSTONE_TTL_MS = 10 * 60 * 1000;
 const APP_BASE_URL = "https://item-school.netlify.app/index.html";
 
 function onOpen() {
@@ -354,8 +356,13 @@ function saveData_(data, role, deletions) {
     const savedAt = new Date().toISOString();
 
     const mergedDeletions = mergeDeletions_(remote.deletions, deletions);
-    const deletedItems = collectDeletedIds_(mergedDeletions, "items");
-    const deletedRequests = collectDeletedIds_(mergedDeletions, "purchaseRequests");
+    // 물품·구입요청은 고유 id라 영구 적용(같은 id 재생성 없음).
+    const deletedItems = collectDeletedIds_(mergedDeletions, "items", 0);
+    const deletedRequests = collectDeletedIds_(mergedDeletions, "purchaseRequests", 0);
+    // 물품실·교사는 '이름'이 키라, 같은 이름 재생성을 막지 않도록 10분만 적용한다.
+    // (아직 갱신 안 된 관리자가 옛 목록을 올리는 ~20초 창은 충분히 막는다.)
+    const deletedLocations = collectDeletedIds_(mergedDeletions, "locations", NAME_TOMBSTONE_TTL_MS);
+    const deletedTeachers = collectDeletedIds_(mergedDeletions, "teachers", NAME_TOMBSTONE_TTL_MS);
 
     // 로그는 추가 전용 → id 기준 합집합
     const logs = mergeById_(remote.logs, data.logs);
@@ -398,6 +405,14 @@ function saveData_(data, role, deletions) {
     }
     if (deletedItems.length) {
       reservations = reservations.filter((r) => deletedItems.indexOf(String(r.itemId)) === -1);
+    }
+    // 물품실/교사 삭제 적용(양쪽 역할 공통): 아직 갱신 안 된 관리자가 옛 목록을 올려도
+    // 삭제한 물품실/교사가 부활하지 않게 한다.
+    if (deletedLocations.length) {
+      locations = locations.filter((n) => deletedLocations.indexOf(String(n)) === -1);
+    }
+    if (deletedTeachers.length) {
+      teachers = teachers.filter((n) => deletedTeachers.indexOf(String(n)) === -1);
     }
 
     writeTable_("items", items);
@@ -461,9 +476,18 @@ function mergeDeletions_(remoteDel, incomingDel) {
   return arr.slice(0, 1000);
 }
 
-function collectDeletedIds_(deletions, coll) {
+// maxAgeMs 가 0/미지정이면 영구 적용, 양수면 그 시간 안의 삭제만 적용한다.
+function collectDeletedIds_(deletions, coll, maxAgeMs) {
   const ids = [];
-  (deletions || []).forEach((d) => { if (d && d.coll === coll) ids.push(String(d.id)); });
+  const now = Date.now();
+  (deletions || []).forEach((d) => {
+    if (!d || d.coll !== coll) return;
+    if (maxAgeMs && d.at) {
+      const t = new Date(d.at).getTime();
+      if (!isNaN(t) && (now - t) > maxAgeMs) return; // 만료된 이름 툼스톤은 무시
+    }
+    ids.push(String(d.id));
+  });
   return ids;
 }
 
