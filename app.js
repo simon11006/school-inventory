@@ -60,7 +60,7 @@ let firebaseAuthPending = !!window.fb;
 let autoSyncInFlight = false;
 let pollingTimer = null;
 let pollingInFlight = false;
-const POLL_INTERVAL_MS = 20000;
+const POLL_INTERVAL_MS = 10000;
 
 const els = {};
 
