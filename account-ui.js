@@ -848,7 +848,7 @@ function openConnectionManager(uid, data) {
               아직 스프레드시트를 안 만드셨다면 가이드를 먼저 따라 하세요.
             </p>
             <a href="./처음설정가이드.html" target="_blank" rel="noopener"
-              style="display:inline-block;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--accent,#5B8A6F);">
+              style="display:inline-block;margin-bottom:14px;font-size:16px;font-weight:800;color:var(--accent,#5B8A6F);">
               📖 처음 설정 가이드 열기 →
             </a>
 
